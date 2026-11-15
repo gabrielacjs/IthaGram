@@ -1,0 +1,101 @@
+diff --git a/gradle.properties b/gradle.properties
+--- a/gradle.properties
++++ b/gradle.properties
+@@ -18 +18 @@
+-APP_PACKAGE=org.telegram.messenger
++APP_PACKAGE=com.gabi.ithagram
+diff --git a/TMessagesProj/src/main/res/values-ar/strings.xml b/TMessagesProj/src/main/res/values-ar/strings.xml
+--- a/TMessagesProj/src/main/res/values-ar/strings.xml
++++ b/TMessagesProj/src/main/res/values-ar/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">تيليجرام</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">(Beta) تيليجرام</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-de/strings.xml b/TMessagesProj/src/main/res/values-de/strings.xml
+--- a/TMessagesProj/src/main/res/values-de/strings.xml
++++ b/TMessagesProj/src/main/res/values-de/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-es/strings.xml b/TMessagesProj/src/main/res/values-es/strings.xml
+--- a/TMessagesProj/src/main/res/values-es/strings.xml
++++ b/TMessagesProj/src/main/res/values-es/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-it/strings.xml b/TMessagesProj/src/main/res/values-it/strings.xml
+--- a/TMessagesProj/src/main/res/values-it/strings.xml
++++ b/TMessagesProj/src/main/res/values-it/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-ko/strings.xml b/TMessagesProj/src/main/res/values-ko/strings.xml
+--- a/TMessagesProj/src/main/res/values-ko/strings.xml
++++ b/TMessagesProj/src/main/res/values-ko/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">텔레그램</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">텔레그램</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-nl/strings.xml b/TMessagesProj/src/main/res/values-nl/strings.xml
+--- a/TMessagesProj/src/main/res/values-nl/strings.xml
++++ b/TMessagesProj/src/main/res/values-nl/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram-bèta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-pt-rBR/strings.xml b/TMessagesProj/src/main/res/values-pt-rBR/strings.xml
+--- a/TMessagesProj/src/main/res/values-pt-rBR/strings.xml
++++ b/TMessagesProj/src/main/res/values-pt-rBR/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-ru/strings.xml b/TMessagesProj/src/main/res/values-ru/strings.xml
+--- a/TMessagesProj/src/main/res/values-ru/strings.xml
++++ b/TMessagesProj/src/main/res/values-ru/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values-uk/strings.xml b/TMessagesProj/src/main/res/values-uk/strings.xml
+--- a/TMessagesProj/src/main/res/values-uk/strings.xml
++++ b/TMessagesProj/src/main/res/values-uk/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj/src/main/res/values/strings.xml b/TMessagesProj/src/main/res/values/strings.xml
+--- a/TMessagesProj/src/main/res/values/strings.xml
++++ b/TMessagesProj/src/main/res/values/strings.xml
+@@ -3 +3 @@
+-    <string name="AppName">Telegram</string>
++    <string name="AppName">IthaGram</string>
+@@ -4 +4 @@
+-    <string name="AppNameBeta">Telegram Beta</string>
++    <string name="AppNameBeta">IthaGram</string>
+diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
+--- a/TMessagesProj_App/build.gradle
++++ b/TMessagesProj_App/build.gradle
+@@ -76 +75,0 @@
+-            applicationIdSuffix ".beta"

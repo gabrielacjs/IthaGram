@@ -1,0 +1,28 @@
+diff --git a/TMessagesProj/build.gradle b/TMessagesProj/build.gradle
+--- a/TMessagesProj/build.gradle
++++ b/TMessagesProj/build.gradle
+@@ -147,6 +147,16 @@
+     defaultConfig {
+         minSdkVersion 23
+         targetSdkVersion 36
++        // NithaGram: credenciales propias desde local.properties o variables de entorno (si no, las publicas)
++        def tgLocalProps = new Properties()
++        def tgLocalFile = rootProject.file('local.properties')
++        if (tgLocalFile.exists()) {
++            tgLocalFile.withInputStream { tgLocalProps.load(it) }
++        }
++        def tgAppId = (tgLocalProps.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: '4').trim()
++        def tgAppHash = (tgLocalProps.getProperty('TELEGRAM_APP_HASH') ?: System.getenv('TELEGRAM_APP_HASH') ?: '014b35b6184100b085b0d0572f9b5103').trim()
++        buildConfigField 'int', 'APP_ID', tgAppId
++        buildConfigField 'String', 'APP_HASH', '"' + tgAppHash + '"'
+ 
+         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java b/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
+@@ -30,2 +30,2 @@
+-    public static int APP_ID = 4;
+-    public static String APP_HASH = "014b35b6184100b085b0d0572f9b5103";
++    public static int APP_ID = BuildConfig.APP_ID;
++    public static String APP_HASH = BuildConfig.APP_HASH;
