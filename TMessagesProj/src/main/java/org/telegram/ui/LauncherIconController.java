@@ -34,12 +34,12 @@ public class LauncherIconController {
     }
 
     public enum LauncherIcon {
-        DEFAULT("DefaultIcon", R.drawable.icon_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconDefault),
-        VINTAGE("VintageIcon", R.drawable.icon_6_background_sa, R.mipmap.icon_6_foreground_sa, R.string.AppIconVintage),
-        AQUA("AquaIcon", R.drawable.icon_4_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconAqua),
-        PREMIUM("PremiumIcon", R.drawable.icon_3_background_sa, R.mipmap.icon_3_foreground_sa, R.string.AppIconPremium, true),
-        TURBO("TurboIcon", R.drawable.icon_5_background_sa, R.mipmap.icon_5_foreground_sa, R.string.AppIconTurbo, true),
-        NOX("NoxIcon", R.mipmap.icon_2_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconNox, true);
+        DEFAULT("DefaultIcon", R.drawable.ic_ithagram_background, R.drawable.ic_ithagram_foreground, R.string.AppIconIthaAzul),
+        CORAL("CoralIcon", R.drawable.ic_ithagram_bg_coral, R.drawable.ic_ithagram_fg_coral, R.string.AppIconIthaCoral),
+        HIELO("HieloIcon", R.drawable.ic_ithagram_bg_hielo, R.drawable.ic_ithagram_fg_hielo, R.string.AppIconIthaHielo),
+        MENTA("MentaIcon", R.drawable.ic_ithagram_bg_menta, R.drawable.ic_ithagram_fg_menta, R.string.AppIconIthaMenta),
+        AURORA("AuroraIcon", R.drawable.ic_ithagram_bg_aurora, R.drawable.ic_ithagram_fg_aurora, R.string.AppIconIthaAurora),
+        DORADO("DoradoIcon", R.drawable.ic_ithagram_bg_dorado, R.drawable.ic_ithagram_fg_dorado, R.string.AppIconIthaDorado);
 
         public final String key;
         public final int background;

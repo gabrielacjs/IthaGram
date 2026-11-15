@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="AppIconIthaAzul">Azul eléctrico</string>
+    <string name="AppIconIthaCoral">Coral</string>
+    <string name="AppIconIthaHielo">Hielo</string>
+    <string name="AppIconIthaMenta">Menta</string>
+    <string name="AppIconIthaAurora">Aurora</string>
+    <string name="AppIconIthaDorado">Dorado</string>
+</resources>

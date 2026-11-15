@@ -292,7 +292,7 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
 
             MarginLayoutParams params = (MarginLayoutParams) titleView.getLayoutParams();
             if (icon.premium && !UserConfig.hasPremiumOnAccounts()) {
-                SpannableString str = new SpannableString("d " + LocaleController.getString(icon.title));
+                SpannableString str = new SpannableString("d " + org.telegram.ui.IthaIconNames.get(icon));
                 ColoredImageSpan span = new ColoredImageSpan(R.drawable.msg_mini_premiumlock);
                 span.setTopOffset(1);
                 span.setSize(AndroidUtilities.dp(13));
@@ -302,7 +302,7 @@ public class AppIconsSelectorCell extends RecyclerListView implements Notificati
                 titleView.setText(str);
             } else {
                 params.rightMargin = 0;
-                titleView.setText(LocaleController.getString(icon.title));
+                titleView.setText(org.telegram.ui.IthaIconNames.get(icon));
             }
             setSelected(LauncherIconController.isEnabled(icon), false);
         }

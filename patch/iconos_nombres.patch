@@ -1,0 +1,46 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Cells/AppIconsSelectorCell.java b/TMessagesProj/src/main/java/org/telegram/ui/Cells/AppIconsSelectorCell.java
+index feb2f67..3243709 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Cells/AppIconsSelectorCell.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Cells/AppIconsSelectorCell.java
+@@ -295 +295 @@
+-                SpannableString str = new SpannableString("d " + LocaleController.getString(icon.title));
++                SpannableString str = new SpannableString("d " + org.telegram.ui.IthaIconNames.get(icon));
+@@ -305 +305 @@
+-                titleView.setText(LocaleController.getString(icon.title));
++                titleView.setText(org.telegram.ui.IthaIconNames.get(icon));
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/AppIconBulletinLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/AppIconBulletinLayout.java
+index 3d4d007..a94c143 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/AppIconBulletinLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/AppIconBulletinLayout.java
+@@ -42 +42 @@
+-        textView.setText(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.AppIconChangedTo, LocaleController.getString(icon.title))));
++        textView.setText(AndroidUtilities.replaceTags(LocaleController.formatString(R.string.AppIconChangedTo, org.telegram.ui.IthaIconNames.get(icon))));
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaIconNames.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaIconNames.java
+new file mode 100644
+index 0000000..0d491da
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaIconNames.java
+@@ -0,0 +1,23 @@
++package org.telegram.ui;
++
++/**
++ * IthaGram: nombres de los iconos de la app (fijos, no pasan por el sistema de idiomas de Telegram).
++ */
++public class IthaIconNames {
++    public static String get(LauncherIconController.LauncherIcon icon) {
++        switch (icon) {
++            case CORAL:
++                return "IthaCoral";
++            case HIELO:
++                return "IthaIce";
++            case MENTA:
++                return "IthaMint";
++            case AURORA:
++                return "IthaAurora";
++            case DORADO:
++                return "IthaGold";
++            default:
++                return "IthaBlue";
++        }
++    }
++}
