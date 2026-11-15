@@ -46,19 +46,30 @@ android {
         localeFilters += ["zz"]
     }
 
+    // IthaGram: firma con tu propia clave (local.properties); si no esta, usa la del repo
+    def ksProps = new Properties()
+    def ksFile = rootProject.file('local.properties')
+    if (ksFile.exists()) {
+        ksFile.withInputStream { ksProps.load(it) }
+    }
+    def ksPath = ksProps.getProperty('KEYSTORE_FILE')
+    def ksStorePass = ksProps.getProperty('KEYSTORE_PASS') ?: RELEASE_STORE_PASSWORD
+    def ksAlias = ksProps.getProperty('ALIAS_NAME') ?: RELEASE_KEY_ALIAS
+    def ksKeyPass = ksProps.getProperty('ALIAS_PASS') ?: RELEASE_KEY_PASSWORD
+
     signingConfigs {
         debug {
-            storeFile file("../TMessagesProj/config/release.keystore")
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias RELEASE_KEY_ALIAS
-            keyPassword RELEASE_KEY_PASSWORD
+            storeFile file(ksPath ?: "../TMessagesProj/config/release.keystore")
+            storePassword ksStorePass
+            keyAlias ksAlias
+            keyPassword ksKeyPass
         }
 
         release {
-            storeFile file("../TMessagesProj/config/release.keystore")
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias RELEASE_KEY_ALIAS
-            keyPassword RELEASE_KEY_PASSWORD
+            storeFile file(ksPath ?: "../TMessagesProj/config/release.keystore")
+            storePassword ksStorePass
+            keyAlias ksAlias
+            keyPassword ksKeyPass
         }
     }
 
