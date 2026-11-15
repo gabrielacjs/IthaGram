@@ -1,0 +1,103 @@
+diff --git a/TMessagesProj/src/main/AndroidManifest.xml b/TMessagesProj/src/main/AndroidManifest.xml
+index ccead6a..53d92f1 100644
+--- a/TMessagesProj/src/main/AndroidManifest.xml
++++ b/TMessagesProj/src/main/AndroidManifest.xml
+@@ -496,5 +496,10 @@
+             android:exported="true"
+             android:foregroundServiceType="dataSync"
+         />
++        <service
++            android:name="org.telegram.messenger.DownloadQueueService"
++            android:exported="false"
++            android:foregroundServiceType="dataSync"
++        />
+         <service
+             android:name=".NotificationRepeat"
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/FileLoaderPriorityQueue.java b/TMessagesProj/src/main/java/org/telegram/messenger/FileLoaderPriorityQueue.java
+index 8112e4e..1b19246 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/FileLoaderPriorityQueue.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/FileLoaderPriorityQueue.java
+@@ -92,6 +92,16 @@
+         int lastPriority = 0;
+         boolean pauseAllNextOperations = false;
+         int max = type == TYPE_LARGE ? MessagesController.getInstance(currentAccount).largeQueueMaxActiveOperations : MessagesController.getInstance(currentAccount).smallQueueMaxActiveOperations;
++        if (type == TYPE_LARGE) {
++            // IthaGram: si el gestor de descargas esta corriendo, respetar su limite (hasta 3) en vez del tope del servidor
++            try {
++                DownloadQueueManager dqm = DownloadQueueManager.getInstance();
++                if (dqm != null && dqm.isRunning()) {
++                    max = Math.max(max, dqm.getMaxConcurrent());
++                }
++            } catch (Throwable ignore) {
++            }
++        }
+         tmpListOperations.clear();
+         // Until the visible story can be shown, other large downloads wait, as they would share its bandwidth.
+         FileLoadOperation visibleStory = null;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 114269e..db8c1c1 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -1253,6 +1253,7 @@
+     public final static int OPTION_REPLY = 8;
+     public final static int OPTION_ADD_TO_STICKERS_OR_MASKS = 9;
+     public final static int OPTION_SAVE_TO_DOWNLOADS_OR_MUSIC = 10;
++    public final static int OPTION_ADD_TO_DOWNLOAD_QUEUE = 9000;
+     public final static int OPTION_ADD_TO_GIFS = 11;
+     public final static int OPTION_EDIT = 12;
+     public final static int OPTION_PIN = 13;
+@@ -34628,6 +34629,18 @@
+                 showDialog(alert);
+                 break;
+             }
++            case OPTION_ADD_TO_DOWNLOAD_QUEUE: {
++                if (org.telegram.messenger.DownloadQueueManager.getInstance().add(currentAccount, selectedObject)) {
++                    BulletinFactory.of(this).createSimpleBulletin(R.raw.contact_check,
++                            org.telegram.messenger.DownloadQueueManager.tr("Este mensaje se agregó a la cola de descarga", "This message was added to the download queue"),
++                            org.telegram.messenger.DownloadQueueManager.tr("Abrir", "Open"),
++                            () -> presentFragment(new DownloadQueueActivity())).show();
++                } else {
++                    BulletinFactory.of(this).createSimpleBulletin(R.raw.error,
++                            org.telegram.messenger.DownloadQueueManager.tr("Ya está en la cola", "Already in the queue")).show();
++                }
++                break;
++            }
+             case OPTION_SAVE_TO_DOWNLOADS_OR_MUSIC: {
+                 if (Build.VERSION.SDK_INT >= 23 && (Build.VERSION.SDK_INT <= 28 || BuildVars.NO_SCOPED_STORAGE) && getParentActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                     getParentActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
+@@ -47086,6 +47099,21 @@
+             }
+         }
+ 
++        // IthaGram: cola de descarga, solo para archivos que todavia no estan descargados
++        try {
++            if (selectedObject != null && selectedObject.getDocument() != null
++                    && !selectedObject.isVoiceOnce() && !selectedObject.isRoundOnce()
++                    && !options.contains(OPTION_ADD_TO_DOWNLOAD_QUEUE)) {
++                File queueFile = FileLoader.getInstance(currentAccount).getPathToMessage(selectedObject.messageOwner);
++                if (queueFile == null || !queueFile.exists()) {
++                    items.add(org.telegram.messenger.DownloadQueueManager.tr("Agregar a la cola de descarga", "Add to download queue"));
++                    options.add(OPTION_ADD_TO_DOWNLOAD_QUEUE);
++                    icons.add(R.drawable.msg_download);
++                }
++            }
++        } catch (Throwable queueError) {
++            FileLog.e(queueError);
++        }
+         if (getMessagesController().config.walletAvailable.get() &&
+                 selectedObject.messageOwner.action instanceof TLRPC.TL_messageActionGramTransfer
+                 && selectedObject.getDialogId() > 0
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index 94dd589..9597ff8 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -13335,6 +13335,9 @@
+             return;
+         }
+ 
++        if (!isArchive()) {
++            io.add(R.drawable.msg_download, org.telegram.messenger.DownloadQueueManager.tr("Gestor de descargas", "Download manager"), () -> presentFragment(new DownloadQueueActivity()));
++        }
+         if (isArchive()) {
+             io.add(R.drawable.msg_customize, getString(R.string.ArchiveSettings), () -> presentFragment(new ArchiveSettingsActivity()));
+             io.add(R.drawable.msg_help, getString(R.string.HowDoesItWork), this::showArchiveHelp);

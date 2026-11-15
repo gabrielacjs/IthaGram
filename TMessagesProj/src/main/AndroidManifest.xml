@@ -497,6 +497,11 @@
             android:foregroundServiceType="dataSync"
         />
         <service
+            android:name="org.telegram.messenger.DownloadQueueService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+        />
+        <service
             android:name=".NotificationRepeat"
             android:exported="false"
             android:foregroundServiceType="dataSync"

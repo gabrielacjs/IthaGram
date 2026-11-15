@@ -1,0 +1,13 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/DownloadQueueManager.java b/TMessagesProj/src/main/java/org/telegram/messenger/DownloadQueueManager.java
+index 3becf42..aaa28c6 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/DownloadQueueManager.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/DownloadQueueManager.java
+@@ -216,7 +216,7 @@ public class DownloadQueueManager implements NotificationCenter.NotificationCent
+             String mime = mo.getDocument() != null ? mo.getDocument().mime_type : null;
+             debug(auto, "guardando " + saveName);
+             // type 2 = Descargas (0 seria Imagenes, 1 Peliculas, 3 Musica); igual que "Guardar en Descargas" del chat
+-            MediaController.saveFile(mo, path, ctx, 2, saveName, mime, uri -> {
++            MediaController.saveFile(path, ctx, 2, saveName, mime, uri -> {
+                 if (uri == null) {
+                     debug(auto, "Telegram no pudo guardar");
+                     return;
