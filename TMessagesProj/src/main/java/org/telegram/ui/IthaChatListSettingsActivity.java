@@ -199,7 +199,7 @@ public class IthaChatListSettingsActivity extends BaseFragment {
         protected void onDraw(Canvas canvas) {
             final int w = getMeasuredWidth();
             final int h = getMeasuredHeight();
-            final int gray = Theme.getColor(Theme.key_windowBackgroundGray);
+            final int gray = Theme.multAlpha(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), 0.14f);
             final int text = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
             final int hint = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
 
@@ -208,6 +208,12 @@ public class IthaChatListSettingsActivity extends BaseFragment {
             paint.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
             rect.set(0, 0, w, h);
             canvas.drawRoundRect(rect, dp(18), dp(18), paint);
+            rect.set(1, 1, w - 1, h - 1);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(Math.max(1, dp(1)));
+            paint.setColor(gray);
+            canvas.drawRoundRect(rect, dp(18), dp(18), paint);
+            paint.setStyle(Paint.Style.FILL);
 
             // botones de los costados (menu y lupa)
             final float barCy = dp(28);

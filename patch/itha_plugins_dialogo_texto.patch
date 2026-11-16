@@ -1,0 +1,40 @@
+diff --git a/TMessagesProj_App/src/main/python/ithasettings.py b/TMessagesProj_App/src/main/python/ithasettings.py
+index 09f022e..03719f2 100644
+--- a/TMessagesProj_App/src/main/python/ithasettings.py
++++ b/TMessagesProj_App/src/main/python/ithasettings.py
+@@ -18,11 +18,26 @@ TextCheckCell = jclass("org.telegram.ui.Cells.TextCheckCell")
+ Builder = jclass("org.telegram.ui.ActionBar.AlertDialog$Builder")
+ RDrawable = jclass("org.telegram.messenger.R$drawable")
+ _DialogClick = jclass("android.content.DialogInterface$OnClickListener")
++_ButtonClick = jclass("org.telegram.ui.ActionBar.AlertDialog$OnButtonClickListener")
+ _CharSequence = jclass("java.lang.CharSequence")
+ 
+ _open = {}  # id del plugin -> (contenedor, fragment)
+ 
+ 
++class _BtnDlg(dynamic_proxy(_ButtonClick)):
++    """Boton de un AlertDialog de Telegram (usa su propia interfaz, no la de Android)."""
++
++    def __init__(self, fn):
++        super().__init__()
++        self._fn = fn
++
++    def onClick(self, dialog, which):
++        try:
++            self._fn(int(which))
++        except Exception as e:
++            log("boton error: %s" % e)
++
++
+ class _Dlg(dynamic_proxy(_DialogClick)):
+     def __init__(self, fn):
+         super().__init__()
+@@ -242,7 +257,7 @@ def _input(ctx, plugin, it, fragment):
+         b = Builder(ctx)
+         b.setTitle(str(title))
+         b.setView(et)
+-        b.setPositiveButton("OK", _Dlg(save))
++        b.setPositiveButton("OK", _BtnDlg(save))
+         b.setNegativeButton("Cancelar", None)
+         fragment.showDialog(b.create())
+ 

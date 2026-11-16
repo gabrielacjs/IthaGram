@@ -7358,6 +7358,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     public boolean sendMessage() {
+        org.telegram.messenger.IthaHooks.call(this, "sendMessage");
         if (richDraftActive && !UserConfig.getInstance(currentAccount).isPremium()) {
             RichEditor.openConversionSheet(getContext(), this::openRichEditorWithoutFormatting, () -> {
                 if (parentFragment != null) {
@@ -7384,6 +7385,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     protected boolean sendMessageInternal(boolean notify, int scheduleDate, int scheduleRepeatPeriod, long payStars, boolean allowConfirm) {
+        org.telegram.messenger.IthaHooks.call(this, "sendMessageInternal");
         final boolean allowConfirmFinal = allowConfirm && !animatorEphemeralMessageVisibility.getValue();
 
         final Runnable send = () -> {

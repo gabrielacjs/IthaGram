@@ -1,0 +1,6 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -780 +780 @@
+-                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getParent() instanceof android.view.View
++                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getWidth() > 0 && ithaMenuItem.getParent() instanceof android.view.View

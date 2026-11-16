@@ -777,7 +777,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     /** Dice si el avatar esta ahora mismo en el boton de menu (opcion activa, boton visible y sin busqueda ni seleccion). */
     public boolean ithaMenuSlotAvatar() {
         return org.telegram.messenger.IthaConfig.isChatAvatarMenu() && hasVisibleAvatar() && ithaMenuItem != null
-                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getParent() instanceof android.view.View
+                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getWidth() > 0 && ithaMenuItem.getParent() instanceof android.view.View
                 && getParent() instanceof ActionBar && ithaModeFactor <= 0.001f;
     }
 

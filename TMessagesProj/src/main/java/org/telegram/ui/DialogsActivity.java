@@ -533,6 +533,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private DialogsActivityStatusLayout dialogsActivityStatusLayout;
     public boolean dialogStoriesCellVisible;
     public float progressToDialogStoriesCell;
+    public static volatile boolean ithaHideTopBlur;
     float searchViewPagerTranslationY;
     float panTranslationY;
 
@@ -935,6 +936,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         @Override
         public void drawBlurRect(Canvas canvas, float y, Rect rectTmp, Paint blurScrimPaint, boolean top) {
+            if (top && ithaHideTopBlur) {
+                return;
+            }
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !SharedConfig.chatBlurEnabled() || iBlur3SourceGlassFrosted == null || !BlurredBackgroundProviderImpl.checkBlurEnabled(currentAccount, resourceProvider)) {
                 canvas.drawRect(rectTmp, blurScrimPaint);
                 return;

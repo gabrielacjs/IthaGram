@@ -1,0 +1,32 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+index 84da022..4b13d75 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+@@ -54,7 +54,19 @@ public class IthaHooks {
+     private static final CopyOnWriteArrayList<Entry> entries = new CopyOnWriteArrayList<>();
+ 
+     public static boolean isSupported(String method) {
+-        return "onResume".equals(method) || "onActivityResult".equals(method);
++        return "onResume".equals(method) || "onActivityResult".equals(method)
++                || "sendMessage".equals(method) || "sendMessageInternal".equals(method);
++    }
++
++    /** Aviso simple (antes de ejecutar el metodo): lo llama Telegram en el sitio enganchado. */
++    public static void call(Object thiz, String method) {
++        if (entries.isEmpty() || thiz == null) {
++            return;
++        }
++        Param p = new Param();
++        p.thisObject = thiz;
++        p.args = new Object[0];
++        runBefore(thiz, method, p);
+     }
+ 
+     /** Devuelve un manejador para desregistrar, o null si ese metodo no se puede enganchar. */
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+@@ -7360,0 +7361 @@
++        org.telegram.messenger.IthaHooks.call(this, "sendMessage");
+@@ -7386,0 +7388 @@
++        org.telegram.messenger.IthaHooks.call(this, "sendMessageInternal");

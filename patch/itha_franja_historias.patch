@@ -1,0 +1,9 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -535,0 +536 @@
++    public static volatile boolean ithaHideTopBlur;
+@@ -937,0 +939,3 @@
++            if (top && ithaHideTopBlur) {
++                return;
++            }

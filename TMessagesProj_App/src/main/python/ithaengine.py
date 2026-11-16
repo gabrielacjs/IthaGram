@@ -2,6 +2,7 @@
 import ast
 import json
 import os
+import shutil
 import sys
 import traceback
 import types
@@ -14,6 +15,8 @@ _plugins = {}   # id -> instancia (cargados)
 _known = {}     # id -> info (path, nombre, ...)
 _disabled = set()
 _state_file = None
+_dirs = []         # carpetas de plugins (la ultima es donde se instala)
+_install_dir = None
 
 
 def _parse_meta(src):
@@ -60,8 +63,15 @@ def _register(path, overwrite=True):
     meta = _parse_meta(src)
     pid = str(meta.get("__id__") or os.path.splitext(os.path.basename(path))[0])
     if pid in _known and not overwrite:
-        log("plugin '%s' repetido, se ignora %s" % (pid, path))
-        return pid
+        # mismo plugin en dos carpetas: gana la copia mas nueva
+        try:
+            keep = os.path.getmtime(_known[pid]["path"]) >= os.path.getmtime(path)
+        except Exception:
+            keep = True
+        if keep:
+            log("plugin '%s' repetido, se ignora %s" % (pid, path))
+            return pid
+        log("plugin '%s' repetido, se usa la copia mas nueva %s" % (pid, path))
     _known[pid] = {
         "id": pid,
         "path": path,
@@ -163,9 +173,36 @@ def set_enabled(pid, enabled):
     return ""
 
 
+def _peek_id(path):
+    with open(path, "r", encoding="utf-8") as f:
+        src = f.read()
+    meta = _parse_meta(src)
+    return str(meta.get("__id__") or os.path.splitext(os.path.basename(path))[0])
+
+
+def _store(path, pid):
+    """Copia el archivo importado a la carpeta de plugins (sobre la copia vieja si ya estaba) para que sobreviva al reinicio."""
+    old = _known.get(pid)
+    if old is not None:
+        target = old["path"]
+    elif _install_dir:
+        target = os.path.join(_install_dir, pid + ".plugin")
+    else:
+        return path
+    try:
+        if os.path.abspath(target) != os.path.abspath(path):
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copyfile(path, target)
+        return target
+    except Exception:
+        log("no se pudo copiar %s: %s" % (path, traceback.format_exc()))
+        return path
+
+
 def import_plugin(path):
     try:
-        pid = _register(path)
+        pid = _peek_id(path)
+        _register(_store(path, pid))
     except Exception as e:
         return "Archivo no valido: %s" % e
     if pid in _plugins:
@@ -180,10 +217,22 @@ def remove_plugin(pid):
     if info is None:
         return ""
     _unload(pid)
-    try:
-        os.remove(info["path"])
-    except Exception:
-        pass
+    # se borran todas las copias (si quedara una en otra carpeta, volveria al reiniciar)
+    paths = {info["path"]}
+    for d in _dirs:
+        try:
+            for name in os.listdir(d):
+                if name.endswith(".plugin"):
+                    p = os.path.join(d, name)
+                    if _peek_id(p) == pid:
+                        paths.add(p)
+        except Exception:
+            pass
+    for p in paths:
+        try:
+            os.remove(p)
+        except Exception:
+            pass
     _known.pop(pid, None)
     _disabled.discard(pid)
     _save_state()
@@ -213,7 +262,9 @@ def close_settings(pid):
 
 
 def start(plugin_dirs, state_dir):
-    global _state_file
+    global _state_file, _dirs, _install_dir
+    _dirs = [d for d in plugin_dirs if d]
+    _install_dir = _dirs[-1] if _dirs else None
     plugin_settings.configure(state_dir)
     _state_file = os.path.join(state_dir, "_plugins_state.json")
     _load_state()

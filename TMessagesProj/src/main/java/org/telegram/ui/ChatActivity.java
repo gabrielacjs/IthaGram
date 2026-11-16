@@ -42724,6 +42724,11 @@ public class ChatActivity extends BaseFragment implements
                         scrollToPositionOnRecreate = -1;
                     }
                 }
+                if (message.getDocumentName().toLowerCase().endsWith(".plugin")) {
+                    if (IthaPluginInstall.handle(ChatActivity.this, message)) {
+                        return;
+                    }
+                }
                 boolean handled = false;
                 if (message.canPreviewDocument()) {
                     PhotoViewer.getInstance().setParentActivity(ChatActivity.this, themeDelegate);

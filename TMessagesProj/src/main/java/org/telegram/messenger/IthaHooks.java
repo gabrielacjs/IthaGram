@@ -54,7 +54,19 @@ public class IthaHooks {
     private static final CopyOnWriteArrayList<Entry> entries = new CopyOnWriteArrayList<>();
 
     public static boolean isSupported(String method) {
-        return "onResume".equals(method) || "onActivityResult".equals(method);
+        return "onResume".equals(method) || "onActivityResult".equals(method)
+                || "sendMessage".equals(method) || "sendMessageInternal".equals(method);
+    }
+
+    /** Aviso simple (antes de ejecutar el metodo): lo llama Telegram en el sitio enganchado. */
+    public static void call(Object thiz, String method) {
+        if (entries.isEmpty() || thiz == null) {
+            return;
+        }
+        Param p = new Param();
+        p.thisObject = thiz;
+        p.args = new Object[0];
+        runBefore(thiz, method, p);
     }
 
     /** Devuelve un manejador para desregistrar, o null si ese metodo no se puede enganchar. */
