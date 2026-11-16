@@ -1,0 +1,249 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index 9a090cd..1940ad6 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -254 +254 @@
+-            avatarImageIsHidden = parentFragment != null && (
++            avatarImageIsHidden = org.telegram.messenger.IthaConfig.isChatAvatarHidden() || parentFragment != null && (
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index a14b175..2298e6f 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -67,6 +67,17 @@ public class IthaConfig {
+         return "";
+     }
+ 
++    // ---- encabezado del chat ----
++
++    /** Ocultar el avatar del encabezado dentro de los chats (se aplica al abrir un chat). */
++    public static boolean isChatAvatarHidden() {
++        return prefs().getBoolean("chat_avatar_hidden", false);
++    }
++
++    public static void setChatAvatarHidden(boolean value) {
++        prefs().edit().putBoolean("chat_avatar_hidden", value).apply();
++    }
++
+     /** La lista de chats que esta abierta (para cambiar titulo y centrado al instante). */
+     public static java.lang.ref.WeakReference<org.telegram.ui.DialogsActivity> dialogsRef;
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+new file mode 100644
+index 0000000..855c9dd
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+@@ -0,0 +1,200 @@
++package org.telegram.ui;
++
++import android.content.Context;
++import android.graphics.Canvas;
++import android.graphics.Paint;
++import android.graphics.RectF;
++import android.view.Gravity;
++import android.view.View;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import org.telegram.messenger.AndroidUtilities;
++import org.telegram.messenger.ContactsController;
++import org.telegram.messenger.IthaConfig;
++import org.telegram.messenger.R;
++import org.telegram.messenger.UserConfig;
++import org.telegram.tgnet.TLRPC;
++import org.telegram.ui.ActionBar.ActionBar;
++import org.telegram.ui.ActionBar.BaseFragment;
++import org.telegram.ui.ActionBar.Theme;
++import org.telegram.ui.Cells.TextCheckCell;
++import org.telegram.ui.Components.LayoutHelper;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++import static org.telegram.messenger.DownloadQueueManager.tr;
++
++/**
++ * IthaGram: "Ajustes de chat". Opciones del encabezado que se ve dentro de los chats, con una vista previa.
++ */
++public class IthaChatSettingsActivity extends BaseFragment {
++
++    private LinearLayout listLayout;
++    private Context ctx;
++    private PreviewView preview;
++
++    @Override
++    public View createView(Context context) {
++        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
++        actionBar.setAllowOverlayTitle(true);
++        actionBar.setTitle(tr("Ajustes de chat", "Chat settings"));
++        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
++            @Override
++            public void onItemClick(int id) {
++                if (id == -1) {
++                    finishFragment();
++                }
++            }
++        });
++
++        FrameLayout root = new FrameLayout(context);
++        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
++        fragmentView = root;
++
++        ScrollView scroll = new ScrollView(context);
++        listLayout = new LinearLayout(context);
++        listLayout.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(listLayout, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
++        root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
++
++        ctx = context;
++        rebuild();
++
++        return fragmentView;
++    }
++
++    private void rebuild() {
++        listLayout.removeAllViews();
++        final Context context = ctx;
++
++        preview = new PreviewView(context);
++        listLayout.addView(preview, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 116, 0, 0, 0, 0));
++
++        TextView info = new TextView(context);
++        info.setText(tr("La vista previa de arriba se actualiza al instante. Los cambios se ven al abrir un chat.", "The preview above updates instantly. Changes show when you open a chat."));
++        info.setTextSize(13);
++        info.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        info.setPadding(dp(20), dp(10), dp(20), dp(10));
++        listLayout.addView(info, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++
++        section(context, tr("Encabezado de chat", "Chat header"));
++        check(context, tr("Ocultar avatar", "Hide avatar"), tr("Quita el avatar del encabezado. Tocá el título para ver el perfil.", "Removes the avatar from the header. Tap the title to see the profile."),
++                IthaConfig.isChatAvatarHidden(), (value) -> {
++                    IthaConfig.setChatAvatarHidden(value);
++                    preview.invalidate();
++                });
++    }
++
++    private interface BoolCallback {
++        void run(boolean value);
++    }
++
++    private void check(Context context, String title, String subtitle, boolean checked, BoolCallback callback) {
++        final TextCheckCell cell = new TextCheckCell(context);
++        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        cell.setTextAndValueAndCheck(title, subtitle, checked, true, false);
++        cell.setOnClickListener(v -> {
++            boolean value = !cell.isChecked();
++            cell.setChecked(value);
++            callback.run(value);
++        });
++        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void section(Context context, String title) {
++        TextView header = new TextView(context);
++        header.setText(title);
++        header.setTextSize(14);
++        header.setTypeface(AndroidUtilities.bold());
++        header.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
++        header.setPadding(dp(20), dp(18), dp(20), dp(8));
++        listLayout.addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    /** Dibujo de ejemplo del encabezado de un chat: boton de volver, pildora con avatar y titulo, menu. */
++    private class PreviewView extends View {
++        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
++        private final RectF rect = new RectF();
++
++        PreviewView(Context context) {
++            super(context);
++        }
++
++        @Override
++        protected void onDraw(Canvas canvas) {
++            final int w = getMeasuredWidth();
++            final int h = getMeasuredHeight();
++            final float cy = h / 2f;
++
++            paint.setStyle(Paint.Style.FILL);
++            paint.setColor(Theme.getColor(Theme.key_chat_wallpaper));
++            canvas.drawRect(0, 0, w, h, paint);
++
++            final int bubble = Theme.getColor(Theme.key_windowBackgroundWhite);
++            final int text = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
++            final int hint = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
++
++            // boton de volver
++            paint.setColor(bubble);
++            canvas.drawCircle(dp(34), cy, dp(20), paint);
++            paint.setColor(text);
++            paint.setStyle(Paint.Style.STROKE);
++            paint.setStrokeWidth(dp(2));
++            paint.setStrokeCap(Paint.Cap.ROUND);
++            canvas.drawLine(dp(37), cy - dp(7), dp(30), cy, paint);
++            canvas.drawLine(dp(30), cy, dp(37), cy + dp(7), paint);
++            paint.setStyle(Paint.Style.FILL);
++
++            // boton de menu (tres puntos)
++            paint.setColor(bubble);
++            canvas.drawCircle(w - dp(34), cy, dp(20), paint);
++            paint.setColor(text);
++            for (int i = -1; i <= 1; i++) {
++                canvas.drawCircle(w - dp(34), cy + i * dp(6), dp(1.6f), paint);
++            }
++
++            // pildora central
++            final float pl = dp(66);
++            final float pr = w - dp(66);
++            rect.set(pl, cy - dp(24), pr, cy + dp(24));
++            paint.setColor(bubble);
++            canvas.drawRoundRect(rect, dp(24), dp(24), paint);
++
++            // nombre del usuario actual
++            TLRPC.User user = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();
++            String name = user != null ? ContactsController.formatName(user.first_name, user.last_name) : null;
++            if (name == null || name.trim().isEmpty()) {
++                name = "IthaGram";
++            }
++
++            float textLeft = pl + dp(18);
++            if (!IthaConfig.isChatAvatarHidden()) {
++                paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
++                canvas.drawCircle(pl + dp(24), cy, dp(19), paint);
++                paint.setColor(0xffffffff);
++                paint.setTypeface(AndroidUtilities.bold());
++                paint.setTextSize(dp(16));
++                final String initial = name.substring(0, 1).toUpperCase();
++                canvas.drawText(initial, pl + dp(24) - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
++                textLeft = pl + dp(52);
++            }
++
++            paint.setColor(text);
++            paint.setTypeface(AndroidUtilities.bold());
++            paint.setTextSize(dp(16));
++            String shown = name;
++            final float maxW = pr - textLeft - dp(12);
++            while (shown.length() > 1 && paint.measureText(shown) > maxW) {
++                shown = shown.substring(0, shown.length() - 1);
++            }
++            canvas.drawText(shown, textLeft, cy - dp(2), paint);
++
++            paint.setColor(hint);
++            paint.setTypeface(null);
++            paint.setTextSize(dp(13));
++            canvas.drawText(tr("en línea", "online"), textLeft, cy + dp(15), paint);
++        }
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+index 8a0f5d3..544d723 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+@@ -68,6 +68,9 @@ public class IthaSettingsActivity extends BaseFragment {
+         row(context, tr("Ajustes de perfil", "Profile settings"),
+                 tr("Número de teléfono", "Phone number"),
+                 () -> presentFragment(new IthaProfileSettingsActivity()));
++        row(context, tr("Ajustes de chat", "Chat settings"),
++                tr("Encabezado dentro de los chats", "Header inside chats"),
++                () -> presentFragment(new IthaChatSettingsActivity()));
+     }
+ 
+     private void section(Context context, String title) {

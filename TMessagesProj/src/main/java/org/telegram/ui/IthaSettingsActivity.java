@@ -68,6 +68,9 @@ public class IthaSettingsActivity extends BaseFragment {
         row(context, tr("Ajustes de perfil", "Profile settings"),
                 tr("Número de teléfono", "Phone number"),
                 () -> presentFragment(new IthaProfileSettingsActivity()));
+        row(context, tr("Ajustes de chat", "Chat settings"),
+                tr("Encabezado dentro de los chats", "Header inside chats"),
+                () -> presentFragment(new IthaChatSettingsActivity()));
     }
 
     private void section(Context context, String title) {

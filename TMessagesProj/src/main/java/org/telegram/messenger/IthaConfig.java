@@ -67,6 +67,17 @@ public class IthaConfig {
         return "";
     }
 
+    // ---- encabezado del chat ----
+
+    /** Ocultar el avatar del encabezado dentro de los chats (se aplica al abrir un chat). */
+    public static boolean isChatAvatarHidden() {
+        return prefs().getBoolean("chat_avatar_hidden", false);
+    }
+
+    public static void setChatAvatarHidden(boolean value) {
+        prefs().edit().putBoolean("chat_avatar_hidden", value).apply();
+    }
+
     /** La lista de chats que esta abierta (para cambiar titulo y centrado al instante). */
     public static java.lang.ref.WeakReference<org.telegram.ui.DialogsActivity> dialogsRef;
 
