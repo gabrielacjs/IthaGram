@@ -2508,7 +2508,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     chatAvatarContainer.setTranslationX(translationX);
                     chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
                 } else {
-                    org.telegram.messenger.IthaConfig.layoutChatPill(this, leftDefault, rightDefault);
+                    org.telegram.messenger.IthaConfig.layoutChatPill(this, leftDefault, rightDefault, Math.max(searchFactor, actionModeFactor));
                     left = org.telegram.messenger.IthaConfig.pillLeft;
                     right = org.telegram.messenger.IthaConfig.pillRight;
                 }

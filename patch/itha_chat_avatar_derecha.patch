@@ -1,0 +1,131 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index 2e3a270..8602ccf 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -679 +679 @@
+-        if (org.telegram.messenger.IthaConfig.isChatTitleCentered() && subtitleTextView != null && getParent() instanceof ActionBar) {
++        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatAvatarRight()) && subtitleTextView != null && getParent() instanceof ActionBar) {
+@@ -793,2 +793,6 @@
+-        final float dt = Math.max(0, (bw - Math.min(tText, bw)) / 2f);
+-        final float ds = Math.max(0, (bw - Math.min(sw, bw)) / 2f);
++        final boolean center = org.telegram.messenger.IthaConfig.isChatTitleCentered();
++        final boolean avatarRight = org.telegram.messenger.IthaConfig.isChatAvatarRight() && hasVisibleAvatar();
++        // con el avatar a la derecha el texto arranca donde arrancaria sin avatar
++        final float shift = avatarRight ? -dp(36.66f) : 0f;
++        final float dt = (center ? Math.max(0, (bw - Math.min(tText, bw)) / 2f) : 0f) + shift;
++        final float ds = (center ? Math.max(0, (bw - Math.min(sw, bw)) / 2f) : 0f) + shift;
+@@ -804,0 +809,17 @@
++        if (avatarRight) {
++            // el avatar va justo despues de la banda de texto (y sus detalles con el)
++            final float ax = dp(13) + bw + dp(8) - 1;
++            avatarImageView.setTranslationX(ax);
++            if (communityItem != null) {
++                communityItem.setTranslationX(ax);
++            }
++            if (timeItem != null) {
++                timeItem.setTranslationX(ax);
++            }
++            if (starBgItem != null) {
++                starBgItem.setTranslationX(ax);
++            }
++            if (starFgItem != null) {
++                starFgItem.setTranslationX(ax);
++            }
++        }
+@@ -867 +888 @@
+-        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatPillCompact()) && getParent() instanceof android.view.View) {
++        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatPillCompact() || org.telegram.messenger.IthaConfig.isChatAvatarRight()) && getParent() instanceof android.view.View) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index 233fe53..32b3dbd 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -131,6 +131,15 @@ public class IthaConfig {
+         prefs().edit().putBoolean("chat_title_centered", value).apply();
+     }
+ 
++    /** Avatar a la derecha del texto en el encabezado del chat. */
++    public static boolean isChatAvatarRight() {
++        return prefs().getBoolean("chat_avatar_right", false);
++    }
++
++    public static void setChatAvatarRight(boolean value) {
++        prefs().edit().putBoolean("chat_avatar_right", value).apply();
++    }
++
+     /** Resultado de layoutChatPill: bordes de la pildora del chat. */
+     public static int pillLeft, pillRight;
+ 
+@@ -143,7 +152,8 @@ public class IthaConfig {
+         pillRight = rightDefault;
+         final boolean compact = isChatPillCompact();
+         final boolean center = isChatTitleCentered();
+-        if (!compact && !center) {
++        final boolean avatarRight = isChatAvatarRight();
++        if (!compact && !center && !avatarRight) {
+             return;
+         }
+         for (int i = 0, n = bar.getChildCount(); i < n; i++) {
+@@ -156,13 +166,13 @@ public class IthaConfig {
+             // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
+             int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
+                     - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));
+-            if (center && c.ithaAvailWidth > 0) {
++            if ((center || avatarRight) && c.ithaAvailWidth > 0) {
+                 // la banda de texto y el centrado se calculan aqui, con el texto de este momento, igual que la pildora
+                 textW = c.ithaApplyBand();
+             }
+             int contentRight = leftDefault + c.getLeftPadding()
+-                    + (avatar ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
+-                    + textW + org.telegram.messenger.AndroidUtilities.dp(16);
++                    + (avatar && !avatarRight ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
++                    + textW + (avatar && avatarRight ? org.telegram.messenger.AndroidUtilities.dp(58) : org.telegram.messenger.AndroidUtilities.dp(16));
+             contentRight = Math.max(leftDefault + org.telegram.messenger.AndroidUtilities.dp(60), Math.min(rightDefault, contentRight));
+             final int contentW = contentRight - leftDefault;
+             final int full = rightDefault - leftDefault;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+index f910359..c416fab 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+@@ -85,6 +85,11 @@ public class IthaChatSettingsActivity extends BaseFragment {
+                     IthaConfig.setChatAvatarHidden(value);
+                     preview.invalidate();
+                 });
++        check(context, tr("Avatar a la derecha", "Avatar on the right"), tr("Pone el avatar a la derecha del nombre.", "Puts the avatar to the right of the name."),
++                IthaConfig.isChatAvatarRight(), (value) -> {
++                    IthaConfig.setChatAvatarRight(value);
++                    preview.invalidate();
++                });
+         check(context, tr("Píldora compacta", "Compact pill"), tr("Ajusta el fondo del título más al texto, sin espacio de sobra.", "Fits the title background closer to the text."),
+                 IthaConfig.isChatPillCompact(), (value) -> {
+                     IthaConfig.setChatPillCompact(value);
+@@ -190,7 +195,8 @@ public class IthaChatSettingsActivity extends BaseFragment {
+             final float pl0 = dp(60);
+             final float full = w - dp(60) * 2;
+             final float textW = Math.max(nameW, subW);
+-            final float contentW = (avatar ? dp(52) : dp(16)) + textW + dp(10);
++            final boolean right = avatar && IthaConfig.isChatAvatarRight();
++            final float contentW = right ? dp(16) + textW + dp(8) + dp(38) + dp(10) : (avatar ? dp(52) : dp(16)) + textW + dp(10);
+             final float pillW = IthaConfig.isChatPillCompact() ? Math.min(full, contentW) : full;
+             final boolean centered = IthaConfig.isChatTitleCentered();
+             final float pl = pl0 + (centered ? (full - pillW) / 2f : 0f);
+@@ -206,14 +212,17 @@ public class IthaChatSettingsActivity extends BaseFragment {
+ 
+             float textLeft = cl + dp(16);
+             if (avatar) {
++                final float acx = right ? cl + dp(16) + textW + dp(8) + dp(19) : cl + dp(24);
+                 paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
+-                canvas.drawCircle(cl + dp(24), cy, dp(19), paint);
++                canvas.drawCircle(acx, cy, dp(19), paint);
+                 paint.setColor(0xffffffff);
+                 paint.setTypeface(AndroidUtilities.bold());
+                 paint.setTextSize(dp(16));
+                 final String initial = name.substring(0, 1).toUpperCase();
+-                canvas.drawText(initial, cl + dp(24) - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
+-                textLeft = cl + dp(52);
++                canvas.drawText(initial, acx - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
++                if (!right) {
++                    textLeft = cl + dp(52);
++                }
+             }
+ 
+             paint.setColor(text);

@@ -85,6 +85,11 @@ public class IthaChatSettingsActivity extends BaseFragment {
                     IthaConfig.setChatAvatarHidden(value);
                     preview.invalidate();
                 });
+        check(context, tr("Avatar a la derecha", "Avatar on the right"), tr("Pone el avatar a la derecha del nombre.", "Puts the avatar to the right of the name."),
+                IthaConfig.isChatAvatarRight(), (value) -> {
+                    IthaConfig.setChatAvatarRight(value);
+                    preview.invalidate();
+                });
         check(context, tr("Píldora compacta", "Compact pill"), tr("Ajusta el fondo del título más al texto, sin espacio de sobra.", "Fits the title background closer to the text."),
                 IthaConfig.isChatPillCompact(), (value) -> {
                     IthaConfig.setChatPillCompact(value);
@@ -190,7 +195,8 @@ public class IthaChatSettingsActivity extends BaseFragment {
             final float pl0 = dp(60);
             final float full = w - dp(60) * 2;
             final float textW = Math.max(nameW, subW);
-            final float contentW = (avatar ? dp(52) : dp(16)) + textW + dp(10);
+            final boolean right = avatar && IthaConfig.isChatAvatarRight();
+            final float contentW = right ? dp(16) + textW + dp(8) + dp(38) + dp(10) : (avatar ? dp(52) : dp(16)) + textW + dp(10);
             final float pillW = IthaConfig.isChatPillCompact() ? Math.min(full, contentW) : full;
             final boolean centered = IthaConfig.isChatTitleCentered();
             final float pl = pl0 + (centered ? (full - pillW) / 2f : 0f);
@@ -206,14 +212,17 @@ public class IthaChatSettingsActivity extends BaseFragment {
 
             float textLeft = cl + dp(16);
             if (avatar) {
+                final float acx = right ? cl + dp(16) + textW + dp(8) + dp(19) : cl + dp(24);
                 paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
-                canvas.drawCircle(cl + dp(24), cy, dp(19), paint);
+                canvas.drawCircle(acx, cy, dp(19), paint);
                 paint.setColor(0xffffffff);
                 paint.setTypeface(AndroidUtilities.bold());
                 paint.setTextSize(dp(16));
                 final String initial = name.substring(0, 1).toUpperCase();
-                canvas.drawText(initial, cl + dp(24) - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
-                textLeft = cl + dp(52);
+                canvas.drawText(initial, acx - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
+                if (!right) {
+                    textLeft = cl + dp(52);
+                }
             }
 
             paint.setColor(text);

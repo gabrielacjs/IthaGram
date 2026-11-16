@@ -131,6 +131,15 @@ public class IthaConfig {
         prefs().edit().putBoolean("chat_title_centered", value).apply();
     }
 
+    /** Avatar a la derecha del texto en el encabezado del chat. */
+    public static boolean isChatAvatarRight() {
+        return prefs().getBoolean("chat_avatar_right", false);
+    }
+
+    public static void setChatAvatarRight(boolean value) {
+        prefs().edit().putBoolean("chat_avatar_right", value).apply();
+    }
+
     /** Resultado de layoutChatPill: bordes de la pildora del chat. */
     public static int pillLeft, pillRight;
 
@@ -138,12 +147,13 @@ public class IthaConfig {
      * Calcula donde va la pildora del chat segun las opciones (compacta y/o centrada) y mueve el
      * contenido (avatar y titulo) para que quede centrado dentro de ella.
      */
-    public static void layoutChatPill(android.view.ViewGroup bar, int leftDefault, int rightDefault) {
+    public static void layoutChatPill(android.view.ViewGroup bar, int leftDefault, int rightDefault, float modeFactor) {
         pillLeft = leftDefault;
         pillRight = rightDefault;
         final boolean compact = isChatPillCompact();
         final boolean center = isChatTitleCentered();
-        if (!compact && !center) {
+        final boolean avatarRight = isChatAvatarRight();
+        if (!compact && !center && !avatarRight) {
             return;
         }
         for (int i = 0, n = bar.getChildCount(); i < n; i++) {
@@ -156,22 +166,24 @@ public class IthaConfig {
             // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
             int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
                     - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));
-            if (center && c.ithaAvailWidth > 0) {
+            if ((center || avatarRight) && c.ithaAvailWidth > 0) {
                 // la banda de texto y el centrado se calculan aqui, con el texto de este momento, igual que la pildora
                 textW = c.ithaApplyBand();
             }
             int contentRight = leftDefault + c.getLeftPadding()
-                    + (avatar ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
-                    + textW + org.telegram.messenger.AndroidUtilities.dp(16);
+                    + (avatar && !avatarRight ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
+                    + textW + (avatar && avatarRight ? org.telegram.messenger.AndroidUtilities.dp(58) : org.telegram.messenger.AndroidUtilities.dp(16));
             contentRight = Math.max(leftDefault + org.telegram.messenger.AndroidUtilities.dp(60), Math.min(rightDefault, contentRight));
             final int contentW = contentRight - leftDefault;
             final int full = rightDefault - leftDefault;
             final int pillW = compact ? contentW : full;
             final int left = leftDefault + (center ? (full - pillW) / 2 : 0);
-            pillLeft = left;
-            pillRight = left + pillW;
+            // en seleccion o busqueda (modeFactor) la barra estira la pildora: se mezcla con el ancho completo, como Telegram
+            final float k = Math.max(0f, Math.min(1f, modeFactor));
+            pillLeft = Math.round(left + (leftDefault - left) * k);
+            pillRight = Math.round((left + pillW) + (rightDefault - (left + pillW)) * k);
             if (center) {
-                c.setTranslationX(left + (pillW - contentW) / 2f - leftDefault);
+                c.setTranslationX((left + (pillW - contentW) / 2f - leftDefault) * (1f - k));
             }
             return;
         }

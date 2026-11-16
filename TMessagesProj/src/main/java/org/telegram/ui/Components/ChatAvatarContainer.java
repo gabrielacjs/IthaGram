@@ -676,7 +676,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         } else if (animatedSubtitleTextView != null) {
             animatedSubtitleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
         }
-        if (org.telegram.messenger.IthaConfig.isChatTitleCentered() && subtitleTextView != null && getParent() instanceof ActionBar) {
+        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatAvatarRight()) && subtitleTextView != null && getParent() instanceof ActionBar) {
             // centrado como Entiny: los dos textos miden todo el ancho disponible (asi nunca se cortan) y se acomodan en onLayout
             ithaAvailWidth = availableWidth;
             titleTextView.setGravity(Gravity.LEFT);
@@ -790,8 +790,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         final int tText = (int) Math.ceil(titleTextView.getTextWidth());
         final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
-        final float dt = Math.max(0, (bw - Math.min(tText, bw)) / 2f);
-        final float ds = Math.max(0, (bw - Math.min(sw, bw)) / 2f);
+        final boolean center = org.telegram.messenger.IthaConfig.isChatTitleCentered();
+        final boolean avatarRight = org.telegram.messenger.IthaConfig.isChatAvatarRight() && hasVisibleAvatar();
+        // con el avatar a la derecha el texto arranca donde arrancaria sin avatar
+        final float shift = avatarRight ? -dp(36.66f) : 0f;
+        final float dt = (center ? Math.max(0, (bw - Math.min(tText, bw)) / 2f) : 0f) + shift;
+        final float ds = (center ? Math.max(0, (bw - Math.min(sw, bw)) / 2f) : 0f) + shift;
         titleTextView.setTranslationX(dt);
         subtitleTextView.setTranslationX(ds);
         SimpleTextView titleCopy = this.titleTextLargerCopyView.get();
@@ -801,6 +805,23 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         SimpleTextView subtitleCopy = this.subtitleTextLargerCopyView.get();
         if (subtitleCopy != null) {
             subtitleCopy.setTranslationX(ds);
+        }
+        if (avatarRight) {
+            // el avatar va justo despues de la banda de texto (y sus detalles con el)
+            final float ax = dp(13) + bw + dp(8) - 1;
+            avatarImageView.setTranslationX(ax);
+            if (communityItem != null) {
+                communityItem.setTranslationX(ax);
+            }
+            if (timeItem != null) {
+                timeItem.setTranslationX(ax);
+            }
+            if (starBgItem != null) {
+                starBgItem.setTranslationX(ax);
+            }
+            if (starFgItem != null) {
+                starFgItem.setTranslationX(ax);
+            }
         }
         return bw;
     }
@@ -864,7 +885,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (subtitleTextLargerCopyView != null) {
             subtitleTextLargerCopyView.layout(l, subtitleTop, l + subtitleTextLargerCopyView.getMeasuredWidth(), subtitleTop + subtitleTextLargerCopyView.getTextHeight());
         }
-        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatPillCompact()) && getParent() instanceof android.view.View) {
+        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatPillCompact() || org.telegram.messenger.IthaConfig.isChatAvatarRight()) && getParent() instanceof android.view.View) {
             // la pildora se dibuja en la barra: avisarle que el contenido cambio de tamano
             ((android.view.View) getParent()).invalidate();
         }
