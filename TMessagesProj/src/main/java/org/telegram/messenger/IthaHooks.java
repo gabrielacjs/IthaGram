@@ -64,6 +64,41 @@ public class IthaHooks {
     public static volatile Bus bus;
     public static volatile boolean sendActive;
     public static volatile boolean updatesActive;
+    /** Puente para menus de plugins (lo instala ithabus.py). */
+    public interface MenuBus {
+        void fill(String menuType, Object fragment, Object message, java.util.ArrayList<Integer> icons, java.util.ArrayList<CharSequence> items, java.util.ArrayList<Integer> options);
+
+        boolean click(String menuType, Object fragment, int option, Object message);
+    }
+
+    public static volatile MenuBus menuBus;
+    public static volatile boolean menuActive;
+
+    public static void addMessageMenu(Object fragment, MessageObject message, java.util.ArrayList<Integer> icons, java.util.ArrayList<CharSequence> items, java.util.ArrayList<Integer> options) {
+        MenuBus b = menuBus;
+        if (b == null || !menuActive) {
+            return;
+        }
+        try {
+            b.fill("message_context_menu", fragment, message, icons, items, options);
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+    }
+
+    /** true = el item era de un plugin y ya se ejecuto. */
+    public static boolean menuClick(Object fragment, int option, MessageObject message) {
+        MenuBus b = menuBus;
+        if (b == null || option < 100000) {
+            return false;
+        }
+        try {
+            return b.click("message_context_menu", fragment, option, message);
+        } catch (Throwable t) {
+            FileLog.e(t);
+            return false;
+        }
+    }
 
     /** null = el plugin cancelo el envio. */
     public static SendMessagesHelper.SendMessageParams sendMessageHook(int account, SendMessagesHelper.SendMessageParams params) {

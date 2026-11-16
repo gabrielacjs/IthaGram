@@ -34351,6 +34351,9 @@ public class ChatActivity extends BaseFragment implements
         if (selectedObject == null || getParentActivity() == null) {
             return;
         }
+        if (org.telegram.messenger.IthaHooks.menuClick(this, option, selectedObject)) {
+            return;
+        }
         boolean preserveDim = false;
         switch (option) {
             case OPTION_RETRY: {
@@ -47201,6 +47204,7 @@ public class ChatActivity extends BaseFragment implements
             options.add(OPTION_WELCOME_REVERT);
             icons.add(R.drawable.outline_revert_24);
         }
+        org.telegram.messenger.IthaHooks.addMessageMenu(this, primaryMessage, icons, items, options);
     }
 
     private boolean showWelcomeMessageRevertOption(MessageObject messageObject) {

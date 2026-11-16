@@ -1,0 +1,13 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+index b3d34c4..a58a90c 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+@@ -69,7 +69,7 @@ public class IthaPluginsActivity extends BaseFragment {
+         });
+ 
+         ActionBarMenu menu = actionBar.createMenu();
+-        ActionBarMenuItem searchItem = menu.addItem(1, R.drawable.ic_ab_search).setIsSearchField(true).setActionBarMenuItemSearchListener(new ActionBarMenuItem.ActionBarMenuItemSearchListener() {
++        ActionBarMenuItem searchItem = menu.addItem(1, R.drawable.msg_search).setIsSearchField(true).setActionBarMenuItemSearchListener(new ActionBarMenuItem.ActionBarMenuItemSearchListener() {
+             @Override
+             public void onTextChanged(android.widget.EditText editText) {
+                 searchQuery = editText.getText().toString().trim().toLowerCase();

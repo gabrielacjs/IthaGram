@@ -6,7 +6,7 @@ Cada funcion execute_* es segura: si un plugin falla, se registra y se sigue.
 """
 import traceback
 
-from java import dynamic_proxy, jclass
+from java import dynamic_proxy, jclass, jint
 
 from android_utils import log
 
@@ -38,6 +38,7 @@ def _refresh_flags():
                     other = True
         IthaHooks.sendActive = send
         IthaHooks.updatesActive = other
+        IthaHooks.menuActive = any(bool(v) for v in _menu_items.values())
     except Exception as e:
         log("ithabus flags error: %s" % e)
 
@@ -59,11 +60,14 @@ def add_menu_item(pid, data):
         item_id = "%s_item_%d" % (pid, _counter[0])
         data["item_id"] = item_id
     _menu_items.setdefault(pid, {})[item_id] = data
+    _refresh_flags()
     return item_id
 
 
 def remove_menu_item(pid, item_id):
-    return _menu_items.get(pid, {}).pop(item_id, None) is not None
+    ok = _menu_items.get(pid, {}).pop(item_id, None) is not None
+    _refresh_flags()
+    return ok
 
 
 def remove_plugin(pid):
@@ -252,3 +256,86 @@ try:
     IthaHooks.bus = _bus
 except Exception as e:
     log("no se pudo instalar el bus: %s" % e)
+
+
+# ---- menus ----
+_MENU_BASE = 100000
+_menu_actions = {}
+
+
+def _icon_id(name):
+    R = jclass("org.telegram.messenger.R$drawable")
+    for n in (name, "msg_info", "msg_settings"):
+        if not n:
+            continue
+        try:
+            return int(getattr(R, str(n)))
+        except Exception:
+            continue
+    return 0
+
+
+def _context(fragment, message):
+    ctx = {"fragment": fragment, "message": message, "messageObject": message}
+    try:
+        ctx["account"] = int(fragment.getCurrentAccount())
+    except Exception:
+        ctx["account"] = jclass("org.telegram.messenger.UserConfig").selectedAccount
+    try:
+        ctx["context"] = fragment.getParentActivity()
+    except Exception:
+        pass
+    try:
+        ctx["dialog_id"] = fragment.getDialogId()
+        ctx["dialogId"] = ctx["dialog_id"]
+    except Exception:
+        pass
+    return ctx
+
+
+def fill_menu(menu_type, fragment, message, icons, items, options):
+    _menu_actions.clear()
+    Integer = jclass("java.lang.Integer")
+    n = 0
+    for data in menu_items_for(menu_type):
+        opt = _MENU_BASE + n
+        n += 1
+        _menu_actions[opt] = data
+        items.add(str(data.get("text") or ""))
+        options.add(Integer.valueOf(jint(opt)))
+        icons.add(Integer.valueOf(jint(_icon_id(data.get("icon")))))
+
+
+def click_menu(menu_type, fragment, option, message):
+    data = _menu_actions.get(int(option))
+    if data is None:
+        return False
+    try:
+        cb = data.get("on_click")
+        if cb is not None:
+            cb(_context(fragment, message))
+    except Exception:
+        log("menu on_click error: %s" % traceback.format_exc())
+    return True
+
+
+class _MenuBus(dynamic_proxy(jclass("org.telegram.messenger.IthaHooks$MenuBus"))):
+    def fill(self, menu_type, fragment, message, icons, items, options):
+        try:
+            fill_menu(str(menu_type), fragment, message, icons, items, options)
+        except Exception:
+            log("menubus.fill error: %s" % traceback.format_exc())
+
+    def click(self, menu_type, fragment, option, message):
+        try:
+            return bool(click_menu(str(menu_type), fragment, option, message))
+        except Exception:
+            log("menubus.click error: %s" % traceback.format_exc())
+            return False
+
+
+_menu_bus = _MenuBus()
+try:
+    IthaHooks.menuBus = _menu_bus
+except Exception as e:
+    log("no se pudo instalar menuBus: %s" % e)
