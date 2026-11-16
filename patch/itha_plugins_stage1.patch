@@ -1,0 +1,38 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java b/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
+index 1626e37..b793695 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
+@@ -297,0 +298 @@
++        try { Class.forName("org.telegram.messenger.regular.IthaPy").getMethod("start", android.content.Context.class).invoke(null, this); } catch (Throwable t) { FileLog.e(t); }
+diff --git a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+new file mode 100644
+index 0000000..b19a9e3
+--- /dev/null
++++ b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+@@ -0,0 +1,26 @@
++package org.telegram.messenger.regular;
++
++import android.content.Context;
++import android.util.Log;
++
++import androidx.annotation.Keep;
++
++import com.chaquo.python.Python;
++import com.chaquo.python.android.AndroidPlatform;
++
++// IthaGram: arranque de Python (plugins). Se llama por reflexion desde ApplicationLoader.
++@Keep
++public class IthaPy {
++    @Keep
++    public static void start(Context context) {
++        try {
++            if (!Python.isStarted()) {
++                Python.start(new AndroidPlatform(context));
++            }
++            String r = Python.getInstance().getModule("ithahello").callAttr("hello").toString();
++            Log.i("IthaPy", "OK: " + r);
++        } catch (Throwable t) {
++            Log.e("IthaPy", "FALLO", t);
++        }
++    }
++}

