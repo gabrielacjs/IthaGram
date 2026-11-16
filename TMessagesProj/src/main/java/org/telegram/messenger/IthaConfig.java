@@ -122,6 +122,61 @@ public class IthaConfig {
         return rightDefault;
     }
 
+    /** Centrar el titulo del chat (y la pildora) entre el boton de volver y el menu. */
+    public static boolean isChatTitleCentered() {
+        return prefs().getBoolean("chat_title_centered", false);
+    }
+
+    public static void setChatTitleCentered(boolean value) {
+        prefs().edit().putBoolean("chat_title_centered", value).apply();
+    }
+
+    /** Resultado de layoutChatPill: bordes de la pildora del chat. */
+    public static int pillLeft, pillRight;
+
+    /**
+     * Calcula donde va la pildora del chat segun las opciones (compacta y/o centrada) y mueve el
+     * contenido (avatar y titulo) para que quede centrado dentro de ella.
+     */
+    public static void layoutChatPill(android.view.ViewGroup bar, int leftDefault, int rightDefault) {
+        pillLeft = leftDefault;
+        pillRight = rightDefault;
+        final boolean compact = isChatPillCompact();
+        final boolean center = isChatTitleCentered();
+        if (!compact && !center) {
+            return;
+        }
+        for (int i = 0, n = bar.getChildCount(); i < n; i++) {
+            android.view.View child = bar.getChildAt(i);
+            if (!(child instanceof org.telegram.ui.Components.ChatAvatarContainer)) {
+                continue;
+            }
+            org.telegram.ui.Components.ChatAvatarContainer c = (org.telegram.ui.Components.ChatAvatarContainer) child;
+            final boolean avatar = c.hasVisibleAvatar();
+            // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
+            int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
+                    - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));
+            if (center && c.ithaAvailWidth > 0) {
+                // la banda de texto y el centrado se calculan aqui, con el texto de este momento, igual que la pildora
+                textW = c.ithaApplyBand();
+            }
+            int contentRight = leftDefault + c.getLeftPadding()
+                    + (avatar ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
+                    + textW + org.telegram.messenger.AndroidUtilities.dp(16);
+            contentRight = Math.max(leftDefault + org.telegram.messenger.AndroidUtilities.dp(60), Math.min(rightDefault, contentRight));
+            final int contentW = contentRight - leftDefault;
+            final int full = rightDefault - leftDefault;
+            final int pillW = compact ? contentW : full;
+            final int left = leftDefault + (center ? (full - pillW) / 2 : 0);
+            pillLeft = left;
+            pillRight = left + pillW;
+            if (center) {
+                c.setTranslationX(left + (pillW - contentW) / 2f - leftDefault);
+            }
+            return;
+        }
+    }
+
     /** Pildora compacta: el fondo del titulo del chat se ajusta mas al texto. */
     public static boolean isChatPillCompact() {
         return prefs().getBoolean("chat_pill_compact", false);

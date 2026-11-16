@@ -1,0 +1,40 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index b82f8b8..fed7c0b 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -680,4 +680 @@
+-            // centrado como Entiny: los dos textos miden lo mismo (el del mas ancho) y se centran por gravedad
+-            final int tw = (int) Math.ceil(titleTextView.getExactWidthIncludeDrawables());
+-            final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
+-            final int bw = Math.max(0, Math.min(availableWidth, Math.max(tw, sw)));
++            // centrado como Entiny: los dos textos miden todo el ancho disponible (asi nunca se cortan) y se acomodan en onLayout
+@@ -685,7 +682,4 @@
+-            ithaBandWidth = bw;
+-            if (bw > 0) {
+-                titleTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+-                subtitleTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+-                titleTextView.measure(MeasureSpec.makeMeasureSpec(bw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
+-                subtitleTextView.measure(MeasureSpec.makeMeasureSpec(bw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
+-            }
++            titleTextView.setGravity(Gravity.LEFT);
++            subtitleTextView.setGravity(Gravity.LEFT);
++            titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
++            subtitleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
+@@ -836,0 +831,17 @@
++        if (org.telegram.messenger.IthaConfig.isChatTitleCentered() && subtitleTextView != null && ithaAvailWidth > 0) {
++            // titulo y subtitulo centrados uno respecto del otro, con el ancho real del texto de ahora
++            final int tw = (int) Math.ceil(titleTextView.getExactWidthIncludeDrawables());
++            final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
++            final int bw = Math.min(ithaAvailWidth, Math.max(tw, sw));
++            ithaBandWidth = bw;
++            final int dt = (bw - Math.min(tw, bw)) / 2;
++            final int ds = (bw - Math.min(sw, bw)) / 2;
++            titleTextView.offsetLeftAndRight(dt);
++            subtitleTextView.offsetLeftAndRight(ds);
++            if (titleTextLargerCopyView != null) {
++                titleTextLargerCopyView.offsetLeftAndRight(dt);
++            }
++            if (subtitleTextLargerCopyView != null) {
++                subtitleTextLargerCopyView.offsetLeftAndRight(ds);
++            }
++        }

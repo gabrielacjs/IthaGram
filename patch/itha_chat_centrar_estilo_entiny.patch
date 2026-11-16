@@ -1,0 +1,55 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index 494440e..b82f8b8 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -678,0 +679,14 @@
++        if (org.telegram.messenger.IthaConfig.isChatTitleCentered() && subtitleTextView != null && getParent() instanceof ActionBar) {
++            // centrado como Entiny: los dos textos miden lo mismo (el del mas ancho) y se centran por gravedad
++            final int tw = (int) Math.ceil(titleTextView.getExactWidthIncludeDrawables());
++            final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
++            final int bw = Math.max(0, Math.min(availableWidth, Math.max(tw, sw)));
++            ithaAvailWidth = availableWidth;
++            ithaBandWidth = bw;
++            if (bw > 0) {
++                titleTextView.setGravity(Gravity.CENTER_HORIZONTAL);
++                subtitleTextView.setGravity(Gravity.CENTER_HORIZONTAL);
++                titleTextView.measure(MeasureSpec.makeMeasureSpec(bw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
++                subtitleTextView.measure(MeasureSpec.makeMeasureSpec(bw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
++            }
++        }
+@@ -760,0 +775,2 @@
++    // IthaGram: ancho de la banda de texto (centrado) y ancho disponible, para que la barra detecte textos nuevos
++    public int ithaBandWidth, ithaAvailWidth;
+@@ -821,16 +836,0 @@
+-        if (org.telegram.messenger.IthaConfig.isChatTitleCentered() && subtitleTextView != null) {
+-            // titulo y subtitulo centrados uno respecto del otro
+-            final int tw = (int) titleTextView.getExactWidthIncludeDrawables();
+-            final int sw = (int) subtitleTextView.getExactWidthIncludeDrawables();
+-            final int bw = Math.max(tw, sw);
+-            final int dt = (bw - tw) / 2;
+-            final int ds = (bw - sw) / 2;
+-            titleTextView.offsetLeftAndRight(dt);
+-            subtitleTextView.offsetLeftAndRight(ds);
+-            if (titleTextLargerCopyView != null) {
+-                titleTextLargerCopyView.offsetLeftAndRight(dt);
+-            }
+-            if (subtitleTextLargerCopyView != null) {
+-                subtitleTextLargerCopyView.offsetLeftAndRight(ds);
+-            }
+-        }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index ac36e47..d179fd1 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -156,6 +156,11 @@ public class IthaConfig {
+             // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
+             final int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
+                     - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));
++            if (center && c.ithaAvailWidth > 0
++                    && Math.abs(Math.min(textW, c.ithaAvailWidth) - c.ithaBandWidth) > org.telegram.messenger.AndroidUtilities.dp(2)) {
++                // el texto cambio (subtitulo nuevo): que el contenedor vuelva a medir
++                c.requestLayout();
++            }
+             int contentRight = leftDefault + c.getLeftPadding()
+                     + (avatar ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
+                     + textW + org.telegram.messenger.AndroidUtilities.dp(16);

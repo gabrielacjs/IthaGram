@@ -1,0 +1,9 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index f92cc8d..86a6b23 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -836,0 +837,4 @@
++        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatPillCompact()) && getParent() instanceof android.view.View) {
++            // la pildora se dibuja en la barra: avisarle que el contenido cambio de tamano
++            ((android.view.View) getParent()).invalidate();
++        }

@@ -2344,6 +2344,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public void checkAvatarContainerWidth(boolean animated) {
         if (chatAvatarContainer == null) {
+            // IthaGram: el contenedor aviso que cambio el texto; redibujar para recalcular la pildora
+            invalidate();
             return;
         }
 
@@ -2506,8 +2508,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     chatAvatarContainer.setTranslationX(translationX);
                     chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
                 } else {
-                    left = leftDefault;
-                    right = org.telegram.messenger.IthaConfig.compactPillRight(this, left, rightDefault);
+                    org.telegram.messenger.IthaConfig.layoutChatPill(this, leftDefault, rightDefault);
+                    left = org.telegram.messenger.IthaConfig.pillLeft;
+                    right = org.telegram.messenger.IthaConfig.pillRight;
                 }
 
                 glassDrawable.setBounds(left, t, right, b);

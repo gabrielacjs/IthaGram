@@ -90,6 +90,11 @@ public class IthaChatSettingsActivity extends BaseFragment {
                     IthaConfig.setChatPillCompact(value);
                     preview.invalidate();
                 });
+        check(context, tr("Centrar título", "Center title"), tr("Centra el avatar y el nombre entre el botón de volver y el menú.", "Centers the avatar and name between the back and menu buttons."),
+                IthaConfig.isChatTitleCentered(), (value) -> {
+                    IthaConfig.setChatTitleCentered(value);
+                    preview.invalidate();
+                });
         check(context, tr("Ocultar fondo de píldora", "Hide pill background"), tr("Quita el fondo de vidrio detrás del título del chat.", "Removes the glass background behind the chat title."),
                 IthaConfig.isChatPillHidden(), (value) -> {
                     IthaConfig.setChatPillHidden(value);
@@ -182,13 +187,16 @@ public class IthaChatSettingsActivity extends BaseFragment {
             paint.setTextSize(dp(13));
             final float subW = paint.measureText(sub);
             // en el chat el contenido va pegado a la izquierda; compacta = la pildora se ajusta al texto
-            final float pl = dp(60);
+            final float pl0 = dp(60);
             final float full = w - dp(60) * 2;
             final float textW = Math.max(nameW, subW);
-            final float pillW = IthaConfig.isChatPillCompact()
-                    ? Math.min(full, (avatar ? dp(52) : dp(16)) + textW + dp(10))
-                    : full;
+            final float contentW = (avatar ? dp(52) : dp(16)) + textW + dp(10);
+            final float pillW = IthaConfig.isChatPillCompact() ? Math.min(full, contentW) : full;
+            final boolean centered = IthaConfig.isChatTitleCentered();
+            final float pl = pl0 + (centered ? (full - pillW) / 2f : 0f);
             final float pr = pl + pillW;
+            // inicio del contenido (avatar y texto); centrado dentro de la pildora si corresponde
+            final float cl = pl + (centered ? (pillW - Math.min(contentW, pillW)) / 2f : 0f);
 
             if (!IthaConfig.isChatPillHidden()) {
                 rect.set(pl, cy - dp(24), pr, cy + dp(24));
@@ -196,16 +204,16 @@ public class IthaChatSettingsActivity extends BaseFragment {
                 canvas.drawRoundRect(rect, dp(24), dp(24), paint);
             }
 
-            float textLeft = pl + dp(16);
+            float textLeft = cl + dp(16);
             if (avatar) {
                 paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
-                canvas.drawCircle(pl + dp(24), cy, dp(19), paint);
+                canvas.drawCircle(cl + dp(24), cy, dp(19), paint);
                 paint.setColor(0xffffffff);
                 paint.setTypeface(AndroidUtilities.bold());
                 paint.setTextSize(dp(16));
                 final String initial = name.substring(0, 1).toUpperCase();
-                canvas.drawText(initial, pl + dp(24) - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
-                textLeft = pl + dp(52);
+                canvas.drawText(initial, cl + dp(24) - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
+                textLeft = cl + dp(52);
             }
 
             paint.setColor(text);

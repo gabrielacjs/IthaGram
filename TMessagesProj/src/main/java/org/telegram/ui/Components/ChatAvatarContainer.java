@@ -676,6 +676,14 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         } else if (animatedSubtitleTextView != null) {
             animatedSubtitleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
         }
+        if (org.telegram.messenger.IthaConfig.isChatTitleCentered() && subtitleTextView != null && getParent() instanceof ActionBar) {
+            // centrado como Entiny: los dos textos miden todo el ancho disponible (asi nunca se cortan) y se acomodan en onLayout
+            ithaAvailWidth = availableWidth;
+            titleTextView.setGravity(Gravity.LEFT);
+            subtitleTextView.setGravity(Gravity.LEFT);
+            titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
+            subtitleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(20), MeasureSpec.AT_MOST));
+        }
         if (communityItem != null) {
             communityItem.measure(MeasureSpec.makeMeasureSpec(dp(14), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(14), MeasureSpec.EXACTLY));
         }
@@ -758,6 +766,44 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     }
 
     private boolean glassMode;
+    // IthaGram: ancho de la banda de texto (centrado) y ancho disponible, para que la barra detecte textos nuevos
+    public int ithaBandWidth, ithaAvailWidth;
+
+    /** Ancho de la banda de texto: el titulo (con el espacio de sus iconos a ambos lados) o el subtitulo, el mayor. */
+    public int ithaComputeBand() {
+        if (titleTextView == null || subtitleTextView == null || ithaAvailWidth <= 0) {
+            return 0;
+        }
+        final int tText = (int) Math.ceil(titleTextView.getTextWidth());
+        final int tExact = (int) Math.ceil(titleTextView.getExactWidthIncludeDrawables());
+        final int dr = Math.max(0, tExact - tText);
+        final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
+        return Math.min(ithaAvailWidth, Math.max(tText + 2 * dr, sw));
+    }
+
+    /** Calcula la banda de texto y centra el TEXTO del titulo y el subtitulo uno respecto del otro. Devuelve el ancho de la banda. */
+    public int ithaApplyBand() {
+        final int bw = ithaComputeBand();
+        ithaBandWidth = bw;
+        if (bw <= 0) {
+            return bw;
+        }
+        final int tText = (int) Math.ceil(titleTextView.getTextWidth());
+        final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
+        final float dt = Math.max(0, (bw - Math.min(tText, bw)) / 2f);
+        final float ds = Math.max(0, (bw - Math.min(sw, bw)) / 2f);
+        titleTextView.setTranslationX(dt);
+        subtitleTextView.setTranslationX(ds);
+        SimpleTextView titleCopy = this.titleTextLargerCopyView.get();
+        if (titleCopy != null) {
+            titleCopy.setTranslationX(dt);
+        }
+        SimpleTextView subtitleCopy = this.subtitleTextLargerCopyView.get();
+        if (subtitleCopy != null) {
+            subtitleCopy.setTranslationX(ds);
+        }
+        return bw;
+    }
     public void setGlassMode() {
         if (titleTextView != null) {
             titleTextView.setTextSizePx(dp(17.5f));
@@ -817,6 +863,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         SimpleTextView subtitleTextLargerCopyView = this.subtitleTextLargerCopyView.get();
         if (subtitleTextLargerCopyView != null) {
             subtitleTextLargerCopyView.layout(l, subtitleTop, l + subtitleTextLargerCopyView.getMeasuredWidth(), subtitleTop + subtitleTextLargerCopyView.getTextHeight());
+        }
+        if ((org.telegram.messenger.IthaConfig.isChatTitleCentered() || org.telegram.messenger.IthaConfig.isChatPillCompact()) && getParent() instanceof android.view.View) {
+            // la pildora se dibuja en la barra: avisarle que el contenido cambio de tamano
+            ((android.view.View) getParent()).invalidate();
         }
     }
 

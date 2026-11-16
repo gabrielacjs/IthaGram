@@ -1,0 +1,56 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index fed7c0b..06fba29 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -770,0 +771,12 @@
++
++    /** Ancho de la banda de texto: el titulo (con el espacio de sus iconos a ambos lados) o el subtitulo, el mayor. */
++    public int ithaComputeBand() {
++        if (titleTextView == null || subtitleTextView == null || ithaAvailWidth <= 0) {
++            return 0;
++        }
++        final int tText = (int) Math.ceil(titleTextView.getTextWidth());
++        final int tExact = (int) Math.ceil(titleTextView.getExactWidthIncludeDrawables());
++        final int dr = Math.max(0, tExact - tText);
++        final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
++        return Math.min(ithaAvailWidth, Math.max(tText + 2 * dr, sw));
++    }
+@@ -832,4 +844,2 @@
+-            // titulo y subtitulo centrados uno respecto del otro, con el ancho real del texto de ahora
+-            final int tw = (int) Math.ceil(titleTextView.getExactWidthIncludeDrawables());
+-            final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
+-            final int bw = Math.min(ithaAvailWidth, Math.max(tw, sw));
++            // el TEXTO del titulo y el subtitulo quedan centrados entre si; el espacio de los iconos se reserva a ambos lados
++            final int bw = ithaComputeBand();
+@@ -837,2 +847,4 @@
+-            final int dt = (bw - Math.min(tw, bw)) / 2;
+-            final int ds = (bw - Math.min(sw, bw)) / 2;
++            final int tText = (int) Math.ceil(titleTextView.getTextWidth());
++            final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
++            final int dt = Math.max(0, (bw - Math.min(tText, bw)) / 2);
++            final int ds = Math.max(0, (bw - Math.min(sw, bw)) / 2);
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index d179fd1..8965515 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -154,12 +154,15 @@ public class IthaConfig {
+             org.telegram.ui.Components.ChatAvatarContainer c = (org.telegram.ui.Components.ChatAvatarContainer) child;
+             final boolean avatar = c.hasVisibleAvatar();
+             // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
+-            final int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
++            int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
+                     - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));
+-            if (center && c.ithaAvailWidth > 0
+-                    && Math.abs(Math.min(textW, c.ithaAvailWidth) - c.ithaBandWidth) > org.telegram.messenger.AndroidUtilities.dp(2)) {
+-                // el texto cambio (subtitulo nuevo): que el contenedor vuelva a medir
+-                c.requestLayout();
++            if (center && c.ithaAvailWidth > 0) {
++                // la banda de texto la calcula el contenedor; si cambio (texto nuevo), que vuelva a acomodar
++                final int want = c.ithaComputeBand();
++                if (Math.abs(want - c.ithaBandWidth) > org.telegram.messenger.AndroidUtilities.dp(2)) {
++                    c.requestLayout();
++                }
++                textW = want;
+             }
+             int contentRight = leftDefault + c.getLeftPadding()
+                     + (avatar ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13))
