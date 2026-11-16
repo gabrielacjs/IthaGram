@@ -1,0 +1,829 @@
+diff --git a/TMessagesProj/src/main/AndroidManifest.xml b/TMessagesProj/src/main/AndroidManifest.xml
+index 38af2e52a..5f754ddfb 100644
+--- a/TMessagesProj/src/main/AndroidManifest.xml
++++ b/TMessagesProj/src/main/AndroidManifest.xml
+@@ -576,6 +576,13 @@
+             android:exported="false"
+             android:foregroundServiceType="dataSync"
+         />
++        <activity
++            android:name="org.telegram.ui.IthaRestartActivity"
++            android:process=":ithaphoenix"
++            android:exported="false"
++            android:excludeFromRecents="true"
++            android:taskAffinity=""
++            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+         <service
+             android:name=".NotificationRepeat"
+             android:exported="false"
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+new file mode 100644
+index 000000000..a14b17550
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -0,0 +1,83 @@
++package org.telegram.messenger;
++
++import android.content.Context;
++import android.content.SharedPreferences;
++
++/**
++ * IthaGram: ajustes propios (pantalla "Itha Ajustes"). Se guardan en SharedPreferences "itha_config".
++ */
++public class IthaConfig {
++
++    public static final String DEFAULT_TITLE = "IthaGram";
++
++    private static SharedPreferences prefs() {
++        return ApplicationLoader.applicationContext.getSharedPreferences("itha_config", Context.MODE_PRIVATE);
++    }
++
++    /** Texto que el usuario escribio (vacio = usar el nombre por defecto). */
++    public static String getTitleTextRaw() {
++        String text = prefs().getString("title_text", "");
++        return text == null ? "" : text;
++    }
++
++    /** Texto que se muestra como titulo de la lista de chats. */
++    public static String getTitleText() {
++        String text = getTitleTextRaw().trim();
++        return text.isEmpty() ? DEFAULT_TITLE : text;
++    }
++
++    public static void setTitleText(String text) {
++        prefs().edit().putString("title_text", text == null ? "" : text.trim()).apply();
++    }
++
++    /** Titulo centrado (por defecto: a la izquierda). */
++    public static boolean isTitleCentered() {
++        return prefs().getBoolean("title_centered", false);
++    }
++
++    public static void setTitleCentered(boolean value) {
++        prefs().edit().putBoolean("title_centered", value).apply();
++    }
++
++    /** Ocultar la barra "Buscar chats" de la lista (queda solo la lupa arriba). */
++    public static boolean isSearchBarHidden() {
++        return prefs().getBoolean("search_bar_hidden", false);
++    }
++
++    public static void setSearchBarHidden(boolean value) {
++        prefs().edit().putBoolean("search_bar_hidden", value).apply();
++    }
++
++    // ---- numero de telefono en Ajustes ----
++
++    /** Ocultar el numero de telefono de la cabecera de Ajustes. */
++    public static boolean isPhoneHidden() {
++        return prefs().getBoolean("phone_hidden", false);
++    }
++
++    public static void setPhoneHidden(boolean value) {
++        prefs().edit().putBoolean("phone_hidden", value).apply();
++    }
++
++    /** Devuelve el numero, o nada si la opcion de ocultarlo esta activa. */
++    public static String maskPhone(String phone) {
++        if (phone == null || !isPhoneHidden()) {
++            return phone;
++        }
++        return "";
++    }
++
++    /** La lista de chats que esta abierta (para cambiar titulo y centrado al instante). */
++    public static java.lang.ref.WeakReference<org.telegram.ui.DialogsActivity> dialogsRef;
++
++    /** La pantalla de Ajustes que esta abierta (para refrescar su cabecera al instante). */
++    public static java.lang.ref.WeakReference<org.telegram.ui.SettingsActivity> settingsRef;
++
++    /** Si el numero esta oculto, saca el separador que quedaria sobrando al principio ("@usuario" solo). */
++    public static CharSequence fixHeader(StringBuilder sb) {
++        if (isPhoneHidden() && sb.indexOf(" \u2022 ") == 0) {
++            return sb.substring(3);
++        }
++        return sb;
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index e02d8efbd..400faef5b 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -295,7 +295,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+     public static final int MAIN_TABS_HEIGHT_WITH_MARGINS = MAIN_TABS_HEIGHT + MAIN_TABS_MARGIN * 2;
+     public static final int FILTER_TABS_HEIGHT = 36;
+     public static final int SEARCH_TABS_HEIGHT = 36 + 7 + 7;
+-    public static final int SEARCH_FIELD_HEIGHT = 48;
++    public static final int SEARCH_FIELD_HEIGHT = org.telegram.messenger.IthaConfig.isSearchBarHidden() ? 1 : 48;
+ 
+     private static final int ANIMATOR_ID_SEARCH_VISIBLE = 1;
+     private static final int ANIMATOR_ID_DONE_BUTTON_VISIBLE = 2;
+@@ -2923,6 +2923,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+ 
+     private Drawable premiumStar;
+ 
++    /** IthaGram: vuelve a aplicar titulo, centrado y espacio de busqueda sin reiniciar la app. */
++    public void ithaRefreshTitle() {
++        if (actionBar != null && statusDrawable != null) {
++            actionBar.setTitle(new SpannableStringBuilder(org.telegram.messenger.IthaConfig.getTitleText()), statusDrawable);
++            actionBar.setCenterTitleAndGlass(org.telegram.messenger.IthaConfig.isTitleCentered());
++            updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
++        }
++        if (fragmentView != null) {
++            fragmentView.requestLayout();
++        }
++    }
++
+     public void updateStatus(TLRPC.User user, boolean animated) {
+         if (dialogStoriesCell != null) {
+             dialogStoriesCell.updateStatus(user, animated);
+@@ -3441,9 +3453,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+                 // a new drawable (also when the view is recreated after a theme switch made elsewhere): remember its tint, the
+                 // theme hook only recolors when the color differs from the last one applied
+                 logoDrawable.setColorFilter(lastLogoDrawableColor = getThemedColor(Theme.key_telegram_color_dialogsLogo), PorterDuff.Mode.MULTIPLY);
+-                SpannableStringBuilder ssb = new SpannableStringBuilder(getString(R.string.AppName));
+-                ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
++                SpannableStringBuilder ssb = new SpannableStringBuilder(org.telegram.messenger.IthaConfig.getTitleText());
++                // IthaGram: titulo en texto (en vez del logo de Telegram)
+                 actionBar.setTitle(ssb, statusDrawable);
++                actionBar.setCenterTitleAndGlass(org.telegram.messenger.IthaConfig.isTitleCentered());
++                org.telegram.messenger.IthaConfig.dialogsRef = new java.lang.ref.WeakReference<>(this);
+                 updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
+             }
+             if (folderId == 0) {
+@@ -13715,7 +13729,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
+ 
+         final float factor0 = isSupportSearch() ? 1 : 0;
+         final float factor1 = (1f - actionModeVisible) * (1f - animatorDoneButtonVisible.getFloatValue());
+-        final float factor2 = Math.max(searchFieldVisible, alphaByScrollOffset * (1f - getRightSlidingProgress()));
++        final float factor2 = Math.max(searchFieldVisible, org.telegram.messenger.IthaConfig.isSearchBarHidden() ? 0f : alphaByScrollOffset * (1f - getRightSlidingProgress()));
+ 
+         final float alpha = factor0 * factor1 * factor2;
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java
+new file mode 100644
+index 000000000..150d1a91e
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java
+@@ -0,0 +1,293 @@
++package org.telegram.ui;
++
++import android.content.Context;
++import android.graphics.Canvas;
++import android.graphics.Paint;
++import android.graphics.RectF;
++import android.view.Gravity;
++import android.view.View;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import org.telegram.messenger.AndroidUtilities;
++import org.telegram.messenger.IthaConfig;
++import org.telegram.messenger.R;
++import org.telegram.ui.ActionBar.ActionBar;
++import org.telegram.ui.ActionBar.AlertDialog;
++import org.telegram.ui.ActionBar.BaseFragment;
++import org.telegram.ui.ActionBar.Theme;
++import org.telegram.ui.Cells.TextCheckCell;
++import org.telegram.ui.Components.LayoutHelper;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++import static org.telegram.messenger.DownloadQueueManager.tr;
++
++/**
++ * IthaGram: "Ajustes lista de chat". Opciones que cambian la lista de chats (titulo, busqueda).
++ */
++public class IthaChatListSettingsActivity extends BaseFragment {
++
++    private LinearLayout listLayout;
++    private Context ctx;
++    private PreviewView preview;
++
++    @Override
++    public View createView(Context context) {
++        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
++        actionBar.setAllowOverlayTitle(true);
++        actionBar.setTitle(tr("Ajustes lista de chat", "Chat list settings"));
++        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
++            @Override
++            public void onItemClick(int id) {
++                if (id == -1) {
++                    finishFragment();
++                }
++            }
++        });
++
++        FrameLayout root = new FrameLayout(context);
++        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
++        fragmentView = root;
++
++        ScrollView scroll = new ScrollView(context);
++        listLayout = new LinearLayout(context);
++        listLayout.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(listLayout, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
++        root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
++
++        ctx = context;
++        rebuild();
++
++        return fragmentView;
++    }
++
++    private void rebuild() {
++        listLayout.removeAllViews();
++        final Context context = ctx;
++
++        preview = new PreviewView(context);
++        listLayout.addView(preview, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 170, 16, 16, 16, 4));
++
++        section(context, tr("Título", "Title"));
++        row(context, tr("Texto del título", "Title text"),
++                IthaConfig.getTitleText() + (IthaConfig.getTitleTextRaw().trim().isEmpty() ? " (" + tr("por defecto", "default") + ")" : ""),
++                this::askTitle);
++        check(context, tr("Título centrado", "Centered title"), IthaConfig.isTitleCentered(), (value) -> {
++            IthaConfig.setTitleCentered(value);
++            applyLive();
++        });
++
++        section(context, tr("Búsqueda", "Search"));
++        check(context, tr("Mostrar barra de búsqueda", "Show search bar"), !IthaConfig.isSearchBarHidden(), (value) -> {
++            IthaConfig.setSearchBarHidden(!value);
++            applyLive();
++            askRestart();
++        });
++
++        TextView note = new TextView(context);
++        note.setText(tr("El título y el centrado cambian al instante. La barra de búsqueda necesita reiniciar la app.", "Title and centering change instantly. The search bar needs an app restart."));
++        note.setTextSize(13);
++        note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        note.setPadding(dp(20), dp(10), dp(20), dp(10));
++        listLayout.addView(note, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void askTitle() {
++        final android.widget.EditText edit = new android.widget.EditText(getParentActivity());
++        edit.setText(IthaConfig.getTitleTextRaw());
++        edit.setHint(IthaConfig.DEFAULT_TITLE);
++        edit.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
++        edit.setHintTextColor(Theme.getColor(Theme.key_dialogTextGray2));
++        edit.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Theme.getColor(Theme.key_dialogTextGray2)));
++        edit.setSingleLine(true);
++        AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
++        b.setTitle(tr("Texto del título", "Title text"));
++        b.setView(edit);
++        b.setPositiveButton(tr("Guardar", "Save"), (d, w) -> {
++            IthaConfig.setTitleText(edit.getText().toString());
++            applyLive();
++            rebuild();
++        });
++        b.setNegativeButton(tr("Cancelar", "Cancel"), null);
++        showDialog(b.create());
++    }
++
++    /** Aplica los cambios a la lista de chats que ya esta abierta (sin reiniciar). */
++    private void applyLive() {
++        if (preview != null) {
++            preview.invalidate();
++        }
++        try {
++            DialogsActivity dialogs = IthaConfig.dialogsRef != null ? IthaConfig.dialogsRef.get() : null;
++            if (dialogs != null) {
++                dialogs.ithaRefreshTitle();
++                return;
++            }
++            if (getParentLayout() == null) {
++                return;
++            }
++            for (BaseFragment f : getParentLayout().getFragmentStack()) {
++                if (f instanceof DialogsActivity) {
++                    ((DialogsActivity) f).ithaRefreshTitle();
++                }
++            }
++        } catch (Throwable ignore) {
++        }
++    }
++
++    /** La barra de busqueda cambia el espacio de toda la lista: se aplica bien al reiniciar la app. */
++    private void askRestart() {
++        if (getParentActivity() == null) {
++            return;
++        }
++        AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
++        b.setTitle(tr("Reiniciar la app", "Restart the app"));
++        b.setMessage(tr("Para acomodar la barra de búsqueda hay que reiniciar la app. ¿Reiniciar ahora?", "The search bar needs an app restart. Restart now?"));
++        b.setPositiveButton(tr("Reiniciar", "Restart"), (d, w) -> IthaRestartActivity.restart(getParentActivity()));
++        b.setNegativeButton(tr("Más tarde", "Later"), null);
++        showDialog(b.create());
++    }
++
++    private void restartApp() {
++        try {
++            final android.app.Activity activity = getParentActivity();
++            final Context c = org.telegram.messenger.ApplicationLoader.applicationContext;
++            android.content.Intent intent = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
++            if (activity == null || intent == null) {
++                return;
++            }
++            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
++            // Plan B por si el telefono bloquea el paso siguiente: una alarma que abre la app
++            android.app.PendingIntent pending = android.app.PendingIntent.getActivity(c, 7731, intent, android.app.PendingIntent.FLAG_CANCEL_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
++            android.app.AlarmManager alarm = (android.app.AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
++            alarm.set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 600, pending);
++            // Plan A: pedirle a Android que abra la app ahora (permitido porque la app esta en pantalla) y cerrar el proceso viejo
++            activity.startActivity(intent);
++            AndroidUtilities.runOnUIThread(() -> android.os.Process.killProcess(android.os.Process.myPid()), 300);
++        } catch (Throwable ignore) {
++        }
++    }
++
++    private interface BoolCallback {
++        void run(boolean value);
++    }
++
++    private void check(Context context, String title, boolean checked, BoolCallback callback) {
++        final TextCheckCell cell = new TextCheckCell(context);
++        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        cell.setTextAndCheck(title, checked, false);
++        cell.setOnClickListener(v -> {
++            boolean value = !cell.isChecked();
++            cell.setChecked(value);
++            callback.run(value);
++        });
++        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    /** Dibujo de ejemplo de la cabecera de la lista de chats. */
++    private static class PreviewView extends View {
++        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
++        private final RectF rect = new RectF();
++
++        PreviewView(Context context) {
++            super(context);
++        }
++
++        @Override
++        protected void onDraw(Canvas canvas) {
++            final int w = getMeasuredWidth();
++            final int h = getMeasuredHeight();
++            final int gray = Theme.getColor(Theme.key_windowBackgroundGray);
++            final int text = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
++            final int hint = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
++
++            // tarjeta
++            paint.setStyle(Paint.Style.FILL);
++            paint.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++            rect.set(0, 0, w, h);
++            canvas.drawRoundRect(rect, dp(18), dp(18), paint);
++
++            // botones de los costados (menu y lupa)
++            final float barCy = dp(28);
++            paint.setColor(gray);
++            canvas.drawCircle(dp(28), barCy, dp(14), paint);
++            canvas.drawCircle(w - dp(28), barCy, dp(14), paint);
++
++            // titulo
++            paint.setColor(text);
++            paint.setTypeface(AndroidUtilities.bold());
++            paint.setTextSize(dp(17));
++            final String title = IthaConfig.getTitleText();
++            final float maxW = w - dp(120);
++            String shown = title;
++            while (shown.length() > 1 && paint.measureText(shown) > maxW) {
++                shown = shown.substring(0, shown.length() - 1);
++            }
++            final float tw = paint.measureText(shown);
++            final float x = IthaConfig.isTitleCentered() ? (w - tw) / 2f : dp(56);
++            canvas.drawText(shown, x, barCy + dp(6), paint);
++
++            float y = dp(56);
++            // barra de busqueda
++            if (!IthaConfig.isSearchBarHidden()) {
++                paint.setColor(gray);
++                rect.set(dp(14), y, w - dp(14), y + dp(34));
++                canvas.drawRoundRect(rect, dp(17), dp(17), paint);
++                paint.setColor(hint);
++                paint.setTypeface(null);
++                paint.setTextSize(dp(14));
++                canvas.drawText(tr("Buscar chats", "Search chats"), dp(32), y + dp(22), paint);
++                y += dp(44);
++            } else {
++                y += dp(6);
++            }
++
++            // filas de chat de ejemplo
++            for (int i = 0; i < 2 && y + dp(40) < h; i++) {
++                paint.setColor(gray);
++                canvas.drawCircle(dp(30), y + dp(20), dp(17), paint);
++                rect.set(dp(58), y + dp(9), dp(58) + (w - dp(110)) * 0.45f, y + dp(17));
++                canvas.drawRoundRect(rect, dp(4), dp(4), paint);
++                rect.set(dp(58), y + dp(24), dp(58) + (w - dp(110)) * 0.75f, y + dp(31));
++                canvas.drawRoundRect(rect, dp(4), dp(4), paint);
++                y += dp(46);
++            }
++        }
++    }
++
++    private void section(Context context, String title) {
++        TextView header = new TextView(context);
++        header.setText(title);
++        header.setTextSize(14);
++        header.setTypeface(AndroidUtilities.bold());
++        header.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
++        header.setPadding(dp(20), dp(18), dp(20), dp(8));
++        listLayout.addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void row(Context context, String title, String subtitle, Runnable action) {
++        LinearLayout row = new LinearLayout(context);
++        row.setOrientation(LinearLayout.VERTICAL);
++        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        row.setPadding(dp(20), dp(12), dp(20), dp(12));
++
++        TextView titleView = new TextView(context);
++        titleView.setText(title);
++        titleView.setTextSize(16);
++        titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
++        row.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++
++        if (subtitle != null) {
++            TextView subtitleView = new TextView(context);
++            subtitleView.setText(subtitle);
++            subtitleView.setTextSize(13);
++            subtitleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++            row.addView(subtitleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
++        }
++
++        row.setOnClickListener(v -> action.run());
++        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java
+new file mode 100644
+index 000000000..f381af3bc
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java
+@@ -0,0 +1,148 @@
++package org.telegram.ui;
++
++import android.content.Context;
++import android.view.Gravity;
++import android.view.View;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import org.telegram.messenger.AndroidUtilities;
++import org.telegram.messenger.IthaConfig;
++import org.telegram.messenger.R;
++import org.telegram.ui.ActionBar.ActionBar;
++import org.telegram.ui.ActionBar.BaseFragment;
++import org.telegram.ui.ActionBar.Theme;
++import org.telegram.ui.Cells.TextCheckCell;
++import org.telegram.ui.Components.LayoutHelper;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++import static org.telegram.messenger.DownloadQueueManager.tr;
++
++/**
++ * IthaGram: "Ajustes de perfil". Opciones de la cabecera de Ajustes (numero de telefono).
++ */
++public class IthaProfileSettingsActivity extends BaseFragment {
++
++    private LinearLayout listLayout;
++    private Context ctx;
++
++    @Override
++    public View createView(Context context) {
++        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
++        actionBar.setAllowOverlayTitle(true);
++        actionBar.setTitle(tr("Ajustes de perfil", "Profile settings"));
++        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
++            @Override
++            public void onItemClick(int id) {
++                if (id == -1) {
++                    finishFragment();
++                }
++            }
++        });
++
++        FrameLayout root = new FrameLayout(context);
++        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
++        fragmentView = root;
++
++        ScrollView scroll = new ScrollView(context);
++        listLayout = new LinearLayout(context);
++        listLayout.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(listLayout, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
++        root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
++
++        ctx = context;
++        rebuild();
++
++        return fragmentView;
++    }
++
++    private void rebuild() {
++        listLayout.removeAllViews();
++        final Context context = ctx;
++
++        section(context, tr("Número de teléfono", "Phone number"));
++        check(context, tr("Ocultar el número", "Hide the number"), IthaConfig.isPhoneHidden(), (value) -> {
++            IthaConfig.setPhoneHidden(value);
++            applyLive();
++        });
++
++        TextView note = new TextView(context);
++        note.setText(tr("Si lo activás, el número de teléfono deja de verse en la cabecera de Ajustes.", "When on, the phone number is no longer shown in the Settings header."));
++        note.setTextSize(13);
++        note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        note.setPadding(dp(20), dp(10), dp(20), dp(10));
++        listLayout.addView(note, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    /** Actualiza la cabecera de Ajustes que ya esta abierta (sin reiniciar). */
++    private void applyLive() {
++        try {
++            SettingsActivity settings = IthaConfig.settingsRef != null ? IthaConfig.settingsRef.get() : null;
++            if (settings != null) {
++                settings.setInfo();
++                return;
++            }
++            if (getParentLayout() == null) {
++                return;
++            }
++            for (BaseFragment f : getParentLayout().getFragmentStack()) {
++                if (f instanceof SettingsActivity) {
++                    ((SettingsActivity) f).setInfo();
++                }
++            }
++        } catch (Throwable ignore) {
++        }
++    }
++
++    private interface BoolCallback {
++        void run(boolean value);
++    }
++
++    private void check(Context context, String title, boolean checked, BoolCallback callback) {
++        final TextCheckCell cell = new TextCheckCell(context);
++        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        cell.setTextAndCheck(title, checked, false);
++        cell.setOnClickListener(v -> {
++            boolean value = !cell.isChecked();
++            cell.setChecked(value);
++            callback.run(value);
++        });
++        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void section(Context context, String title) {
++        TextView header = new TextView(context);
++        header.setText(title);
++        header.setTextSize(14);
++        header.setTypeface(AndroidUtilities.bold());
++        header.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
++        header.setPadding(dp(20), dp(18), dp(20), dp(8));
++        listLayout.addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void row(Context context, String title, String subtitle, Runnable action) {
++        LinearLayout row = new LinearLayout(context);
++        row.setOrientation(LinearLayout.VERTICAL);
++        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        row.setPadding(dp(20), dp(12), dp(20), dp(12));
++
++        TextView titleView = new TextView(context);
++        titleView.setText(title);
++        titleView.setTextSize(16);
++        titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
++        row.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++
++        if (subtitle != null) {
++            TextView subtitleView = new TextView(context);
++            subtitleView.setText(subtitle);
++            subtitleView.setTextSize(13);
++            subtitleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++            row.addView(subtitleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
++        }
++
++        row.setOnClickListener(v -> action.run());
++        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaRestartActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaRestartActivity.java
+new file mode 100644
+index 000000000..cd5753789
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaRestartActivity.java
+@@ -0,0 +1,57 @@
++package org.telegram.ui;
++
++import android.app.Activity;
++import android.content.Context;
++import android.content.Intent;
++import android.os.Bundle;
++import android.os.Process;
++
++/**
++ * IthaGram: reinicia la app. Esta pantalla vive en OTRO proceso (ver AndroidManifest): mata el proceso principal y
++ * vuelve a abrir la app, asi funciona aunque el telefono bloquee que una app se abra a si misma en segundo plano.
++ */
++public class IthaRestartActivity extends Activity {
++
++    private static final String EXTRA_NEXT = "itha_next";
++    private static final String EXTRA_PID = "itha_pid";
++
++    /** Reinicia la app completa. Llamar con la pantalla actual (la app tiene que estar visible). */
++    public static void restart(Activity from) {
++        try {
++            if (from == null) {
++                return;
++            }
++            Context c = from.getApplicationContext();
++            Intent next = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
++            if (next == null) {
++                return;
++            }
++            next.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
++            Intent intent = new Intent(c, IthaRestartActivity.class);
++            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
++            intent.putExtra(EXTRA_NEXT, next);
++            intent.putExtra(EXTRA_PID, Process.myPid());
++            from.startActivity(intent);
++        } catch (Throwable ignore) {
++        }
++    }
++
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        try {
++            Intent in = getIntent();
++            Intent next = in.getParcelableExtra(EXTRA_NEXT);
++            int pid = in.getIntExtra(EXTRA_PID, -1);
++            if (pid > 0 && pid != Process.myPid()) {
++                Process.killProcess(pid);
++            }
++            if (next != null) {
++                startActivity(next);
++            }
++        } catch (Throwable ignore) {
++        }
++        finish();
++        Runtime.getRuntime().exit(0);
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+new file mode 100644
+index 000000000..8a0f5d34f
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+@@ -0,0 +1,106 @@
++package org.telegram.ui;
++
++import android.content.Context;
++import android.view.Gravity;
++import android.view.View;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import org.telegram.messenger.AndroidUtilities;
++import org.telegram.messenger.R;
++import org.telegram.ui.ActionBar.ActionBar;
++import org.telegram.ui.ActionBar.BaseFragment;
++import org.telegram.ui.ActionBar.Theme;
++import org.telegram.ui.Components.LayoutHelper;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++import static org.telegram.messenger.DownloadQueueManager.tr;
++
++/**
++ * IthaGram: pantalla "Itha Ajustes". Aqui se van sumando las funciones propias de IthaGram.
++ * Para agregar una opcion nueva: usar section(...) para un titulo y row(...) para una fila.
++ */
++public class IthaSettingsActivity extends BaseFragment {
++
++    private LinearLayout listLayout;
++    private Context ctx;
++
++    @Override
++    public View createView(Context context) {
++        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
++        actionBar.setAllowOverlayTitle(true);
++        actionBar.setTitle("Itha Ajustes");
++        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
++            @Override
++            public void onItemClick(int id) {
++                if (id == -1) {
++                    finishFragment();
++                }
++            }
++        });
++
++        FrameLayout root = new FrameLayout(context);
++        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
++        fragmentView = root;
++
++        ScrollView scroll = new ScrollView(context);
++        listLayout = new LinearLayout(context);
++        listLayout.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(listLayout, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
++        root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
++
++        ctx = context;
++        rebuild();
++
++        return fragmentView;
++    }
++
++    private void rebuild() {
++        listLayout.removeAllViews();
++        final Context context = ctx;
++
++        section(context, tr("Ajustes de IthaGram", "IthaGram settings"));
++        row(context, tr("Ajustes lista de chat", "Chat list settings"),
++                tr("Título, alineación y barra de búsqueda", "Title, alignment and search bar"),
++                () -> presentFragment(new IthaChatListSettingsActivity()));
++        row(context, tr("Ajustes de perfil", "Profile settings"),
++                tr("Número de teléfono", "Phone number"),
++                () -> presentFragment(new IthaProfileSettingsActivity()));
++    }
++
++    private void section(Context context, String title) {
++        TextView header = new TextView(context);
++        header.setText(title);
++        header.setTextSize(14);
++        header.setTypeface(AndroidUtilities.bold());
++        header.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
++        header.setPadding(dp(20), dp(18), dp(20), dp(8));
++        listLayout.addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void row(Context context, String title, String subtitle, Runnable action) {
++        LinearLayout row = new LinearLayout(context);
++        row.setOrientation(LinearLayout.VERTICAL);
++        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        row.setPadding(dp(20), dp(12), dp(20), dp(12));
++
++        TextView titleView = new TextView(context);
++        titleView.setText(title);
++        titleView.setTextSize(16);
++        titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
++        row.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++
++        if (subtitle != null) {
++            TextView subtitleView = new TextView(context);
++            subtitleView.setText(subtitle);
++            subtitleView.setTextSize(13);
++            subtitleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++            row.addView(subtitleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
++        }
++
++        row.setOnClickListener(v -> action.run());
++        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+index e2b917be3..7286e8b58 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+@@ -530,13 +530,14 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+         titleView.setText(UserObject.getUserName(user));
+         final StringBuilder sb = new StringBuilder();
+         if (user != null) {
+-            sb.append(PhoneFormat.getInstance().format("+" + user.phone));
++            sb.append(org.telegram.messenger.IthaConfig.maskPhone(PhoneFormat.getInstance().format("+" + user.phone)));
+         }
+         final String username = UserObject.getPublicUsername(user);
+         if (username != null) {
+             sb.append(" • @").append(username);
+         }
+-        subtitleView.setText(sb);
++        subtitleView.setText(org.telegram.messenger.IthaConfig.fixHeader(sb));
++        org.telegram.messenger.IthaConfig.settingsRef = new java.lang.ref.WeakReference<>(this);
+ 
+         versionView.setText(getVersionName());
+     }
+@@ -795,6 +796,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+             items.add(UItem.asShadow(null));
+         }
+ 
++        items.add(SettingCell.Factory.of(40, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_features, "Itha Ajustes"));
+         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
+         items.add(SettingCell.Factory.of(2, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
+         items.add(SettingCell.Factory.of(3, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_privacy, getString(R.string.SettingsPrivacySecurity), getString(R.string.SettingsPrivacySecurityInfo)));
+@@ -944,6 +946,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
+             case 10:
+                 presentSettingFragment(new LanguageSelectActivity());
+                 break;
++            case 40:
++                presentSettingFragment(new IthaSettingsActivity());
++                break;
+ 
+             case 11:
+                 presentSettingFragment(new PremiumPreviewFragment("settings"));

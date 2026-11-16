@@ -295,7 +295,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     public static final int MAIN_TABS_HEIGHT_WITH_MARGINS = MAIN_TABS_HEIGHT + MAIN_TABS_MARGIN * 2;
     public static final int FILTER_TABS_HEIGHT = 36;
     public static final int SEARCH_TABS_HEIGHT = 36 + 7 + 7;
-    public static final int SEARCH_FIELD_HEIGHT = 48;
+    public static final int SEARCH_FIELD_HEIGHT = org.telegram.messenger.IthaConfig.isSearchBarHidden() ? 1 : 48;
 
     private static final int ANIMATOR_ID_SEARCH_VISIBLE = 1;
     private static final int ANIMATOR_ID_DONE_BUTTON_VISIBLE = 2;
@@ -2923,6 +2923,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private Drawable premiumStar;
 
+    /** IthaGram: vuelve a aplicar titulo, centrado y espacio de busqueda sin reiniciar la app. */
+    public void ithaRefreshTitle() {
+        if (actionBar != null && statusDrawable != null) {
+            actionBar.setTitle(new SpannableStringBuilder(org.telegram.messenger.IthaConfig.getTitleText()), statusDrawable);
+            actionBar.setCenterTitleAndGlass(org.telegram.messenger.IthaConfig.isTitleCentered());
+            updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
+        }
+        if (fragmentView != null) {
+            fragmentView.requestLayout();
+        }
+    }
+
     public void updateStatus(TLRPC.User user, boolean animated) {
         if (dialogStoriesCell != null) {
             dialogStoriesCell.updateStatus(user, animated);
@@ -3441,9 +3453,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 // a new drawable (also when the view is recreated after a theme switch made elsewhere): remember its tint, the
                 // theme hook only recolors when the color differs from the last one applied
                 logoDrawable.setColorFilter(lastLogoDrawableColor = getThemedColor(Theme.key_telegram_color_dialogsLogo), PorterDuff.Mode.MULTIPLY);
-                SpannableStringBuilder ssb = new SpannableStringBuilder(getString(R.string.AppName));
-                ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                SpannableStringBuilder ssb = new SpannableStringBuilder(org.telegram.messenger.IthaConfig.getTitleText());
+                // IthaGram: titulo en texto (en vez del logo de Telegram)
                 actionBar.setTitle(ssb, statusDrawable);
+                actionBar.setCenterTitleAndGlass(org.telegram.messenger.IthaConfig.isTitleCentered());
+                org.telegram.messenger.IthaConfig.dialogsRef = new java.lang.ref.WeakReference<>(this);
                 updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
             }
             if (folderId == 0) {
@@ -13715,7 +13729,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         final float factor0 = isSupportSearch() ? 1 : 0;
         final float factor1 = (1f - actionModeVisible) * (1f - animatorDoneButtonVisible.getFloatValue());
-        final float factor2 = Math.max(searchFieldVisible, alphaByScrollOffset * (1f - getRightSlidingProgress()));
+        final float factor2 = Math.max(searchFieldVisible, org.telegram.messenger.IthaConfig.isSearchBarHidden() ? 0f : alphaByScrollOffset * (1f - getRightSlidingProgress()));
 
         final float alpha = factor0 * factor1 * factor2;
 
