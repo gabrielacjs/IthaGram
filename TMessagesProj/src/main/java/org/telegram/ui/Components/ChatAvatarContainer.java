@@ -668,7 +668,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16);
+        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE && !ithaMenuSlotAvatar() ? 54 : 0) + 16);
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -769,6 +769,84 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     // IthaGram: ancho de la banda de texto (centrado) y ancho disponible, para que la barra detecte textos nuevos
     public int ithaBandWidth, ithaAvailWidth;
 
+    // IthaGram: avatar en el boton de menu (ocupa el lugar de los tres puntos)
+    public org.telegram.ui.ActionBar.ActionBarMenuItem ithaMenuItem;
+    private float ithaModeFactor;
+    private boolean ithaMenuSlotLast, ithaMenuPlaced, ithaOverlayLast;
+
+    /** Dice si el avatar esta ahora mismo en el boton de menu (opcion activa, boton visible y sin busqueda ni seleccion). */
+    public boolean ithaMenuSlotAvatar() {
+        return org.telegram.messenger.IthaConfig.isChatAvatarMenu() && hasVisibleAvatar() && ithaMenuItem != null
+                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getParent() instanceof android.view.View
+                && getParent() instanceof ActionBar && ithaModeFactor <= 0.001f;
+    }
+
+    public android.view.View ithaAvatarView() {
+        return avatarImageView;
+    }
+
+    /** Tocar el avatar del boton de menu hace lo mismo que tocar el avatar normal. */
+    public void ithaOpenProfileFromMenu() {
+        if (avatarImageView == null || !avatarImageView.performClick()) {
+            openProfile(true);
+        }
+    }
+
+    /** Mueve el avatar (y sus detalles) encima del boton de menu y oculta los tres puntos. Se llama al dibujar la barra. */
+    public void ithaPlaceMenuAvatar(float modeFactor, boolean overlayOpen) {
+        ithaModeFactor = modeFactor;
+        if (ithaMenuItem != null) {
+            org.telegram.messenger.IthaConfig.menuAvatarItems.put(ithaMenuItem, this);
+        }
+        final boolean on = ithaMenuSlotAvatar();
+        if (on != ithaMenuSlotLast) {
+            // el texto gana o pierde el espacio del avatar: recalcular
+            post(this::requestLayout);
+        }
+        // el menu desplegable dibuja una copia del avatar mientras se abre y se cierra: los tres puntos nunca se ven
+        final boolean avatarShown = on;
+        if (ithaMenuItem != null && ithaMenuItem.getIconView() != null && (on || ithaMenuPlaced)) {
+            final int visibility = avatarShown ? INVISIBLE : VISIBLE;
+            if (ithaMenuItem.getIconView().getVisibility() != visibility) {
+                ithaMenuItem.getIconView().setVisibility(visibility);
+            }
+        }
+        final android.view.View[] moved = {avatarImageView, communityItem, timeItem, starBgItem, starFgItem};
+        if (!on) {
+            if (ithaMenuPlaced) {
+                ithaMenuPlaced = false;
+                ithaOverlayLast = false;
+                for (android.view.View v : moved) {
+                    if (v != null) {
+                        v.animate().cancel();
+                        v.setAlpha(1f);
+                        v.setTranslationY(0);
+                        if (!org.telegram.messenger.IthaConfig.isChatAvatarRight()) {
+                            v.setTranslationX(0);
+                        }
+                    }
+                }
+            }
+            return;
+        }
+        ithaMenuPlaced = true;
+        if (getClipChildren()) {
+            setClipChildren(false);
+        }
+        final android.view.View menuView = (android.view.View) ithaMenuItem.getParent();
+        final float cx = menuView.getX() + ithaMenuItem.getX() + ithaMenuItem.getWidth() / 2f;
+        final float cy = menuView.getY() + ithaMenuItem.getY() + ithaMenuItem.getHeight() / 2f;
+        final float ax = getX() + avatarImageView.getLeft() + avatarImageView.getWidth() / 2f;
+        final float ay = getY() + avatarImageView.getTop() + avatarImageView.getHeight() / 2f;
+        for (android.view.View v : moved) {
+            if (v != null) {
+                v.setTranslationX(cx - ax);
+                v.setTranslationY(cy - ay);
+            }
+        }
+        ithaOverlayLast = overlayOpen;
+    }
+
     /** Ancho de la banda de texto: el titulo (con el espacio de sus iconos a ambos lados) o el subtitulo, el mayor. */
     public int ithaComputeBand() {
         if (titleTextView == null || subtitleTextView == null || ithaAvailWidth <= 0) {
@@ -791,7 +869,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         final int tText = (int) Math.ceil(titleTextView.getTextWidth());
         final int sw = (int) Math.ceil(subtitleTextView.getExactWidthIncludeDrawables());
         final boolean center = org.telegram.messenger.IthaConfig.isChatTitleCentered();
-        final boolean avatarRight = org.telegram.messenger.IthaConfig.isChatAvatarRight() && hasVisibleAvatar();
+        final boolean avatarRight = org.telegram.messenger.IthaConfig.isChatAvatarRight() && hasVisibleAvatar() && !ithaMenuSlotAvatar();
         // con el avatar a la derecha el texto arranca donde arrancaria sin avatar
         final float shift = avatarRight ? -dp(36.66f) : 0f;
         final float dt = (center ? Math.max(0, (bw - Math.min(tText, bw)) / 2f) : 0f) + shift;
@@ -842,7 +920,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         final int subtitleTop = viewTop + dp(glassMode ? 23.66f : 24);
 
         avatarImageView.layout(1 + leftPadding, 1 + viewTop, 1 + leftPadding + avatarImageView.getMeasuredWidth(), 1 + viewTop + avatarImageView.getMeasuredHeight());
-        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE ? dp(glassMode ? 49.66f : 55) : dp(glassMode ? 13 : 1)) + rightAvatarPadding;
+        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !ithaMenuSlotAvatar() ? dp(glassMode ? 49.66f : 55) : dp(glassMode ? 13 : 1)) + rightAvatarPadding;
         SimpleTextView titleTextLargerCopyView = this.titleTextLargerCopyView.get();
         if (getSubtitleTextView().getVisibility() != GONE) {
             titleTextView.layout(l, viewTop + dp(1.66f) - titleTextView.getPaddingTop(), l + titleTextView.getMeasuredWidth(), viewTop + titleTextView.getTextHeight() + dp(1.66f) - titleTextView.getPaddingTop() + titleTextView.getPaddingBottom());
@@ -889,6 +967,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             // la pildora se dibuja en la barra: avisarle que el contenido cambio de tamano
             ((android.view.View) getParent()).invalidate();
         }
+        ithaMenuSlotLast = ithaMenuSlotAvatar();
     }
 
     public void setLeftPadding(int value) {
@@ -1824,7 +1903,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (subtitleTextView != null) {
             width = Math.max(width, subtitleTextView.getExactWidthIncludeDrawables());
         }
-        if (hasVisibleAvatar()) {
+        if (hasVisibleAvatar() && !ithaMenuSlotAvatar()) {
             width += dp(52 + 18);
         } else {
             width += dp(34);

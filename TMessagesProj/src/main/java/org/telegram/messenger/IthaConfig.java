@@ -140,6 +140,48 @@ public class IthaConfig {
         prefs().edit().putBoolean("chat_avatar_right", value).apply();
     }
 
+    /** Avatar dentro del boton de menu (en lugar de los tres puntos). */
+    public static boolean isChatAvatarMenu() {
+        return prefs().getBoolean("chat_avatar_menu", false);
+    }
+
+    public static void setChatAvatarMenu(boolean value) {
+        prefs().edit().putBoolean("chat_avatar_menu", value).apply();
+    }
+
+    /** El boton de llamada de la barra del chat pasa al menu de los tres puntos. */
+    public static boolean isChatCallInMenu() {
+        return prefs().getBoolean("chat_call_in_menu", false);
+    }
+
+    public static void setChatCallInMenu(boolean value) {
+        prefs().edit().putBoolean("chat_call_in_menu", value).apply();
+    }
+
+    /** Coloca el avatar sobre el boton de menu si la opcion esta activa (se llama al dibujar la barra). */
+    public static void placeMenuAvatar(android.view.ViewGroup bar, float modeFactor, boolean overlayOpen) {
+        for (int i = 0, n = bar.getChildCount(); i < n; i++) {
+            android.view.View child = bar.getChildAt(i);
+            if (child instanceof org.telegram.ui.Components.ChatAvatarContainer) {
+                ((org.telegram.ui.Components.ChatAvatarContainer) child).ithaPlaceMenuAvatar(modeFactor, overlayOpen);
+                return;
+            }
+        }
+    }
+
+    /** Botones de menu que llevan el avatar encima (el menu desplegable los cierra mas rapido, sin esperar el rebote). */
+    public static final java.util.WeakHashMap<android.view.View, org.telegram.ui.Components.ChatAvatarContainer> menuAvatarItems = new java.util.WeakHashMap<>();
+
+    public static boolean isMenuAvatarItem(android.view.View item) {
+        return item != null && isChatAvatarMenu() && menuAvatarItems.containsKey(item);
+    }
+
+    /** El avatar que ahora mismo esta sobre este boton de menu (para que el menu desplegable lo dibuje al abrirse y cerrarse). */
+    public static android.view.View menuAvatarView(android.view.View item) {
+        final org.telegram.ui.Components.ChatAvatarContainer c = item != null && isChatAvatarMenu() ? menuAvatarItems.get(item) : null;
+        return c != null && c.ithaMenuSlotAvatar() ? c.ithaAvatarView() : null;
+    }
+
     /** Resultado de layoutChatPill: bordes de la pildora del chat. */
     public static int pillLeft, pillRight;
 
@@ -162,7 +204,7 @@ public class IthaConfig {
                 continue;
             }
             org.telegram.ui.Components.ChatAvatarContainer c = (org.telegram.ui.Components.ChatAvatarContainer) child;
-            final boolean avatar = c.hasVisibleAvatar();
+            final boolean avatar = c.hasVisibleAvatar() && !c.ithaMenuSlotAvatar();
             // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
             int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
                     - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));

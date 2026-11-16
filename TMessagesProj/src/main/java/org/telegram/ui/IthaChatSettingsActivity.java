@@ -90,6 +90,15 @@ public class IthaChatSettingsActivity extends BaseFragment {
                     IthaConfig.setChatAvatarRight(value);
                     preview.invalidate();
                 });
+        check(context, tr("Avatar en el botón de menú", "Avatar in the menu button"), tr("El avatar ocupa el lugar de los tres puntos. Tocalo para abrir el menú; mantenelo presionado para ver el perfil.", "The avatar takes the place of the three dots. Tap it to open the menu; hold it to see the profile."),
+                IthaConfig.isChatAvatarMenu(), (value) -> {
+                    IthaConfig.setChatAvatarMenu(value);
+                    preview.invalidate();
+                });
+        check(context, tr("Llamada dentro del menú", "Call inside the menu"), tr("Quita el botón de llamada de la barra; queda en el menú de los tres puntos. Se aplica al abrir un chat.", "Removes the call button from the bar; it stays in the three-dots menu. Applies when you open a chat."),
+                IthaConfig.isChatCallInMenu(), (value) -> {
+                    IthaConfig.setChatCallInMenu(value);
+                });
         check(context, tr("Píldora compacta", "Compact pill"), tr("Ajusta el fondo del título más al texto, sin espacio de sobra.", "Fits the title background closer to the text."),
                 IthaConfig.isChatPillCompact(), (value) -> {
                     IthaConfig.setChatPillCompact(value);
@@ -195,8 +204,10 @@ public class IthaChatSettingsActivity extends BaseFragment {
             final float pl0 = dp(60);
             final float full = w - dp(60) * 2;
             final float textW = Math.max(nameW, subW);
-            final boolean right = avatar && IthaConfig.isChatAvatarRight();
-            final float contentW = right ? dp(16) + textW + dp(8) + dp(38) + dp(10) : (avatar ? dp(52) : dp(16)) + textW + dp(10);
+            final boolean menuAv = avatar && IthaConfig.isChatAvatarMenu();
+            final boolean inPill = avatar && !menuAv;
+            final boolean right = inPill && IthaConfig.isChatAvatarRight();
+            final float contentW = right ? dp(16) + textW + dp(8) + dp(38) + dp(10) : (inPill ? dp(52) : dp(16)) + textW + dp(10);
             final float pillW = IthaConfig.isChatPillCompact() ? Math.min(full, contentW) : full;
             final boolean centered = IthaConfig.isChatTitleCentered();
             final float pl = pl0 + (centered ? (full - pillW) / 2f : 0f);
@@ -211,7 +222,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
             }
 
             float textLeft = cl + dp(16);
-            if (avatar) {
+            if (inPill) {
                 final float acx = right ? cl + dp(16) + textW + dp(8) + dp(19) : cl + dp(24);
                 paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
                 canvas.drawCircle(acx, cy, dp(19), paint);
@@ -239,6 +250,20 @@ public class IthaChatSettingsActivity extends BaseFragment {
             paint.setTypeface(null);
             paint.setTextSize(dp(13));
             canvas.drawText(sub, textLeft, cy + dp(15), paint);
+
+            if (menuAv) {
+                // el avatar tapa los tres puntos del boton de menu
+                final float mx = w - dp(34);
+                paint.setColor(bubble);
+                canvas.drawCircle(mx, cy, dp(20), paint);
+                paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
+                canvas.drawCircle(mx, cy, dp(17), paint);
+                paint.setColor(0xffffffff);
+                paint.setTypeface(AndroidUtilities.bold());
+                paint.setTextSize(dp(15));
+                final String initial = name.substring(0, 1).toUpperCase();
+                canvas.drawText(initial, mx - paint.measureText(initial) / 2f, cy + dp(5), paint);
+            }
         }
     }
 }

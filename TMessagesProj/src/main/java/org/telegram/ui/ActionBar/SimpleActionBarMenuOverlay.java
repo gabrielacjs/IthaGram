@@ -485,8 +485,8 @@ public class SimpleActionBarMenuOverlay extends FrameLayout {
             menuH = f * (1f - u * u * (3f - 2f * u));
             // the button settles after the menu pours back: a small squash, ~0.35 s
             final float tw = t - 0.2f;
-            wobble = tw > 0 && startFromPill ? 0.07f * f * (float) Math.exp(-tw / 0.11f) * (float) Math.sin(2 * Math.PI * tw / 0.17f) : 0f;
-            if (startFromPill ? tw > 0.45f : tw >= 0) { // an action mode button has no own glass to settle
+            wobble = tw > 0 && startFromPill && !org.telegram.messenger.IthaConfig.isMenuAvatarItem(item) ? 0.07f * f * (float) Math.exp(-tw / 0.11f) * (float) Math.sin(2 * Math.PI * tw / 0.17f) : 0f;
+            if ((startFromPill && !org.telegram.messenger.IthaConfig.isMenuAvatarItem(item)) ? tw > 0.45f : tw >= 0) { // an action mode button has no own glass to settle
                 wobble = 0;
                 post(() -> {
                     if (!opened && animating) { // not opened again meanwhile
@@ -658,13 +658,25 @@ public class SimpleActionBarMenuOverlay extends FrameLayout {
         // come back while the items are still fading out on closing
         final float ia = 1f - Utilities.clamp01(m / (opened ? 0.3f : 0.7f));
         final View icon = startFromPill ? bar.getMenuView() : item.getIconView();
-        if (ia > 0.004f && icon != null) {
+        // IthaGram: el avatar del boton de menu se dibuja aqui en lugar de los tres puntos
+        final View ithaAvatar = org.telegram.messenger.IthaConfig.menuAvatarView(item);
+        if (ia > 0.004f && icon != null && !(ithaAvatar != null && !startFromPill)) {
             computeViewRect(icon, tmpRect);
             final float s = 1f - 0.15f * Utilities.clamp01(m / 0.3f);
             saveFaded(canvas, tmpRect.left, tmpRect.top, tmpRect.right, tmpRect.bottom, ia);
             canvas.scale(s * (1f + wobble * 0.5f), s * (1f - wobble), tmpRect.centerX(), tmpRect.centerY());
             canvas.translate(tmpRect.left, tmpRect.top);
             icon.draw(canvas);
+            canvas.restore();
+        }
+        if (ia > 0.004f && ithaAvatar != null) {
+            computeViewRect(item, tmpRect);
+            final float s = 1f - 0.15f * Utilities.clamp01(m / 0.3f);
+            final float acx = tmpRect.centerX(), acy = tmpRect.centerY();
+            saveFaded(canvas, acx - dp(24), acy - dp(24), acx + dp(24), acy + dp(24), ia);
+            canvas.scale(s, s, acx, acy);
+            canvas.translate(acx - ithaAvatar.getWidth() / 2f, acy - ithaAvatar.getHeight() / 2f);
+            ithaAvatar.draw(canvas);
             canvas.restore();
         }
 

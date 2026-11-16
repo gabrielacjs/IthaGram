@@ -1,0 +1,176 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index 8da2d9f..ef2d224 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -142,0 +143,20 @@ public class IthaConfig {
++    /** Avatar dentro del boton de menu (en lugar de los tres puntos). */
++    public static boolean isChatAvatarMenu() {
++        return prefs().getBoolean("chat_avatar_menu", false);
++    }
++
++    public static void setChatAvatarMenu(boolean value) {
++        prefs().edit().putBoolean("chat_avatar_menu", value).apply();
++    }
++
++    /** Coloca el avatar sobre el boton de menu si la opcion esta activa (se llama al dibujar la barra). */
++    public static void placeMenuAvatar(android.view.ViewGroup bar, float modeFactor) {
++        for (int i = 0, n = bar.getChildCount(); i < n; i++) {
++            android.view.View child = bar.getChildAt(i);
++            if (child instanceof org.telegram.ui.Components.ChatAvatarContainer) {
++                ((org.telegram.ui.Components.ChatAvatarContainer) child).ithaPlaceMenuAvatar(modeFactor);
++                return;
++            }
++        }
++    }
++
+@@ -165 +185 @@ public class IthaConfig {
+-            final boolean avatar = c.hasVisibleAvatar();
++            final boolean avatar = c.hasVisibleAvatar() && !c.ithaMenuSlotAvatar();
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
+index ab0f8fb..58a8a40 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
+@@ -2513,0 +2514 @@
++                    org.telegram.messenger.IthaConfig.placeMenuAvatar(this, Math.max(searchFactor, actionModeFactor));
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 7091a36..385e72d 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -4336,0 +4337,18 @@
++            if (avatarContainer != null) {
++                // IthaGram: avatar en el boton de menu: tocar abre el perfil, mantener presionado abre el menu
++                avatarContainer.ithaMenuItem = headerItem;
++                headerItem.setOnClickListener(v -> {
++                    if (avatarContainer.ithaMenuSlotAvatar()) {
++                        avatarContainer.ithaOpenProfileFromMenu();
++                    } else if (headerItem.hasSubMenu()) {
++                        headerItem.toggleSubMenu();
++                    }
++                });
++                headerItem.setOnLongClickListener(v -> {
++                    if (!avatarContainer.ithaMenuSlotAvatar()) {
++                        return false;
++                    }
++                    headerItem.toggleSubMenu();
++                    return true;
++                });
++            }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index 8602ccf..9ed92dc 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -671 +671 @@
+-        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE ? 54 : 0) + 16);
++        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE && !ithaMenuSlotAvatar() ? 54 : 0) + 16);
+@@ -771,0 +772,65 @@
++    // IthaGram: avatar en el boton de menu (ocupa el lugar de los tres puntos)
++    public org.telegram.ui.ActionBar.ActionBarMenuItem ithaMenuItem;
++    private float ithaModeFactor;
++    private boolean ithaMenuSlotLast, ithaMenuPlaced;
++
++    /** Dice si el avatar esta ahora mismo en el boton de menu (opcion activa, boton visible y sin busqueda ni seleccion). */
++    public boolean ithaMenuSlotAvatar() {
++        return org.telegram.messenger.IthaConfig.isChatAvatarMenu() && hasVisibleAvatar() && ithaMenuItem != null
++                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getParent() instanceof android.view.View
++                && getParent() instanceof ActionBar && ithaModeFactor <= 0.001f;
++    }
++
++    /** Tocar el avatar del boton de menu hace lo mismo que tocar el avatar normal. */
++    public void ithaOpenProfileFromMenu() {
++        if (avatarImageView == null || !avatarImageView.performClick()) {
++            openProfile(true);
++        }
++    }
++
++    /** Mueve el avatar (y sus detalles) encima del boton de menu y oculta los tres puntos. Se llama al dibujar la barra. */
++    public void ithaPlaceMenuAvatar(float modeFactor) {
++        ithaModeFactor = modeFactor;
++        final boolean on = ithaMenuSlotAvatar();
++        if (on != ithaMenuSlotLast) {
++            // el texto gana o pierde el espacio del avatar: recalcular
++            post(this::requestLayout);
++        }
++        if (ithaMenuItem != null && ithaMenuItem.getIconView() != null && (on || ithaMenuPlaced)) {
++            final int visibility = on ? INVISIBLE : VISIBLE;
++            if (ithaMenuItem.getIconView().getVisibility() != visibility) {
++                ithaMenuItem.getIconView().setVisibility(visibility);
++            }
++        }
++        final android.view.View[] moved = {avatarImageView, communityItem, timeItem, starBgItem, starFgItem};
++        if (!on) {
++            if (ithaMenuPlaced) {
++                ithaMenuPlaced = false;
++                for (android.view.View v : moved) {
++                    if (v != null) {
++                        v.setTranslationY(0);
++                        if (!org.telegram.messenger.IthaConfig.isChatAvatarRight()) {
++                            v.setTranslationX(0);
++                        }
++                    }
++                }
++            }
++            return;
++        }
++        ithaMenuPlaced = true;
++        if (getClipChildren()) {
++            setClipChildren(false);
++        }
++        final android.view.View menuView = (android.view.View) ithaMenuItem.getParent();
++        final float cx = menuView.getX() + ithaMenuItem.getX() + ithaMenuItem.getWidth() / 2f;
++        final float cy = menuView.getY() + ithaMenuItem.getY() + ithaMenuItem.getHeight() / 2f;
++        final float ax = getX() + avatarImageView.getLeft() + avatarImageView.getWidth() / 2f;
++        final float ay = getY() + avatarImageView.getTop() + avatarImageView.getHeight() / 2f;
++        for (android.view.View v : moved) {
++            if (v != null) {
++                v.setTranslationX(cx - ax);
++                v.setTranslationY(cy - ay);
++            }
++        }
++    }
++
+@@ -794 +859 @@
+-        final boolean avatarRight = org.telegram.messenger.IthaConfig.isChatAvatarRight() && hasVisibleAvatar();
++        final boolean avatarRight = org.telegram.messenger.IthaConfig.isChatAvatarRight() && hasVisibleAvatar() && !ithaMenuSlotAvatar();
+@@ -845 +910 @@
+-        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE ? dp(glassMode ? 49.66f : 55) : dp(glassMode ? 13 : 1)) + rightAvatarPadding;
++        int l = leftPadding + (avatarImageView.getVisibility() == VISIBLE && !ithaMenuSlotAvatar() ? dp(glassMode ? 49.66f : 55) : dp(glassMode ? 13 : 1)) + rightAvatarPadding;
+@@ -891,0 +957 @@
++        ithaMenuSlotLast = ithaMenuSlotAvatar();
+@@ -1827 +1893 @@
+-        if (hasVisibleAvatar()) {
++        if (hasVisibleAvatar() && !ithaMenuSlotAvatar()) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+index c416fab..1907f66 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+@@ -92,0 +93,5 @@ public class IthaChatSettingsActivity extends BaseFragment {
++        check(context, tr("Avatar en el botón de menú", "Avatar in the menu button"), tr("El avatar ocupa el lugar de los tres puntos. Tocá para ver el perfil; mantené presionado para abrir el menú.", "The avatar takes the place of the three dots. Tap for the profile; hold to open the menu."),
++                IthaConfig.isChatAvatarMenu(), (value) -> {
++                    IthaConfig.setChatAvatarMenu(value);
++                    preview.invalidate();
++                });
+@@ -198,2 +203,4 @@ public class IthaChatSettingsActivity extends BaseFragment {
+-            final boolean right = avatar && IthaConfig.isChatAvatarRight();
+-            final float contentW = right ? dp(16) + textW + dp(8) + dp(38) + dp(10) : (avatar ? dp(52) : dp(16)) + textW + dp(10);
++            final boolean menuAv = avatar && IthaConfig.isChatAvatarMenu();
++            final boolean inPill = avatar && !menuAv;
++            final boolean right = inPill && IthaConfig.isChatAvatarRight();
++            final float contentW = right ? dp(16) + textW + dp(8) + dp(38) + dp(10) : (inPill ? dp(52) : dp(16)) + textW + dp(10);
+@@ -214 +221 @@ public class IthaChatSettingsActivity extends BaseFragment {
+-            if (avatar) {
++            if (inPill) {
+@@ -241,0 +249,14 @@ public class IthaChatSettingsActivity extends BaseFragment {
++
++            if (menuAv) {
++                // el avatar tapa los tres puntos del boton de menu
++                final float mx = w - dp(34);
++                paint.setColor(bubble);
++                canvas.drawCircle(mx, cy, dp(20), paint);
++                paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
++                canvas.drawCircle(mx, cy, dp(17), paint);
++                paint.setColor(0xffffffff);
++                paint.setTypeface(AndroidUtilities.bold());
++                paint.setTextSize(dp(15));
++                final String initial = name.substring(0, 1).toUpperCase();
++                canvas.drawText(initial, mx - paint.measureText(initial) / 2f, cy + dp(5), paint);
++            }

@@ -4286,8 +4286,8 @@ public class ChatActivity extends BaseFragment implements
                 audioCallIconItem.setContentDescription(LocaleController.getString(R.string.Call));
                 userFull = getMessagesController().getUserFull(currentUser.id);
                 if (userFull != null && userFull.phone_calls_available) {
-                    showAudioCallAsIcon = !inPreviewMode;
-                    audioCallIconItem.setVisibility(View.VISIBLE);
+                    showAudioCallAsIcon = !inPreviewMode && !org.telegram.messenger.IthaConfig.isChatCallInMenu();
+                    audioCallIconItem.setVisibility(showAudioCallAsIcon ? View.VISIBLE : View.GONE);
                 } else {
                     showAudioCallAsIcon = false;
                     audioCallIconItem.setVisibility(View.GONE);
@@ -4334,6 +4334,22 @@ public class ChatActivity extends BaseFragment implements
             });
             otherIcon.addView(headerItem.getIconView());
             headerItem.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
+            if (avatarContainer != null) {
+                // IthaGram: avatar en el boton de menu: tocar abre el menu, mantener presionado abre el perfil
+                avatarContainer.ithaMenuItem = headerItem;
+                headerItem.setOnClickListener(v -> {
+                    if (headerItem.hasSubMenu()) {
+                        headerItem.toggleSubMenu();
+                    }
+                });
+                headerItem.setOnLongClickListener(v -> {
+                    if (!avatarContainer.ithaMenuSlotAvatar()) {
+                        return false;
+                    }
+                    avatarContainer.ithaOpenProfileFromMenu();
+                    return true;
+                });
+            }
 
             if (currentUser != null && currentUser.self && chatMode != MODE_SAVED) {
                 savedChatsItem = headerItem.lazilyAddSubItem(view_as_topics, R.drawable.msg_topics, LocaleController.getString(R.string.SavedViewAsChats));
@@ -24827,7 +24843,7 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
                 if (headerItem != null) {
-                    showAudioCallAsIcon = userInfo.phone_calls_available && !inPreviewMode;
+                    showAudioCallAsIcon = userInfo.phone_calls_available && !inPreviewMode && !org.telegram.messenger.IthaConfig.isChatCallInMenu();
                     if (userInfo.phone_calls_available) {
                         if (showAudioCallAsIcon) {
                             if (audioCallIconItem != null) {
@@ -30620,8 +30636,8 @@ public class ChatActivity extends BaseFragment implements
         if (currentUser != null && audioCallIconItem != null) {
             TLRPC.UserFull userFull = getMessagesController().getUserFull(currentUser.id);
             if (userFull != null && userFull.phone_calls_available) {
-                showAudioCallAsIcon = !inPreviewMode;
-                audioCallIconItem.setVisibility(View.VISIBLE);
+                showAudioCallAsIcon = !inPreviewMode && !org.telegram.messenger.IthaConfig.isChatCallInMenu();
+                audioCallIconItem.setVisibility(showAudioCallAsIcon ? View.VISIBLE : View.GONE);
             } else {
                 showAudioCallAsIcon = false;
                 audioCallIconItem.setVisibility(View.GONE);

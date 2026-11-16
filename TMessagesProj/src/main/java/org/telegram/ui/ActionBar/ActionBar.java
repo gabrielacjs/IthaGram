@@ -2511,6 +2511,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                     org.telegram.messenger.IthaConfig.layoutChatPill(this, leftDefault, rightDefault, Math.max(searchFactor, actionModeFactor));
                     left = org.telegram.messenger.IthaConfig.pillLeft;
                     right = org.telegram.messenger.IthaConfig.pillRight;
+                    org.telegram.messenger.IthaConfig.placeMenuAvatar(this, Math.max(searchFactor, actionModeFactor), openMenuOverlay != null);
                 }
 
                 glassDrawable.setBounds(left, t, right, b);
