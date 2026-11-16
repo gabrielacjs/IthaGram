@@ -71,6 +71,9 @@ public class IthaSettingsActivity extends BaseFragment {
         row(context, tr("Ajustes de chat", "Chat settings"),
                 tr("Encabezado dentro de los chats", "Header inside chats"),
                 () -> presentFragment(new IthaChatSettingsActivity()));
+        row(context, tr("Plugins", "Plugins"),
+                tr("Extensiones .plugin (Python)", "Python .plugin extensions"),
+                () -> presentFragment(new IthaPluginsActivity()));
     }
 
     private void section(Context context, String title) {

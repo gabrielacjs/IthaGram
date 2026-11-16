@@ -420,7 +420,7 @@ public abstract class ViewPagerActivity extends BaseFragment {
             final boolean backward = false; // todo: support backward
 
             if (!isResumed && visibilityByViewPage > 0 && parentIsResumed && fragment.fragmentView != null) {
-                fragment.onResume();
+                org.telegram.messenger.IthaHooks.resume(fragment);
                 isResumed = true;
             }
             if (!isInAnimation && (oldVisibility == 0 || oldVisibility == 1f) && oldVisibility != newVisibility && (Math.abs(oldVisibility - newVisibility) != 1f)) {

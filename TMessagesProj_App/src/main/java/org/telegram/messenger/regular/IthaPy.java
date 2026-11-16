@@ -27,6 +27,7 @@ public class IthaPy {
             }
             String r = Python.getInstance().getModule("ithahello").callAttr("hello").toString();
             Log.i("IthaPy", "OK: " + r);
+            org.telegram.messenger.IthaPlugins.setHost(new IthaPyHost());
             startPlugins(context);
         } catch (Throwable t) {
             Log.e("IthaPy", "FALLO", t);
