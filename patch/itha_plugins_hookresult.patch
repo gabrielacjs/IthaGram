@@ -1,0 +1,20 @@
+diff --git a/TMessagesProj_App/src/main/python/base_plugin.py b/TMessagesProj_App/src/main/python/base_plugin.py
+index d06b064..a26a9ec 100644
+--- a/TMessagesProj_App/src/main/python/base_plugin.py
++++ b/TMessagesProj_App/src/main/python/base_plugin.py
+@@ -26,6 +26,15 @@ class HookStrategy:
+     MODIFY_FINAL = "MODIFY_FINAL"
+ 
+ 
++class HookResult:
++    """Resultado de un hook (compatible con exteraGram)."""
++
++    def __init__(self, strategy=HookStrategy.DEFAULT, message=None, params=None):
++        self.strategy = strategy
++        self.message = message
++        self.params = params
++
++
+ class MethodHook:
+     def before_hooked_method(self, param):
+         pass

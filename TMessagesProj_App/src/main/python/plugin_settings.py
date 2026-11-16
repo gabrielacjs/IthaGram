@@ -51,3 +51,24 @@ def set_setting(plugin_id, key, value):
         os.replace(tmp, p)
     except Exception:
         pass
+
+
+def get_all_settings(plugin_id):
+    return dict(_load(plugin_id))
+
+
+def set_all_settings(plugin_id, settings):
+    data = _load(plugin_id)
+    data.clear()
+    data.update(settings or {})
+    p = _path(plugin_id)
+    if not p:
+        return True
+    try:
+        tmp = p + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+        os.replace(tmp, p)
+        return True
+    except Exception:
+        return False

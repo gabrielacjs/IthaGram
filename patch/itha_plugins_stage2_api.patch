@@ -1,0 +1,280 @@
+diff --git a/TMessagesProj_App/src/main/python/ithabus.py b/TMessagesProj_App/src/main/python/ithabus.py
+index 641ab47..f5eb4c9 100644
+--- a/TMessagesProj_App/src/main/python/ithabus.py
++++ b/TMessagesProj_App/src/main/python/ithabus.py
+@@ -6,8 +6,12 @@ Cada funcion execute_* es segura: si un plugin falla, se registra y se sigue.
+ """
+ import traceback
+ 
++from java import dynamic_proxy, jclass
++
+ from android_utils import log
+ 
++IthaHooks = jclass("org.telegram.messenger.IthaHooks")
++
+ _event_hooks = {}   # plugin_id -> {nombre: (match_substring, priority)}
+ _menu_items = {}    # plugin_id -> {item_id: dict}
+ _counter = [0]
+@@ -21,12 +25,31 @@ def _plugins():
+         return {}
+ 
+ 
++def _refresh_flags():
++    """Avisa a Java si hay plugins escuchando, para no llamar a Python de balde."""
++    try:
++        send = False
++        other = False
++        for hooks in _event_hooks.values():
++            for name in hooks:
++                if name == "send_message_hook":
++                    send = True
++                else:
++                    other = True
++        IthaHooks.sendActive = send
++        IthaHooks.updatesActive = other
++    except Exception as e:
++        log("ithabus flags error: %s" % e)
++
++
+ def add_event_hook(pid, name, match_substring=False, priority=0):
+     _event_hooks.setdefault(pid, {})[str(name)] = (bool(match_substring), int(priority))
++    _refresh_flags()
+ 
+ 
+ def remove_event_hook(pid, name):
+     _event_hooks.get(pid, {}).pop(str(name), None)
++    _refresh_flags()
+ 
+ 
+ def add_menu_item(pid, data):
+@@ -46,25 +69,30 @@ def remove_menu_item(pid, item_id):
+ def remove_plugin(pid):
+     _event_hooks.pop(pid, None)
+     _menu_items.pop(pid, None)
++    _refresh_flags()
++
++
++def _matches(name, substr, event_name):
++    return name == str(event_name) or (substr and name in str(event_name))
+ 
+ 
+-def _subscribed(pid, event_name, hook_name):
++def _subscribed(pid, event_name):
+     hooks = _event_hooks.get(pid)
+     if not hooks:
+         return False
+     for name, (substr, _prio) in hooks.items():
+-        if name == hook_name or (substr and name in str(event_name)):
++        if _matches(name, substr, event_name):
+             return True
+     return False
+ 
+ 
+-def _ordered(hook_name, event_name):
++def _ordered(event_name):
+     out = []
+     for pid, plugin in list(_plugins().items()):
+-        if _subscribed(pid, event_name, hook_name):
++        if _subscribed(pid, event_name):
+             prio = 0
+             for name, (substr, p) in _event_hooks[pid].items():
+-                if name == hook_name or (substr and name in str(event_name)):
++                if _matches(name, substr, event_name):
+                     prio = max(prio, p)
+             out.append((-prio, pid, plugin))
+     out.sort(key=lambda t: (t[0], t[1]))
+@@ -73,7 +101,7 @@ def _ordered(hook_name, event_name):
+ 
+ def execute_send_message(account, params):
+     """Devuelve (cancelar, params). `params` es el SendMessageParams de Telegram."""
+-    for pid, plugin in _ordered("send_message_hook", "send_message_hook"):
++    for pid, plugin in _ordered("send_message_hook"):
+         try:
+             res = plugin.on_send_message_hook(account, params)
+             strat = getattr(res, "strategy", "DEFAULT")
+@@ -89,7 +117,7 @@ def execute_send_message(account, params):
+ 
+ 
+ def execute_update(account, update_name, update):
+-    for pid, plugin in _ordered("on_update_hook", update_name):
++    for pid, plugin in _ordered(update_name):
+         try:
+             res = plugin.on_update_hook(update_name, account, update)
+             strat = getattr(res, "strategy", "DEFAULT")
+@@ -105,7 +133,7 @@ def execute_update(account, update_name, update):
+ 
+ 
+ def execute_updates(account, container_name, updates):
+-    for pid, plugin in _ordered("on_updates_hook", container_name):
++    for pid, plugin in _ordered(container_name):
+         try:
+             res = plugin.on_updates_hook(container_name, account, updates)
+             strat = getattr(res, "strategy", "DEFAULT")
+@@ -121,7 +149,7 @@ def execute_updates(account, container_name, updates):
+ 
+ 
+ def execute_pre_request(account, request_name, request):
+-    for pid, plugin in _ordered("pre_request_hook", request_name):
++    for pid, plugin in _ordered(request_name):
+         try:
+             res = plugin.pre_request_hook(request_name, account, request)
+             strat = getattr(res, "strategy", "DEFAULT")
+@@ -137,7 +165,7 @@ def execute_pre_request(account, request_name, request):
+ 
+ 
+ def execute_post_request(account, request_name, response, error):
+-    for pid, plugin in _ordered("post_request_hook", request_name):
++    for pid, plugin in _ordered(request_name):
+         try:
+             res = plugin.post_request_hook(request_name, account, response, error)
+             strat = getattr(res, "strategy", "DEFAULT")
+@@ -169,3 +197,58 @@ def menu_items_for(menu_type):
+                 out.append(data)
+     out.sort(key=lambda d: -int(d.get("priority") or 0))
+     return out
++
++
++def process_updates(account, updates):
++    """Llamado desde MessagesController.processUpdates. False = descartar todo el paquete."""
++    res = execute_updates(account, updates.getClass().getSimpleName(), updates)
++    if res is None:
++        return False
++    try:
++        lst = updates.updates
++    except Exception:
++        return True
++    try:
++        i = 0
++        while i < lst.size():
++            u = lst.get(i)
++            r = execute_update(account, u.getClass().getSimpleName(), u)
++            if r is None:
++                lst.remove(u)
++                continue
++            if r is not u:
++                lst.set(i, r)
++            i += 1
++    except Exception:
++        log("process_updates error: %s" % traceback.format_exc())
++    return True
++
++
++class _Bus(dynamic_proxy(jclass("org.telegram.messenger.IthaHooks$Bus"))):
++    def sendMessage(self, account, params):
++        try:
++            cancel, params = execute_send_message(int(account), params)
++            return None if cancel else params
++        except Exception:
++            log("bus.sendMessage error: %s" % traceback.format_exc())
++            return params
++
++    def updates(self, account, updates):
++        try:
++            return bool(process_updates(int(account), updates))
++        except Exception:
++            log("bus.updates error: %s" % traceback.format_exc())
++            return True
++
++    def appEvent(self, event):
++        try:
++            execute_app_event(str(event))
++        except Exception:
++            log("bus.appEvent error: %s" % traceback.format_exc())
++
++
++_bus = _Bus()
++try:
++    IthaHooks.bus = _bus
++except Exception as e:
++    log("no se pudo instalar el bus: %s" % e)
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+@@ -59,1 +59,53 @@
+     private static final CopyOnWriteArrayList<Entry> entries = new CopyOnWriteArrayList<>();
++    /** Puente hacia el motor de Python (lo instala ithabus.py al iniciar). */
++    public interface Bus {
++        Object sendMessage(int account, Object params);
++
++        boolean updates(int account, Object updates);
++
++        void appEvent(String event);
++    }
++
++    public static volatile Bus bus;
++    public static volatile boolean sendActive;
++    public static volatile boolean updatesActive;
++
++    /** null = el plugin cancelo el envio. */
++    public static SendMessagesHelper.SendMessageParams sendMessageHook(int account, SendMessagesHelper.SendMessageParams params) {
++        Bus b = bus;
++        if (b == null || !sendActive) {
++            return params;
++        }
++        try {
++            return (SendMessagesHelper.SendMessageParams) b.sendMessage(account, params);
++        } catch (Throwable t) {
++            FileLog.e(t);
++            return params;
++        }
++    }
++
++    /** false = un plugin descarto este paquete de updates. */
++    public static boolean updatesHook(int account, org.telegram.tgnet.TLRPC.Updates updates) {
++        Bus b = bus;
++        if (b == null || !updatesActive) {
++            return true;
++        }
++        try {
++            return b.updates(account, updates);
++        } catch (Throwable t) {
++            FileLog.e(t);
++            return true;
++        }
++    }
++
++    public static void appEvent(String event) {
++        Bus b = bus;
++        if (b == null) {
++            return;
++        }
++        try {
++            b.appEvent(event);
++        } catch (Throwable t) {
++            FileLog.e(t);
++        }
++    }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java
+@@ -4441,1 +4441,9 @@
+-    public void sendMessage(SendMessageParams sendMessageParams) {
++    public void sendMessage(SendMessageParams sendMessageParams) {
++        sendMessageParams = IthaHooks.sendMessageHook(currentAccount, sendMessageParams);
++        if (sendMessageParams == null) {
++            return;
++        }
++        sendMessageItha(sendMessageParams);
++    }
++
++    private void sendMessageItha(SendMessageParams sendMessageParams) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -17917,1 +17917,4 @@
+     public void processUpdates(final TLRPC.Updates updates, boolean fromQueue) {
++        if (!fromQueue && !IthaHooks.updatesHook(currentAccount, updates)) {
++            return;
++        }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -6900,1 +6900,2 @@
+         super.onPause();
++        org.telegram.messenger.IthaHooks.appEvent("app_pause");
+@@ -6970,1 +6971,2 @@
+         super.onStop();
++        org.telegram.messenger.IthaHooks.appEvent("app_stop");
+@@ -7212,1 +7214,2 @@
+         super.onResume();
++        org.telegram.messenger.IthaHooks.appEvent("app_resume");

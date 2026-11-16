@@ -211,6 +211,10 @@ apply plugin: 'com.google.gms.google-services'
 chaquopy {
     defaultConfig {
         version = "3.11"
+        // librerias de Python que usan algunos plugins (se descargan al compilar)
+        pip {
+            install "requests"
+        }
         pyc {
             src = false
             pip = false

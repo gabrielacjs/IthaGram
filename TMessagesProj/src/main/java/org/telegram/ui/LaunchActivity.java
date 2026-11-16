@@ -6898,6 +6898,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onPause() {
         super.onPause();
+        org.telegram.messenger.IthaHooks.appEvent("app_pause");
         isResumed = false;
         WidgetMedia.onAppPaused(true);
         PipCoordinator.getInstance().onActivityPause(this);
@@ -6968,6 +6969,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onStop() {
         super.onStop();
+        org.telegram.messenger.IthaHooks.appEvent("app_stop");
         GramWalletStorageAuth.onActivityStopped(this);
         isStarted = false;
         PipCoordinator.getInstance().onActivityStop(this);
@@ -7210,6 +7212,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
+        org.telegram.messenger.IthaHooks.appEvent("app_resume");
         WidgetMedia.onAppPaused(false);
         isResumed = true;
         PipCoordinator.getInstance().onActivityResume(this);

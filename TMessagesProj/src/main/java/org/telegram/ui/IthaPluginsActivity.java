@@ -204,7 +204,17 @@ public class IthaPluginsActivity extends BaseFragment {
 
     private void showError(String message) {
         try {
-            BulletinFactory.of(this).createErrorBulletin(message).show();
+            // dialogo con el error completo y un boton para copiarlo (para mandarlo a quien lo arregla)
+            final String text = String.valueOf(message);
+            AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
+            b.setTitle(tr("Error del plugin", "Plugin error"));
+            b.setMessage(text);
+            b.setPositiveButton(tr("Copiar log", "Copy log"), (d, w) -> {
+                AndroidUtilities.addToClipboard(text);
+                android.widget.Toast.makeText(getParentActivity(), tr("Log copiado", "Log copied"), android.widget.Toast.LENGTH_SHORT).show();
+            });
+            b.setNegativeButton(tr("Cerrar", "Close"), null);
+            showDialog(b.create());
         } catch (Throwable ignored) {
         }
     }

@@ -1,0 +1,36 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+index 81495ee..f97dedc 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+@@ -204,7 +204,17 @@ public class IthaPluginsActivity extends BaseFragment {
+ 
+     private void showError(String message) {
+         try {
+-            BulletinFactory.of(this).createErrorBulletin(message).show();
++            // dialogo con el error completo y un boton para copiarlo (para mandarlo a quien lo arregla)
++            final String text = String.valueOf(message);
++            AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
++            b.setTitle(tr("Error del plugin", "Plugin error"));
++            b.setMessage(text);
++            b.setPositiveButton(tr("Copiar log", "Copy log"), (d, w) -> {
++                AndroidUtilities.addToClipboard(text);
++                android.widget.Toast.makeText(getParentActivity(), tr("Log copiado", "Log copied"), android.widget.Toast.LENGTH_SHORT).show();
++            });
++            b.setNegativeButton(tr("Cerrar", "Close"), null);
++            showDialog(b.create());
+         } catch (Throwable ignored) {
+         }
+     }
+diff --git a/TMessagesProj_App/src/main/python/ithaengine.py b/TMessagesProj_App/src/main/python/ithaengine.py
+index d19b427..a3089c1 100644
+--- a/TMessagesProj_App/src/main/python/ithaengine.py
++++ b/TMessagesProj_App/src/main/python/ithaengine.py
+@@ -126,7 +126,7 @@ def _try_load(pid):
+         _plugins.pop(pid, None)
+         err = traceback.format_exc()
+         log("error cargando %s: %s" % (pid, err))
+-        return "No se pudo cargar el plugin: %s" % err.strip().splitlines()[-1]
++        return "No se pudo cargar el plugin %s:\n\n%s" % (pid, err.strip()[-3500:])
+ 
+ 
+ def list_plugins_json():

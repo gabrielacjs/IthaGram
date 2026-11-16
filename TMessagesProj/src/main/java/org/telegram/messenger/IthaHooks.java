@@ -52,6 +52,58 @@ public class IthaHooks {
     }
 
     private static final CopyOnWriteArrayList<Entry> entries = new CopyOnWriteArrayList<>();
+    /** Puente hacia el motor de Python (lo instala ithabus.py al iniciar). */
+    public interface Bus {
+        Object sendMessage(int account, Object params);
+
+        boolean updates(int account, Object updates);
+
+        void appEvent(String event);
+    }
+
+    public static volatile Bus bus;
+    public static volatile boolean sendActive;
+    public static volatile boolean updatesActive;
+
+    /** null = el plugin cancelo el envio. */
+    public static SendMessagesHelper.SendMessageParams sendMessageHook(int account, SendMessagesHelper.SendMessageParams params) {
+        Bus b = bus;
+        if (b == null || !sendActive) {
+            return params;
+        }
+        try {
+            return (SendMessagesHelper.SendMessageParams) b.sendMessage(account, params);
+        } catch (Throwable t) {
+            FileLog.e(t);
+            return params;
+        }
+    }
+
+    /** false = un plugin descarto este paquete de updates. */
+    public static boolean updatesHook(int account, org.telegram.tgnet.TLRPC.Updates updates) {
+        Bus b = bus;
+        if (b == null || !updatesActive) {
+            return true;
+        }
+        try {
+            return b.updates(account, updates);
+        } catch (Throwable t) {
+            FileLog.e(t);
+            return true;
+        }
+    }
+
+    public static void appEvent(String event) {
+        Bus b = bus;
+        if (b == null) {
+            return;
+        }
+        try {
+            b.appEvent(event);
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+    }
 
     public static boolean isSupported(String method) {
         return "onResume".equals(method) || "onActivityResult".equals(method)

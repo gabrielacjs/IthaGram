@@ -136,7 +136,7 @@ def _try_load(pid):
         _plugins.pop(pid, None)
         err = traceback.format_exc()
         log("error cargando %s: %s" % (pid, err))
-        return "No se pudo cargar el plugin: %s" % err.strip().splitlines()[-1]
+        return "No se pudo cargar el plugin %s:\n\n%s" % (pid, err.strip()[-3500:])
 
 
 def list_plugins_json():

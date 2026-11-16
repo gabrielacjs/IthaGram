@@ -1,0 +1,10 @@
+diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
+--- a/TMessagesProj_App/build.gradle
++++ b/TMessagesProj_App/build.gradle
+@@ -205 +205,5 @@
+-        version = "3.11"
++        version = "3.11"
++        // librerias de Python que usan algunos plugins (se descargan al compilar)
++        pip {
++            install "requests"
++        }
