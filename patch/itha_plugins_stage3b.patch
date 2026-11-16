@@ -1,0 +1,789 @@
+diff --git a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+index e7b4597..cd52d77 100644
+--- a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
++++ b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+@@ -7,2 +7,4 @@ import android.util.Log;
+ 
++import java.io.File;
++
+ import androidx.annotation.Keep;
+@@ -27,2 +29,3 @@ public class IthaPy {
+             Log.i("IthaPy", "OK: " + r);
++            startPlugins(context);
+         } catch (Throwable t) {
+@@ -31,2 +34,24 @@ public class IthaPy {
+     }
++
++    private static void startPlugins(final Context context) {
++        final Context app = context.getApplicationContext();
++        new Thread(new Runnable() {
++            @Override
++            public void run() {
++                try {
++                    File ext = app.getExternalFilesDir(null);
++                    String extDir = ext != null ? new File(ext, "plugins").getAbsolutePath() : "";
++                    String intDir = new File(app.getFilesDir(), "plugins").getAbsolutePath();
++                    String stateDir = new File(app.getFilesDir(), "plugins_data").getAbsolutePath();
++                    new File(intDir).mkdirs();
++                    if (ext != null) {
++                        new File(extDir).mkdirs();
++                    }
++                    Python.getInstance().getModule("ithaengine").callAttr("start", new String[]{extDir, intDir}, stateDir);
++                } catch (Throwable t) {
++                    Log.e("IthaPy", "motor de plugins FALLO", t);
++                }
++            }
++        }, "IthaPlugins").start();
++    }
+ }
+diff --git a/TMessagesProj_App/src/main/python/android_utils.py b/TMessagesProj_App/src/main/python/android_utils.py
+new file mode 100644
+index 0000000..16cfda3
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/android_utils.py
+@@ -0,0 +1,81 @@
++"""android_utils (IthaGram) - hilo de UI, listeners, log."""
++from java import dynamic_proxy, jclass
++
++AndroidUtilities = jclass("org.telegram.messenger.AndroidUtilities")
++_Log = jclass("android.util.Log")
++_Runnable = jclass("java.lang.Runnable")
++_OnClickListenerIface = jclass("android.view.View$OnClickListener")
++_OnLongClickListenerIface = jclass("android.view.View$OnLongClickListener")
++
++
++def dp(value):
++    try:
++        return AndroidUtilities.dp(float(value))
++    except Exception:
++        return 0
++
++
++def get_string(key, res=0):
++    try:
++        LocaleController = jclass("org.telegram.messenger.LocaleController")
++        if res:
++            return LocaleController.getString(str(key), int(res))
++        return LocaleController.getString(str(key))
++    except Exception:
++        return str(key)
++
++
++class R(dynamic_proxy(_Runnable)):
++    def __init__(self, fn):
++        super().__init__()
++        self._fn = fn
++
++    def run(self):
++        try:
++            self._fn()
++        except Exception as e:
++            log("R.run error: %s" % e)
++
++
++class OnClickListener(dynamic_proxy(_OnClickListenerIface)):
++    def __init__(self, fn):
++        super().__init__()
++        self._fn = fn
++
++    def onClick(self, view):
++        self._fn(view)
++
++
++class OnLongClickListener(dynamic_proxy(_OnLongClickListenerIface)):
++    def __init__(self, fn):
++        super().__init__()
++        self._fn = fn
++
++    def onLongClick(self, view):
++        return bool(self._fn(view))
++
++
++def run_on_ui_thread(func, delay=0):
++    if func is None:
++        return
++    runnable = R(func)
++    if delay:
++        AndroidUtilities.runOnUIThread(runnable, int(delay))
++    else:
++        AndroidUtilities.runOnUIThread(runnable)
++
++
++def log(data):
++    try:
++        _Log.i("IthaPlugin", data if isinstance(data, str) else str(data))
++    except Exception:
++        pass
++
++
++def copy_to_clipboard(text):
++    try:
++        if AndroidUtilities.addToClipboard(str(text)):
++            from ui.bulletin import BulletinHelper
++            BulletinHelper.show_info(get_string("TextCopied"))
++    except Exception:
++        pass
+diff --git a/TMessagesProj_App/src/main/python/base_plugin.py b/TMessagesProj_App/src/main/python/base_plugin.py
+new file mode 100644
+index 0000000..d06b064
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/base_plugin.py
+@@ -0,0 +1,144 @@
++"""base_plugin (IthaGram) - BasePlugin, MethodHook y utilidades de hooks.
++
++Los hooks no son nativos: se registran en org.telegram.messenger.IthaHooks y
++Telegram avisa en puntos concretos (onResume de fragments, onActivityResult).
++"""
++from java import dynamic_proxy, jclass
++
++import plugin_settings
++from android_utils import log
++
++IthaHooks = jclass("org.telegram.messenger.IthaHooks")
++_Callback = jclass("org.telegram.messenger.IthaHooks$Callback")
++
++
++class PluginError(Exception):
++    def __init__(self, message, plugin_id):
++        super().__init__("[%s] %s" % (plugin_id, message))
++        self.message = message
++        self.plugin_id = plugin_id
++
++
++class HookStrategy:
++    DEFAULT = "DEFAULT"
++    CANCEL = "CANCEL"
++    MODIFY = "MODIFY"
++    MODIFY_FINAL = "MODIFY_FINAL"
++
++
++class MethodHook:
++    def before_hooked_method(self, param):
++        pass
++
++    def after_hooked_method(self, param):
++        pass
++
++
++class XposedHook(MethodHook):
++    def __init__(self, before=None, after=None):
++        self._before = before
++        self._after = after
++
++    def before_hooked_method(self, param):
++        if self._before is not None:
++            return self._before(param)
++
++    def after_hooked_method(self, param):
++        if self._after is not None:
++            return self._after(param)
++
++
++class _HookCallback(dynamic_proxy(_Callback)):
++    def __init__(self, hook, plugin_id):
++        super().__init__()
++        self._hook = hook
++        self._plugin_id = plugin_id
++
++    def before(self, param):
++        try:
++            self._hook.before_hooked_method(param)
++        except Exception as e:
++            log("[%s] before_hooked_method error: %s" % (self._plugin_id, e))
++
++    def after(self, param):
++        try:
++            self._hook.after_hooked_method(param)
++        except Exception as e:
++            log("[%s] after_hooked_method error: %s" % (self._plugin_id, e))
++
++
++class _HookHandle:
++    def __init__(self, java_handle, callback):
++        self.java_handle = java_handle
++        self.callback = callback
++
++
++class BasePlugin:
++    id = ""
++    name = ""
++    description = ""
++    author = ""
++    version = ""
++    icon = ""
++    min_version = ""
++
++    def __init__(self):
++        self._itha_hooks = []
++
++    # ---- ciclo de vida ----
++    def on_plugin_load(self):
++        pass
++
++    def on_plugin_unload(self):
++        pass
++
++    def create_settings(self):
++        return []
++
++    # ---- ajustes ----
++    def get_setting(self, key, default=None):
++        return plugin_settings.get_setting(self.id, key, default)
++
++    def set_setting(self, key, value, reload_settings=False):
++        plugin_settings.set_setting(self.id, key, value)
++        if reload_settings:
++            try:
++                import ithaengine
++                ithaengine.reload_settings(self.id)
++            except Exception:
++                pass
++        return True
++
++    def log(self, message):
++        log("[%s] %s" % (self.id, message))
++
++    # ---- hooks ----
++    def hook_method(self, method, hook, priority=0):
++        try:
++            cb = _HookCallback(hook, self.id)
++            handle = IthaHooks.register(method.getDeclaringClass(), method.getName(), cb)
++            if handle is None:
++                log("[%s] hook_method: '%s' todavia no se puede enganchar en IthaGram" % (self.id, method.getName()))
++                return None
++            h = _HookHandle(handle, cb)
++            if not hasattr(self, "_itha_hooks"):
++                self._itha_hooks = []
++            self._itha_hooks.append(h)
++            return h
++        except Exception as e:
++            log("[%s] hook_method error: %s" % (self.id, e))
++            return None
++
++    def unhook_method(self, handle):
++        try:
++            if handle is None:
++                return
++            IthaHooks.unregister(handle.java_handle)
++            if handle in getattr(self, "_itha_hooks", []):
++                self._itha_hooks.remove(handle)
++        except Exception as e:
++            log("[%s] unhook_method error: %s" % (self.id, e))
++
++    def _itha_unhook_all(self):
++        for h in list(getattr(self, "_itha_hooks", [])):
++            self.unhook_method(h)
+diff --git a/TMessagesProj_App/src/main/python/client_utils.py b/TMessagesProj_App/src/main/python/client_utils.py
+new file mode 100644
+index 0000000..b2d6c69
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/client_utils.py
+@@ -0,0 +1,31 @@
++"""client_utils (IthaGram) - acceso a fragments y colas de Telegram."""
++from java import jclass
++from android_utils import R, log
++
++
++def get_last_fragment():
++    try:
++        LaunchActivity = jclass("org.telegram.ui.LaunchActivity")
++    except Exception:
++        return None
++    for name in ("getSafeLastFragment", "getLastFragment"):
++        try:
++            f = getattr(LaunchActivity, name)()
++            if f is not None:
++                return f
++        except Exception:
++            pass
++    return None
++
++
++def run_on_queue(fn, delay=0):
++    if fn is None:
++        return
++    try:
++        queue = jclass("org.telegram.messenger.Utilities").globalQueue
++        if delay:
++            queue.postRunnable(R(fn), int(delay))
++        else:
++            queue.postRunnable(R(fn))
++    except Exception as e:
++        log("run_on_queue error: %s" % e)
+diff --git a/TMessagesProj_App/src/main/python/hook_utils.py b/TMessagesProj_App/src/main/python/hook_utils.py
+new file mode 100644
+index 0000000..65a6100
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/hook_utils.py
+@@ -0,0 +1,115 @@
++"""hook_utils (IthaGram) - ayudas de reflexion Java."""
++from java import jclass
++from android_utils import log
++
++
++class _ClassRef(object):
++    """Respaldo: envuelve un jclass para ofrecer getClass() -> java.lang.Class."""
++
++    def __init__(self, jc, name):
++        self._jc = jc
++        self._name = name
++
++    def getClass(self):
++        return jclass("java.lang.Class").forName(self._name)
++
++    def __getattr__(self, item):
++        return getattr(self._jc, item)
++
++
++def find_class(class_name):
++    """Devuelve la clase Java `class_name` o None si no existe."""
++    if not class_name:
++        return None
++    try:
++        cls = jclass(class_name)
++    except Exception:
++        return None
++    try:
++        cls.getClass().getName()
++        return cls
++    except Exception:
++        return _ClassRef(cls, class_name)
++
++
++def _as_class_object(clazz):
++    if clazz is None:
++        return None
++    try:
++        if hasattr(clazz, "getDeclaredField"):
++            return clazz
++    except Exception:
++        pass
++    try:
++        return clazz.getClass()
++    except Exception:
++        return None
++
++
++def _find_field(clazz, field_name):
++    clazz = _as_class_object(clazz)
++    if clazz is None or not field_name:
++        return None
++    current = clazz
++    while current is not None:
++        try:
++            field = current.getDeclaredField(field_name)
++            if field is not None:
++                return field
++        except Exception:
++            pass
++        try:
++            current = current.getSuperclass()
++        except Exception:
++            current = None
++    return None
++
++
++def get_private_field(obj, field_name):
++    try:
++        if obj is None:
++            return None
++        field = _find_field(obj.getClass(), field_name)
++        if field is None:
++            return None
++        field.setAccessible(True)
++        return field.get(obj)
++    except Exception:
++        return None
++
++
++def set_private_field(obj, field_name, new_value):
++    try:
++        if obj is None:
++            return False
++        field = _find_field(obj.getClass(), field_name)
++        if field is None:
++            return False
++        field.setAccessible(True)
++        field.set(obj, new_value)
++        return True
++    except Exception:
++        return False
++
++
++def get_static_private_field(clazz, field_name):
++    try:
++        field = _find_field(clazz, field_name)
++        if field is None:
++            return None
++        field.setAccessible(True)
++        return field.get(None)
++    except Exception:
++        return None
++
++
++def set_static_private_field(clazz, field_name, new_value):
++    try:
++        field = _find_field(clazz, field_name)
++        if field is None:
++            return False
++        field.setAccessible(True)
++        field.set(None, new_value)
++        return True
++    except Exception:
++        return False
+diff --git a/TMessagesProj_App/src/main/python/ithaengine.py b/TMessagesProj_App/src/main/python/ithaengine.py
+new file mode 100644
+index 0000000..b787117
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/ithaengine.py
+@@ -0,0 +1,101 @@
++"""ithaengine - cargador de plugins .plugin de IthaGram."""
++import ast
++import os
++import sys
++import traceback
++import types
++
++import plugin_settings
++from android_utils import log
++from base_plugin import BasePlugin
++
++_plugins = {}
++
++
++def _parse_meta(src):
++    meta = {}
++    try:
++        tree = ast.parse(src)
++        for node in tree.body:
++            if isinstance(node, ast.Assign) and len(node.targets) == 1 \
++                    and isinstance(node.targets[0], ast.Name):
++                name = node.targets[0].id
++                if name.startswith("__") and name.endswith("__"):
++                    try:
++                        meta[name] = ast.literal_eval(node.value)
++                    except Exception:
++                        pass
++    except Exception:
++        pass
++    return meta
++
++
++def load_file(path):
++    with open(path, "r", encoding="utf-8") as f:
++        src = f.read()
++    meta = _parse_meta(src)
++    pid = str(meta.get("__id__") or os.path.splitext(os.path.basename(path))[0])
++    if pid in _plugins:
++        log("plugin '%s' ya cargado" % pid)
++        return
++    mod = types.ModuleType("itha_plugin_" + pid)
++    mod.__file__ = path
++    sys.modules[mod.__name__] = mod
++    exec(compile(src, path, "exec"), mod.__dict__)
++    cls = None
++    for v in list(mod.__dict__.values()):
++        if isinstance(v, type) and v is not BasePlugin and issubclass(v, BasePlugin):
++            cls = v
++    if cls is None:
++        raise RuntimeError("no hay clase BasePlugin en %s" % path)
++    inst = cls()
++    inst.id = pid
++    inst.name = str(meta.get("__name__", pid))
++    inst.description = str(meta.get("__description__", ""))
++    inst.author = str(meta.get("__author__", ""))
++    inst.version = str(meta.get("__version__", ""))
++    inst.icon = str(meta.get("__icon__", ""))
++    inst.min_version = str(meta.get("__min_version__", ""))
++    _plugins[pid] = inst
++    inst.on_plugin_load()
++    log("plugin cargado: %s %s" % (inst.name, inst.version))
++
++
++def unload(pid):
++    inst = _plugins.pop(pid, None)
++    if inst is None:
++        return
++    try:
++        inst.on_plugin_unload()
++    except Exception:
++        log("error en on_plugin_unload(%s): %s" % (pid, traceback.format_exc()))
++    try:
++        inst._itha_unhook_all()
++    except Exception:
++        pass
++
++
++def get_plugins():
++    return _plugins
++
++
++def reload_settings(pid):
++    pass
++
++
++def start(plugin_dirs, state_dir):
++    plugin_settings.configure(state_dir)
++    for d in plugin_dirs:
++        try:
++            if not d or not os.path.isdir(d):
++                continue
++            for name in sorted(os.listdir(d)):
++                if not name.endswith(".plugin"):
++                    continue
++                try:
++                    load_file(os.path.join(d, name))
++                except Exception:
++                    log("error cargando %s: %s" % (name, traceback.format_exc()))
++        except Exception:
++            log("error leyendo %s: %s" % (d, traceback.format_exc()))
++    log("motor de plugins iniciado (%d plugins)" % len(_plugins))
+diff --git a/TMessagesProj_App/src/main/python/plugin_settings.py b/TMessagesProj_App/src/main/python/plugin_settings.py
+new file mode 100644
+index 0000000..ee1735f
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/plugin_settings.py
+@@ -0,0 +1,53 @@
++"""plugin_settings (IthaGram) - ajustes de cada plugin guardados en JSON."""
++import json
++import os
++
++_dir = None
++_cache = {}
++
++
++def configure(directory):
++    global _dir
++    _dir = directory
++    try:
++        os.makedirs(directory, exist_ok=True)
++    except Exception:
++        pass
++
++
++def _path(plugin_id):
++    return os.path.join(_dir, "%s.json" % plugin_id) if _dir else None
++
++
++def _load(plugin_id):
++    if plugin_id in _cache:
++        return _cache[plugin_id]
++    data = {}
++    p = _path(plugin_id)
++    try:
++        if p and os.path.exists(p):
++            with open(p, "r", encoding="utf-8") as f:
++                data = json.load(f)
++    except Exception:
++        data = {}
++    _cache[plugin_id] = data
++    return data
++
++
++def get_setting(plugin_id, key, default=None):
++    return _load(plugin_id).get(key, default)
++
++
++def set_setting(plugin_id, key, value):
++    data = _load(plugin_id)
++    data[key] = value
++    p = _path(plugin_id)
++    if not p:
++        return
++    try:
++        tmp = p + ".tmp"
++        with open(tmp, "w", encoding="utf-8") as f:
++            json.dump(data, f, ensure_ascii=False)
++        os.replace(tmp, p)
++    except Exception:
++        pass
+diff --git a/TMessagesProj_App/src/main/python/ui/__init__.py b/TMessagesProj_App/src/main/python/ui/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TMessagesProj_App/src/main/python/ui/bulletin.py b/TMessagesProj_App/src/main/python/ui/bulletin.py
+new file mode 100644
+index 0000000..d291996
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/ui/bulletin.py
+@@ -0,0 +1,46 @@
++"""ui.bulletin (IthaGram) - avisos breves."""
++from java import jclass
++from android_utils import run_on_ui_thread, log
++
++
++def _show(kind, text):
++    def go():
++        try:
++            from client_utils import get_last_fragment
++            fragment = get_last_fragment()
++            BulletinFactory = jclass("org.telegram.ui.Components.BulletinFactory")
++            if fragment is None:
++                raise RuntimeError("sin fragment")
++            factory = BulletinFactory.of(fragment)
++            if kind == "error":
++                factory.createErrorBulletin(str(text)).show()
++            else:
++                raw = jclass("org.telegram.messenger.R$raw")
++                icon = raw.contact_check if kind == "success" else raw.chats_infotip
++                factory.createSimpleBulletin(icon, str(text)).show()
++        except Exception as e:
++            try:
++                Toast = jclass("android.widget.Toast")
++                ctx = jclass("org.telegram.messenger.ApplicationLoader").applicationContext
++                Toast.makeText(ctx, str(text), 0).show()
++            except Exception:
++                log("bulletin error: %s" % e)
++    run_on_ui_thread(go)
++
++
++class BulletinHelper:
++    @staticmethod
++    def show_error(text, *args, **kwargs):
++        _show("error", text)
++
++    @staticmethod
++    def show_info(text, *args, **kwargs):
++        _show("info", text)
++
++    @staticmethod
++    def show_success(text, *args, **kwargs):
++        _show("success", text)
++
++    @staticmethod
++    def show_simple(text, *args, **kwargs):
++        _show("info", text)
+diff --git a/TMessagesProj_App/src/main/python/ui/settings.py b/TMessagesProj_App/src/main/python/ui/settings.py
+new file mode 100644
+index 0000000..ab848b0
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/ui/settings.py
+@@ -0,0 +1,129 @@
++"""ui.settings (IthaGram) - elementos de la pantalla de ajustes del plugin."""
++from dataclasses import dataclass
++
++
++@dataclass
++class Header:
++    text: str
++    type: str = "header"
++
++
++@dataclass
++class Divider:
++    text: str = None
++    type: str = "divider"
++
++
++@dataclass
++class Switch:
++    key: str
++    text: str
++    default: bool
++    subtext: str = None
++    icon: str = None
++    on_change: object = None
++    on_long_click: object = None
++    link_alias: str = None
++    type: str = "switch"
++
++
++@dataclass
++class Selector:
++    key: str
++    text: str
++    default: int
++    items: list = None
++    icon: str = None
++    on_change: object = None
++    on_long_click: object = None
++    link_alias: str = None
++    type: str = "selector"
++
++
++@dataclass
++class Input:
++    key: str
++    text: str
++    default: str = ""
++    subtext: str = None
++    icon: str = None
++    on_change: object = None
++    on_long_click: object = None
++    link_alias: str = None
++    type: str = "input"
++
++
++@dataclass
++class Text:
++    text: str
++    subtext: str = None
++    icon: str = None
++    accent: bool = False
++    red: bool = False
++    on_click: object = None
++    on_long_click: object = None
++    create_sub_fragment: object = None
++    link_alias: str = None
++    type: str = "text"
++
++
++@dataclass
++class EditText:
++    key: str
++    hint: str
++    default: str = ""
++    multiline: bool = False
++    max_length: int = 256
++    mask: str = None
++    on_change: object = None
++    type: str = "edit_text"
++
++
++@dataclass
++class Custom:
++    item: object = None
++    view: object = None
++    factory: object = None
++    factory_args: object = None
++    on_click: object = None
++    on_long_click: object = None
++    create_sub_fragment: object = None
++    link_alias: str = None
++    type: str = "custom"
++
++
++class _FactoryInstance:
++    def __init__(self, ssf):
++        self._ssf = ssf
++        self.java = ssf  # la pantalla de ajustes (etapa siguiente) usa estos callbacks
++
++
++class SimpleSettingFactory:
++    def __init__(self, create_view, bind_view, *, is_clickable=False, is_shadow=False,
++                 create_item=None, on_click=None, on_long_click=None,
++                 attached_view=None, equals=None, content_equals=None):
++        self.create_view = create_view
++        self.bind_view = bind_view
++        self.is_clickable = is_clickable
++        self.is_shadow = is_shadow
++        self.create_item = create_item
++        self.on_click = on_click
++        self.on_long_click = on_long_click
++        self.attached_view = attached_view
++        self.equals = equals
++        self.content_equals = content_equals
++        self.instance = _FactoryInstance(self)
++
++    def __call__(self, *args, **kwargs):
++        return Custom(factory=self, factory_args=list(args) if args else None,
++                      link_alias=kwargs.get("link_alias"))
++
++    def release(self):
++        self.create_view = None
++        self.bind_view = None
++        self.create_item = None
++        self.on_click = None
++        self.on_long_click = None
++        self.attached_view = None
++        self.equals = None
++        self.content_equals = None

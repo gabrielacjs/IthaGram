@@ -1,0 +1,171 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBarLayout.java
+@@ -1120 +1120 @@
+-            lastFragment.onResume();
++            org.telegram.messenger.IthaHooks.resume(lastFragment);
+@@ -1428 +1428 @@
+-                lastFragment.onResume();
++                org.telegram.messenger.IthaHooks.resume(lastFragment);
+@@ -1509 +1509 @@
+-        lastFragment.onResume();
++        org.telegram.messenger.IthaHooks.resume(lastFragment);
+@@ -2186 +2186 @@
+-        fragment.onResume();
++        org.telegram.messenger.IthaHooks.resume(fragment);
+@@ -2479 +2479 @@
+-                fragment.onResume();
++                org.telegram.messenger.IthaHooks.resume(fragment);
+@@ -2740 +2740 @@
+-            previousFragment.onResume();
++            org.telegram.messenger.IthaHooks.resume(previousFragment);
+@@ -2913 +2913 @@
+-        previousFragment.onResume();
++        org.telegram.messenger.IthaHooks.resume(previousFragment);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -6787,1 +6787,2 @@
+     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        if (org.telegram.messenger.IthaHooks.beforeActivityResult(this, requestCode, resultCode, data)) return;
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+new file mode 100644
+index 0000000..face0e7
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+@@ -0,0 +1,135 @@
++package org.telegram.messenger;
++
++import android.app.Activity;
++import android.content.Intent;
++
++import org.telegram.ui.ActionBar.BaseFragment;
++
++import java.util.concurrent.CopyOnWriteArrayList;
++
++/**
++ * IthaGram: puntos de enganche para plugins. No usa hooks nativos: Telegram llama a este
++ * registro en sitios concretos y aqui se avisa a los plugins que se registraron.
++ */
++public class IthaHooks {
++
++    public static class Param {
++        public Object thisObject;
++        public Object[] args;
++        private Object result;
++        private boolean returnEarly;
++
++        public Object getResult() {
++            return result;
++        }
++
++        public void setResult(Object result) {
++            this.result = result;
++            this.returnEarly = true;
++        }
++
++        public boolean isReturnEarly() {
++            return returnEarly;
++        }
++    }
++
++    public interface Callback {
++        void before(Param param);
++
++        void after(Param param);
++    }
++
++    private static final class Entry {
++        final Class<?> cls;
++        final String method;
++        final Callback callback;
++
++        Entry(Class<?> cls, String method, Callback callback) {
++            this.cls = cls;
++            this.method = method;
++            this.callback = callback;
++        }
++    }
++
++    private static final CopyOnWriteArrayList<Entry> entries = new CopyOnWriteArrayList<>();
++
++    public static boolean isSupported(String method) {
++        return "onResume".equals(method) || "onActivityResult".equals(method);
++    }
++
++    /** Devuelve un manejador para desregistrar, o null si ese metodo no se puede enganchar. */
++    public static Object register(Class<?> cls, String method, Callback callback) {
++        if (cls == null || callback == null || !isSupported(method)) {
++            return null;
++        }
++        Entry e = new Entry(cls, method, callback);
++        entries.add(e);
++        return e;
++    }
++
++    public static void unregister(Object handle) {
++        if (handle instanceof Entry) {
++            entries.remove(handle);
++        }
++    }
++
++    private static boolean matches(Entry e, String method, Object thiz) {
++        return e.method.equals(method) && e.cls.isInstance(thiz);
++    }
++
++    private static boolean runBefore(Object thiz, String method, Param p) {
++        for (Entry e : entries) {
++            if (!matches(e, method, thiz)) {
++                continue;
++            }
++            try {
++                e.callback.before(p);
++            } catch (Throwable t) {
++                FileLog.e(t);
++            }
++            if (p.returnEarly) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    private static void runAfter(Object thiz, String method, Param p) {
++        for (Entry e : entries) {
++            if (!matches(e, method, thiz)) {
++                continue;
++            }
++            try {
++                e.callback.after(p);
++            } catch (Throwable t) {
++                FileLog.e(t);
++            }
++        }
++    }
++
++    /** Sustituye a fragment.onResume() en ActionBarLayout. */
++    public static void resume(BaseFragment fragment) {
++        if (entries.isEmpty()) {
++            fragment.onResume();
++            return;
++        }
++        Param p = new Param();
++        p.thisObject = fragment;
++        p.args = new Object[0];
++        if (!runBefore(fragment, "onResume", p)) {
++            fragment.onResume();
++        }
++        runAfter(fragment, "onResume", p);
++    }
++
++    /** Se llama al inicio de LaunchActivity.onActivityResult; true = el plugin lo consumio. */
++    public static boolean beforeActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
++        if (entries.isEmpty()) {
++            return false;
++        }
++        Param p = new Param();
++        p.thisObject = activity;
++        p.args = new Object[]{requestCode, resultCode, data};
++        return runBefore(activity, "onActivityResult", p);
++    }
++}

@@ -1117,7 +1117,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
 //        }
         if (!fragmentsStack.isEmpty()) {
             BaseFragment lastFragment = fragmentsStack.get(fragmentsStack.size() - 1);
-            lastFragment.onResume();
+            org.telegram.messenger.IthaHooks.resume(lastFragment);
         }
         if (sheetFragment != null) {
             sheetFragment.onResume();
@@ -1425,7 +1425,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
             if (fragmentsStack.size() > 0) {
                 lastFragment = fragmentsStack.get(fragmentsStack.size() - 1);
                 currentActionBar = lastFragment.actionBar;
-                lastFragment.onResume();
+                org.telegram.messenger.IthaHooks.resume(lastFragment);
                 lastFragment.onBecomeFullyVisible();
                 lastFragment.prepareFragmentToSlide(false, false);
             }
@@ -1506,7 +1506,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
         if (!lastFragment.hasOwnBackground && fragmentView.getBackground() == null) {
             ThemeBind.backgroundColor(fragmentView, Theme.key_windowBackgroundWhite);
         }
-        lastFragment.onResume();
+        org.telegram.messenger.IthaHooks.resume(lastFragment);
         if (themeAnimatorSet != null) {
             presentingFragmentDescriptions = lastFragment.getThemeDescriptions();
         }
@@ -2183,7 +2183,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
         fragmentsStack.add(fragment);
 
         onFragmentStackChanged("presentFragment");
-        fragment.onResume();
+        org.telegram.messenger.IthaHooks.resume(fragment);
 
         currentActionBar = fragment.actionBar;
         if (!fragment.hasOwnBackground && fragmentView.getBackground() == null) {
@@ -2476,7 +2476,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
             fragmentsStack.add(fragment);
             if (position != INavigationLayout.FORCE_NOT_ATTACH_VIEW) {
                 attachView(fragment);
-                fragment.onResume();
+                org.telegram.messenger.IthaHooks.resume(fragment);
                 fragment.onTransitionAnimationEnd(false, true);
                 fragment.onTransitionAnimationEnd(true, true);
                 fragment.onBecomeFullyVisible();
@@ -2737,7 +2737,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
             oldFragment = currentFragment;
             previousFragment.onTransitionAnimationStart(true, true);
             currentFragment.onTransitionAnimationStart(false, true);
-            previousFragment.onResume();
+            org.telegram.messenger.IthaHooks.resume(previousFragment);
             if (themeAnimatorSet != null) {
                 presentingFragmentDescriptions = previousFragment.getThemeDescriptions();
             }
@@ -2910,7 +2910,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
         }
         previousFragment.setTitleOverlayTextIfActionBarAttached(titleOverlayText, titleOverlayTextId, overlayAction);
         previousFragment.attachSheets(containerView);
-        previousFragment.onResume();
+        org.telegram.messenger.IthaHooks.resume(previousFragment);
         previousFragment.onBecomeFullyVisible();
         currentActionBar = previousFragment.actionBar;
         if (!previousFragment.hasOwnBackground && fragmentView.getBackground() == null) {

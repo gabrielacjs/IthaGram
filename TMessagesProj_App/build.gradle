@@ -218,3 +218,9 @@ chaquopy {
         }
     }
 }
+
+android {
+    defaultConfig {
+        proguardFiles 'proguard-itha-plugins.pro'
+    }
+}

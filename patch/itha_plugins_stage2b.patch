@@ -1,0 +1,17 @@
+diff --git a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+index b19a9e3..e7b4597 100644
+--- a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
++++ b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+@@ -2,3 +2,5 @@ package org.telegram.messenger.regular;
+ 
++import android.app.Application;
+ import android.content.Context;
++import android.os.Build;
+ import android.util.Log;
+@@ -16,2 +18,6 @@ public class IthaPy {
+         try {
++            // solo en el proceso principal (no en el de widgets u otros)
++            if (Build.VERSION.SDK_INT >= 28 && !context.getPackageName().equals(Application.getProcessName())) {
++                return;
++            }
+             if (!Python.isStarted()) {
