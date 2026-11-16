@@ -97,6 +97,31 @@ public class IthaConfig {
         return false;
     }
 
+    /**
+     * Borde derecho de la pildora del chat. Si la pildora compacta esta activa, la ajusta al texto
+     * (el contenedor va pegado a la izquierda); si no, deja el borde por defecto.
+     */
+    public static int compactPillRight(android.view.ViewGroup bar, int left, int rightDefault) {
+        if (!isChatPillCompact()) {
+            return rightDefault;
+        }
+        for (int i = 0, n = bar.getChildCount(); i < n; i++) {
+            android.view.View child = bar.getChildAt(i);
+            if (child instanceof org.telegram.ui.Components.ChatAvatarContainer) {
+                org.telegram.ui.Components.ChatAvatarContainer c = (org.telegram.ui.Components.ChatAvatarContainer) child;
+                final boolean avatar = c.hasVisibleAvatar();
+                // getVisualWidth ya viene recortado 8dp con la opcion activa: lo devolvemos para sacar el ancho del texto
+                final int textW = c.getVisualWidth() + org.telegram.messenger.AndroidUtilities.dp(8)
+                        - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34));
+                final int textEnd = left + c.getLeftPadding()
+                        + (avatar ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13)) + Math.max(textW, 0);
+                final int right = textEnd + org.telegram.messenger.AndroidUtilities.dp(16);
+                return Math.max(left + org.telegram.messenger.AndroidUtilities.dp(60), Math.min(rightDefault, right));
+            }
+        }
+        return rightDefault;
+    }
+
     /** Pildora compacta: el fondo del titulo del chat se ajusta mas al texto. */
     public static boolean isChatPillCompact() {
         return prefs().getBoolean("chat_pill_compact", false);

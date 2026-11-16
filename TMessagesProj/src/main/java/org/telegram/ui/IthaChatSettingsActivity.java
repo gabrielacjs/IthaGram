@@ -181,10 +181,13 @@ public class IthaChatSettingsActivity extends BaseFragment {
             paint.setTypeface(null);
             paint.setTextSize(dp(13));
             final float subW = paint.measureText(sub);
-            final float maxPill = w - dp(66) * 2;
+            // en el chat el contenido va pegado a la izquierda; compacta = la pildora se ajusta al texto
+            final float pl = dp(60);
+            final float full = w - dp(60) * 2;
             final float textW = Math.max(nameW, subW);
-            final float pillW = Math.min(maxPill, (avatar ? dp(52) : dp(16)) + textW + (IthaConfig.isChatPillCompact() ? dp(10) : dp(18)));
-            final float pl = (w - pillW) / 2f;
+            final float pillW = IthaConfig.isChatPillCompact()
+                    ? Math.min(full, (avatar ? dp(52) : dp(16)) + textW + dp(10))
+                    : full;
             final float pr = pl + pillW;
 
             if (!IthaConfig.isChatPillHidden()) {
