@@ -1,0 +1,56 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
+index 7984ca2..7c408f8 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
+@@ -2514 +2514 @@
+-                if (!doNotDrawCenterGlass) {
++                if (!doNotDrawCenterGlass && !(chatAvatarContainer != null && org.telegram.messenger.IthaConfig.isChatPillHidden())) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index 2298e6f..447adda 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -78,6 +78,15 @@ public class IthaConfig {
+         prefs().edit().putBoolean("chat_avatar_hidden", value).apply();
+     }
+ 
++    /** Ocultar el fondo (la pildora de vidrio) detras del titulo del chat. */
++    public static boolean isChatPillHidden() {
++        return prefs().getBoolean("chat_pill_hidden", false);
++    }
++
++    public static void setChatPillHidden(boolean value) {
++        prefs().edit().putBoolean("chat_pill_hidden", value).apply();
++    }
++
+     /** La lista de chats que esta abierta (para cambiar titulo y centrado al instante). */
+     public static java.lang.ref.WeakReference<org.telegram.ui.DialogsActivity> dialogsRef;
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+index 855c9dd..cf5f858 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+@@ -85,6 +85,11 @@ public class IthaChatSettingsActivity extends BaseFragment {
+                     IthaConfig.setChatAvatarHidden(value);
+                     preview.invalidate();
+                 });
++        check(context, tr("Ocultar fondo de píldora", "Hide pill background"), tr("Quita el fondo de vidrio detrás del título del chat.", "Removes the glass background behind the chat title."),
++                IthaConfig.isChatPillHidden(), (value) -> {
++                    IthaConfig.setChatPillHidden(value);
++                    preview.invalidate();
++                });
+     }
+ 
+     private interface BoolCallback {
+@@ -159,8 +164,10 @@ public class IthaChatSettingsActivity extends BaseFragment {
+             final float pl = dp(66);
+             final float pr = w - dp(66);
+             rect.set(pl, cy - dp(24), pr, cy + dp(24));
+-            paint.setColor(bubble);
+-            canvas.drawRoundRect(rect, dp(24), dp(24), paint);
++            if (!IthaConfig.isChatPillHidden()) {
++                paint.setColor(bubble);
++                canvas.drawRoundRect(rect, dp(24), dp(24), paint);
++            }
+ 
+             // nombre del usuario actual
+             TLRPC.User user = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();

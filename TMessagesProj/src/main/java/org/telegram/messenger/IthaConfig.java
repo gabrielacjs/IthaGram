@@ -78,6 +78,34 @@ public class IthaConfig {
         prefs().edit().putBoolean("chat_avatar_hidden", value).apply();
     }
 
+    /** Ocultar el fondo (la pildora de vidrio) detras del titulo del chat. */
+    public static boolean isChatPillHidden() {
+        return prefs().getBoolean("chat_pill_hidden", false);
+    }
+
+    public static void setChatPillHidden(boolean value) {
+        prefs().edit().putBoolean("chat_pill_hidden", value).apply();
+    }
+
+    /** Dice si esta barra es el encabezado de un chat (tiene el contenedor del avatar y titulo). */
+    public static boolean hasChatHeader(android.view.ViewGroup bar) {
+        for (int i = 0, n = bar.getChildCount(); i < n; i++) {
+            if (bar.getChildAt(i) instanceof org.telegram.ui.Components.ChatAvatarContainer) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Pildora compacta: el fondo del titulo del chat se ajusta mas al texto. */
+    public static boolean isChatPillCompact() {
+        return prefs().getBoolean("chat_pill_compact", false);
+    }
+
+    public static void setChatPillCompact(boolean value) {
+        prefs().edit().putBoolean("chat_pill_compact", value).apply();
+    }
+
     /** La lista de chats que esta abierta (para cambiar titulo y centrado al instante). */
     public static java.lang.ref.WeakReference<org.telegram.ui.DialogsActivity> dialogsRef;
 

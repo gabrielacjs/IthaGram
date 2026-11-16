@@ -85,6 +85,16 @@ public class IthaChatSettingsActivity extends BaseFragment {
                     IthaConfig.setChatAvatarHidden(value);
                     preview.invalidate();
                 });
+        check(context, tr("Píldora compacta", "Compact pill"), tr("Ajusta el fondo del título más al texto, sin espacio de sobra.", "Fits the title background closer to the text."),
+                IthaConfig.isChatPillCompact(), (value) -> {
+                    IthaConfig.setChatPillCompact(value);
+                    preview.invalidate();
+                });
+        check(context, tr("Ocultar fondo de píldora", "Hide pill background"), tr("Quita el fondo de vidrio detrás del título del chat.", "Removes the glass background behind the chat title."),
+                IthaConfig.isChatPillHidden(), (value) -> {
+                    IthaConfig.setChatPillHidden(value);
+                    preview.invalidate();
+                });
     }
 
     private interface BoolCallback {
@@ -155,22 +165,36 @@ public class IthaChatSettingsActivity extends BaseFragment {
                 canvas.drawCircle(w - dp(34), cy + i * dp(6), dp(1.6f), paint);
             }
 
-            // pildora central
-            final float pl = dp(66);
-            final float pr = w - dp(66);
-            rect.set(pl, cy - dp(24), pr, cy + dp(24));
-            paint.setColor(bubble);
-            canvas.drawRoundRect(rect, dp(24), dp(24), paint);
-
             // nombre del usuario actual
             TLRPC.User user = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();
             String name = user != null ? ContactsController.formatName(user.first_name, user.last_name) : null;
             if (name == null || name.trim().isEmpty()) {
                 name = "IthaGram";
             }
+            final String sub = tr("en línea", "online");
+            final boolean avatar = !IthaConfig.isChatAvatarHidden();
 
-            float textLeft = pl + dp(18);
-            if (!IthaConfig.isChatAvatarHidden()) {
+            // la pildora se ajusta al texto, igual que en el chat
+            paint.setTypeface(AndroidUtilities.bold());
+            paint.setTextSize(dp(16));
+            final float nameW = paint.measureText(name);
+            paint.setTypeface(null);
+            paint.setTextSize(dp(13));
+            final float subW = paint.measureText(sub);
+            final float maxPill = w - dp(66) * 2;
+            final float textW = Math.max(nameW, subW);
+            final float pillW = Math.min(maxPill, (avatar ? dp(52) : dp(16)) + textW + (IthaConfig.isChatPillCompact() ? dp(10) : dp(18)));
+            final float pl = (w - pillW) / 2f;
+            final float pr = pl + pillW;
+
+            if (!IthaConfig.isChatPillHidden()) {
+                rect.set(pl, cy - dp(24), pr, cy + dp(24));
+                paint.setColor(bubble);
+                canvas.drawRoundRect(rect, dp(24), dp(24), paint);
+            }
+
+            float textLeft = pl + dp(16);
+            if (avatar) {
                 paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
                 canvas.drawCircle(pl + dp(24), cy, dp(19), paint);
                 paint.setColor(0xffffffff);
@@ -185,7 +209,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
             paint.setTypeface(AndroidUtilities.bold());
             paint.setTextSize(dp(16));
             String shown = name;
-            final float maxW = pr - textLeft - dp(12);
+            final float maxW = pr - textLeft - dp(8);
             while (shown.length() > 1 && paint.measureText(shown) > maxW) {
                 shown = shown.substring(0, shown.length() - 1);
             }
@@ -194,7 +218,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
             paint.setColor(hint);
             paint.setTypeface(null);
             paint.setTextSize(dp(13));
-            canvas.drawText(tr("en línea", "online"), textLeft, cy + dp(15), paint);
+            canvas.drawText(sub, textLeft, cy + dp(15), paint);
         }
     }
 }

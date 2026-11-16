@@ -1758,6 +1758,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         } else {
             width += dp(34);
         }
-        return (int) width;
+        return (int) width - (org.telegram.messenger.IthaConfig.isChatPillCompact() ? dp(8) : 0);
     }
 }

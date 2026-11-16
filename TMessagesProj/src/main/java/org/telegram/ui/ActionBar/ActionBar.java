@@ -2511,7 +2511,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 }
 
                 glassDrawable.setBounds(left, t, right, b);
-                if (!doNotDrawCenterGlass) {
+                if (!doNotDrawCenterGlass && !(org.telegram.messenger.IthaConfig.isChatPillHidden() && org.telegram.messenger.IthaConfig.hasChatHeader(this))) {
                     glassDrawable.draw(canvas);
                 }
             }

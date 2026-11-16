@@ -1,0 +1,28 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
+index 7c408f8..83afdcc 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/ActionBar.java
+@@ -2514 +2514 @@
+-                if (!doNotDrawCenterGlass && !(chatAvatarContainer != null && org.telegram.messenger.IthaConfig.isChatPillHidden())) {
++                if (!doNotDrawCenterGlass && !(org.telegram.messenger.IthaConfig.isChatPillHidden() && org.telegram.messenger.IthaConfig.hasChatHeader(this))) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index 1b20454..4517c25 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -87,6 +87,16 @@ public class IthaConfig {
+         prefs().edit().putBoolean("chat_pill_hidden", value).apply();
+     }
+ 
++    /** Dice si esta barra es el encabezado de un chat (tiene el contenedor del avatar y titulo). */
++    public static boolean hasChatHeader(android.view.ViewGroup bar) {
++        for (int i = 0, n = bar.getChildCount(); i < n; i++) {
++            if (bar.getChildAt(i) instanceof org.telegram.ui.Components.ChatAvatarContainer) {
++                return true;
++            }
++        }
++        return false;
++    }
++
+     /** Pildora compacta: el fondo del titulo del chat se ajusta mas al texto. */
+     public static boolean isChatPillCompact() {
+         return prefs().getBoolean("chat_pill_compact", false);
