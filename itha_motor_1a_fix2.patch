@@ -1,0 +1,207 @@
+diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
+index 2c0a713..b4ab0ed 100644
+--- a/TMessagesProj_App/build.gradle
++++ b/TMessagesProj_App/build.gradle
+@@ -23,6 +23,7 @@ dependencies {
+ 
+     // IthaGram: motor de plugins (portado de exteraGram/Nagram)
+     implementation 'androidx.core:core:1.16.0'
++    implementation 'androidx.fragment:fragment:1.8.5'
+     implementation 'com.google.code.gson:gson:2.11.0'
+     implementation 'com.linkedin.dexmaker:dexmaker:2.28.3'
+     implementation 'org.mvel:mvel2:2.5.2.Final'
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginEvents.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginEvents.java
+new file mode 100644
+index 0000000..9326cf3
+--- /dev/null
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginEvents.java
+@@ -0,0 +1,15 @@
++package com.exteragram.messenger.plugins;
++
++import org.telegram.messenger.DispatchQueue;
++
++/** IthaGram: ids de eventos y cola propios del motor (no tocan NotificationCenter ni Utilities de Telegram). */
++public class PluginEvents {
++    public static final int pluginsUpdated = 91000001;
++    public static final int pluginMenuItemsUpdated = 91000002;
++    public static final int pluginSettingsRegistered = 91000003;
++    public static final int pluginSettingsUnregistered = 91000004;
++    public static final int pluginIsNotResponding = 91000005;
++    public static final int pluginsPySdkInfoChanged = 91000006;
++
++    public static volatile DispatchQueue pluginsQueue;
++}
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginsController.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginsController.java
+index 4dd3617..60b316b 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginsController.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PluginsController.java
+@@ -138,8 +138,8 @@ public class PluginsController implements PluginsHooks {
+     }
+ 
+     private final Runnable updateNotificationRunnable = () -> {
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginsUpdated);
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginMenuItemsUpdated);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginsUpdated);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginMenuItemsUpdated);
+     };
+ 
+     public interface EngineHookCaller<T> {
+@@ -594,14 +594,14 @@ public class PluginsController implements PluginsHooks {
+     }
+ 
+     public static void runOnPluginsQueue(Runnable runnable) {
+-        if (Utilities.pluginsQueue == null || !Utilities.pluginsQueue.isAlive()) {
++        if (com.exteragram.messenger.plugins.PluginEvents.pluginsQueue == null || !com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.isAlive()) {
+             synchronized (PluginsController.class) {
+-                if (Utilities.pluginsQueue == null || !Utilities.pluginsQueue.isAlive()) {
+-                    Utilities.pluginsQueue = new DispatchQueue("pluginsQueue");
++                if (com.exteragram.messenger.plugins.PluginEvents.pluginsQueue == null || !com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.isAlive()) {
++                    com.exteragram.messenger.plugins.PluginEvents.pluginsQueue = new DispatchQueue("pluginsQueue");
+                 }
+             }
+         }
+-        Utilities.pluginsQueue.postRunnable(runnable);
++        com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.postRunnable(runnable);
+     }
+ 
+     public void init(Runnable runnable) {
+@@ -615,8 +615,8 @@ public class PluginsController implements PluginsHooks {
+         NativeCrashHandler.checkAndHandleNativeCrash();
+         applyArtOpts();
+         watchdog.start();
+-        if (Utilities.pluginsQueue == null || !Utilities.pluginsQueue.isAlive()) {
+-            Utilities.pluginsQueue = new DispatchQueue("pluginsQueue");
++        if (com.exteragram.messenger.plugins.PluginEvents.pluginsQueue == null || !com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.isAlive()) {
++            com.exteragram.messenger.plugins.PluginEvents.pluginsQueue = new DispatchQueue("pluginsQueue");
+         }
+         if (preferences == null && ApplicationLoader.applicationContext != null) {
+             preferences = ApplicationLoader.applicationContext.getSharedPreferences("plugin_settings", 0);
+@@ -894,7 +894,7 @@ public class PluginsController implements PluginsHooks {
+             }
+             return;
+         }
+-        Utilities.pluginsQueue.postRunnable(() -> {
++        com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.postRunnable(() -> {
+             try {
+                 PluginsEngine engine = getPluginEngine(pluginId);
+                 if (engine == null) {
+@@ -907,7 +907,7 @@ public class PluginsController implements PluginsHooks {
+                 }
+                 settings.put(pluginId, pluginSettings);
+                 FileLog.d("Registered settings for plugin " + pluginId);
+-                NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginSettingsRegistered, pluginId);
++                NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginSettingsRegistered, pluginId);
+             } catch (Throwable t) {
+                 FileLog.e(t);
+                 invalidatePluginSettings(pluginId);
+@@ -926,7 +926,7 @@ public class PluginsController implements PluginsHooks {
+         for (SettingItem item : removed) {
+             item.cleanup();
+         }
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginSettingsUnregistered, pluginId);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginSettingsUnregistered, pluginId);
+     }
+ 
+     public void clearPluginSettingsPreferences(String pluginId) {
+@@ -1143,7 +1143,7 @@ public class PluginsController implements PluginsHooks {
+                 return new CopyOnWriteArrayList<>(newItems);
+             });
+             FileLog.d("Added menu item: " + record.itemId + " for plugin " + pluginId + " in type " + record.menuType);
+-            NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginMenuItemsUpdated);
++            NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginMenuItemsUpdated);
+             return record.itemId;
+         } catch (Exception ignored) {
+             return null;
+@@ -1168,7 +1168,7 @@ public class PluginsController implements PluginsHooks {
+         }
+         record.markRemoved();
+         FileLog.d("Removed menu item: " + itemId + " for plugin " + pluginId);
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginMenuItemsUpdated);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginMenuItemsUpdated);
+         return true;
+     }
+ 
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
+index 328b033..27831ba 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
+@@ -2474,7 +2474,7 @@ public class PythonPluginsEngine implements PluginsController.PluginsEngine {
+         private static boolean notifyWhenChangeStatus = true;
+         public static int status = STATUS_IDLE;
+         public static final Runnable notifyRunnable = () ->
+-                NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginsPySdkInfoChanged);
++                NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginsPySdkInfoChanged);
+ 
+         public static int getStatus() {
+             return status;
+@@ -2843,7 +2843,7 @@ public class PythonPluginsEngine implements PluginsController.PluginsEngine {
+         }
+ 
+         public static boolean isAppVersionCodeCompatible(String operator, String targetVersion) {
+-            return AppUtils.compareVersions(operator, BuildConfig.VERSION_CODE, Integer.parseInt(targetVersion));
++            return AppUtils.compareVersions(operator, BuildVars.BUILD_VERSION, Integer.parseInt(targetVersion));
+         }
+ 
+         public static String hashBytes(InputStream inputStream) {
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/ui/PluginSettingsActivity.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/ui/PluginSettingsActivity.java
+index c06ed16..0d1d9cf 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/ui/PluginSettingsActivity.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/ui/PluginSettingsActivity.java
+@@ -21,4 +21,11 @@ public class PluginSettingsActivity extends BaseFragment {
+ 
+     public PluginSettingsActivity(Plugin plugin, String title, List<SettingItem> items, PyObject createSubFragmentCallback, String targetSetting) {
+     }
++
++    public PluginSettingsActivity setSettingsLinkPrefix(String prefix) {
++        return this;
++    }
++
++    public void checkTargetSetting() {
++    }
+ }
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/utils/PluginsWatchdog.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/utils/PluginsWatchdog.java
+index 15b3c60..1facd37 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/utils/PluginsWatchdog.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/utils/PluginsWatchdog.java
+@@ -61,7 +61,7 @@ public class PluginsWatchdog {
+                     }
+                 }
+                 if (notify) {
+-                    NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding);
++                    NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginIsNotResponding);
+                 }
+             } catch (Throwable t) {
+                 FileLog.e(t);
+@@ -148,7 +148,7 @@ public class PluginsWatchdog {
+         if (plugin != null) {
+             plugin.setNotResponding(false);
+         }
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginIsNotResponding);
+     }
+ 
+     public void forceDisablePlugin(String pluginId, Activity activity) {
+@@ -170,8 +170,8 @@ public class PluginsWatchdog {
+         }
+         new File(controller.pluginsDir, pluginId + ".py").delete();
+         controller.plugins.remove(pluginId);
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginsUpdated);
+-        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(NotificationCenter.pluginMenuItemsUpdated);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginsUpdated);
++        NotificationCenter.getGlobalInstance().postNotificationNameOnUIThread(com.exteragram.messenger.plugins.PluginEvents.pluginMenuItemsUpdated);
+         restartApp(activity);
+     }
+ 
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/network/RemoteUtils.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/network/RemoteUtils.java
+index 995c180..8d92953 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/network/RemoteUtils.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/network/RemoteUtils.java
+@@ -11,4 +11,8 @@ public class RemoteUtils {
+         error.text = "DISABLED";
+         callback.run(null, error);
+     }
++
++    public static void searchMessages(String query, TLRPC.MessagesFilter filter, Utilities.Callback2<TLRPC.messages_Messages, TLRPC.TL_error> callback, int timeout) {
++        searchMessages(query, filter, callback);
++    }
+ }

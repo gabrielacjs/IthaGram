@@ -20,6 +20,14 @@ dependencies {
     implementation project(':TMessagesProj')
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
     implementation files('../TMessagesProj/libs/libgsaverification-client.aar')
+
+    // IthaGram: motor de plugins (portado de exteraGram/Nagram)
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'androidx.fragment:fragment:1.8.5'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.linkedin.dexmaker:dexmaker:2.28.3'
+    implementation 'org.mvel:mvel2:2.5.2.Final'
+    implementation 'net.java.dev.jna:jna:5.14.0@aar'
 }
 
 android {
@@ -36,8 +44,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
 
         coreLibraryDesugaringEnabled true
     }
@@ -226,5 +234,6 @@ chaquopy {
 android {
     defaultConfig {
         proguardFiles 'proguard-itha-plugins.pro'
+        proguardFiles 'proguard-itha-engine.pro'
     }
 }

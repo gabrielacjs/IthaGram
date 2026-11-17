@@ -1,0 +1,12 @@
+# IthaGram: motor de plugins (exteraGram/Nagram). Python lo usa por reflexion.
+-keep class com.exteragram.** { *; }
+-keep class de.robv.android.xposed.** { *; }
+-keep class com.sun.jna.** { *; }
+-keep class org.mvel2.** { *; }
+-keep class com.android.dx.** { *; }
+-dontwarn com.sun.jna.**
+-dontwarn org.mvel2.**
+-dontwarn java.awt.**
+-dontwarn java.beans.**
+-dontwarn javax.script.**
+-dontwarn javax.lang.model.**

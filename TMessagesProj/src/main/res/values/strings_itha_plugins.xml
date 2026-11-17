@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="IthaPl_CheckingForUpdates">Checking for updates…</string>
+    <string name="IthaPl_LatestVersionInstalled">Latest version installed</string>
+    <string name="IthaPl_LoadingUpdate">Loading update…</string>
+    <string name="IthaPl_PluginEngineNotEnabled">Plugin engine is disabled, so %1$s can\'t be used</string>
+    <string name="IthaPl_PluginHasNoSettings">%1$s has no settings</string>
+    <string name="IthaPl_PluginInstallError">Failed to install %1$s</string>
+    <string name="IthaPl_PluginIsNotRespondingAlert">%1$s is not responding</string>
+    <string name="IthaPl_PluginNoAuthor">Unknown author</string>
+    <string name="IthaPl_PluginNoDescription">No description</string>
+    <string name="IthaPl_PluginNotEnabled">Enable plugin engine to install %1$s</string>
+    <string name="IthaPl_PluginNotFound">Plugin %1$s not found</string>
+    <string name="IthaPl_PluginSettingNotFound">Setting not found</string>
+    <string name="IthaPl_PluginsSafeModeInfoCrashGeneric">Plugins were disabled after a crash</string>
+    <string name="IthaPl_PluginsSafeModeInfoManual">Plugins safe mode is on</string>
+    <string name="IthaPl_PluginsSafeModeInfoNativeCrash">Plugins were disabled after a native crash</string>
+    <string name="IthaPl_PluginsSafeModeInfoPluginCrash">Plugin %1$s caused a crash and was disabled</string>
+    <string name="IthaPl_RestartPluginSystemToApplyUpdate">Restart the plugin system to apply the update</string>
+    <string name="IthaPl_WaitMore">Wait</string>
+    <string name="IthaPl_Enable">Enable</string>
+    <string name="IthaPl_Disable">Disable</string>
+</resources>

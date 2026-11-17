@@ -1,0 +1,33 @@
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
+index 27831ba..2a1e469 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
+@@ -2843,7 +2843,7 @@ public class PythonPluginsEngine implements PluginsController.PluginsEngine {
+         }
+ 
+         public static boolean isAppVersionCodeCompatible(String operator, String targetVersion) {
+-            return AppUtils.compareVersions(operator, BuildVars.BUILD_VERSION, Integer.parseInt(targetVersion));
++            return AppUtils.compareVersions(operator, com.exteragram.messenger.utils.AppUtils.getVersionCode(), Integer.parseInt(targetVersion));
+         }
+ 
+         public static String hashBytes(InputStream inputStream) {
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/AppUtils.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/AppUtils.java
+index de65a5d..a991846 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/AppUtils.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/utils/AppUtils.java
+@@ -5,6 +5,15 @@ import java.io.StringWriter;
+ 
+ /** IthaGram: version minima de AppUtils de exteraGram. */
+ public class AppUtils {
++    public static int getVersionCode() {
++        try {
++            android.content.Context c = org.telegram.messenger.ApplicationLoader.applicationContext;
++            return c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode;
++        } catch (Throwable t) {
++            return 0;
++        }
++    }
++
+     public static String stackTraceToString(Throwable throwable) {
+         if (throwable == null) {
+             return "";
