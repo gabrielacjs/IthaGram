@@ -86,6 +86,76 @@ public class IthaBridge {
         IthaHooks.sendActive = true;
         IthaHooks.updatesActive = true;
         Log.i(TAG, "motor Nagram: enganches conectados " + describePlugins());
+        installResumeReplay();
+    }
+
+    // Los plugins terminan de cargarse unos segundos DESPUES de que aparece la primera pantalla, y varios (como los de
+    // fondos) pintan cuando una pantalla "se reanuda". Al terminar de cargar se reanuda una vez la pantalla visible.
+    private static volatile boolean resumeReplayed;
+
+    private static void installResumeReplay() {
+        org.telegram.messenger.AndroidUtilities.runOnUIThread(new Runnable() {
+            @Override
+            public void run() {
+                org.telegram.messenger.NotificationCenter.getGlobalInstance().addObserver(new org.telegram.messenger.NotificationCenter.NotificationCenterDelegate() {
+                    @Override
+                    public void didReceivedNotification(int id, int account, Object... args) {
+                        if (resumeReplayed || id != com.exteragram.messenger.plugins.PluginEvents.pluginsUpdated) {
+                            return;
+                        }
+                        boolean anyActive = false;
+                        for (com.exteragram.messenger.plugins.Plugin p : PluginsController.getInstance().getPlugins().values()) {
+                            if (p.isEnabled() && !p.hasError()) {
+                                anyActive = true;
+                                break;
+                            }
+                        }
+                        if (!anyActive) {
+                            return;
+                        }
+                        resumeReplayed = true;
+                        org.telegram.messenger.AndroidUtilities.runOnUIThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    BaseFragment f = org.telegram.ui.LaunchActivity.getLastFragment();
+                                    if (f != null && f.getParentActivity() != null) {
+                                        Log.i(TAG, "motor Nagram: plugins cargados, reanudando " + f.getClass().getSimpleName());
+                                        f.onResume();
+                                        resumeInner(f);
+                                    }
+                                } catch (Throwable t) {
+                                    Log.e(TAG, "reanudar pantalla FALLO", t);
+                                }
+                            }
+                        }, 100);
+                    }
+                }, com.exteragram.messenger.plugins.PluginEvents.pluginsUpdated);
+            }
+        });
+    }
+
+    // La lista de chats (DialogsActivity) vive DENTRO de MainTabsActivity: tambien se reanudan los fragmentos que guarda.
+    private static void resumeInner(BaseFragment host) {
+        Class<?> c = host.getClass();
+        while (c != null && c != Object.class) {
+            for (java.lang.reflect.Field fl : c.getDeclaredFields()) {
+                try {
+                    if (!BaseFragment.class.isAssignableFrom(fl.getType()) || java.lang.reflect.Modifier.isStatic(fl.getModifiers())) {
+                        continue;
+                    }
+                    fl.setAccessible(true);
+                    Object v = fl.get(host);
+                    if (v instanceof BaseFragment && v != host && ((BaseFragment) v).getParentActivity() != null) {
+                        Log.i(TAG, "motor Nagram: reanudando interno " + v.getClass().getSimpleName());
+                        ((BaseFragment) v).onResume();
+                    }
+                } catch (Throwable t) {
+                    Log.e(TAG, "reanudar interno FALLO", t);
+                }
+            }
+            c = c.getSuperclass();
+        }
     }
 
     private static String describePlugins() {

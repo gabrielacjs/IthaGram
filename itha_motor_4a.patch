@@ -1,0 +1,21 @@
+diff --git a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+index 6c9a2bf..aa84d73 100644
+--- a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
++++ b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPy.java
+@@ -20,8 +20,14 @@ public class IthaPy {
+             if (Build.VERSION.SDK_INT >= 28 && !context.getPackageName().equals(Application.getProcessName())) {
+                 return;
+             }
+-            // diagnostico: deja que los errores del motor salgan por logcat (etiqueta tmessages)
+-            org.telegram.messenger.BuildVars.LOGS_ENABLED = true;
++            // registros del motor por logcat (etiqueta tmessages): solo si existe el archivo files/plugins/debug.txt
++            try {
++                java.io.File ext = context.getExternalFilesDir(null);
++                if (ext != null && new java.io.File(new java.io.File(ext, "plugins"), "debug.txt").exists()) {
++                    org.telegram.messenger.BuildVars.LOGS_ENABLED = true;
++                }
++            } catch (Throwable ignored) {
++            }
+             Log.i("IthaDiag", "motor Nagram: iniciando");
+             PluginsController.getInstance().init(new Runnable() {
+                 @Override

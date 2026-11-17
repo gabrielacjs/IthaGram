@@ -1,0 +1,22 @@
+diff --git a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPyHost.java b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPyHost.java
+index d3429ab..12e14c2 100644
+--- a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPyHost.java
++++ b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaPyHost.java
+@@ -434,7 +434,16 @@ public class IthaPyHost implements IthaPlugins.Host {
+                     save(key, nv, onChange);
+                 });
+                 b.setNegativeButton("Cancelar", null);
+-                fragment.showDialog(b.create());
++                AlertDialog dialog = b.create();
++                dialog.setOnShowListener(d -> AndroidUtilities.runOnUIThread(() -> {
++                    try {
++                        edit.requestFocus();
++                        edit.setSelection(edit.getText().length());
++                        AndroidUtilities.showKeyboard(edit);
++                    } catch (Throwable ignored) {
++                    }
++                }, 150));
++                fragment.showDialog(dialog);
+             });
+             return cell;
+         }
