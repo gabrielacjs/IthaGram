@@ -1,0 +1,21 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+index ec80fc3..8014394 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+@@ -109,4 +109,7 @@ public class IthaPluginsActivity extends BaseFragment {
+         if (host != null) {
+             addMasterRow(context, host);
++            section(context, tr("Agregar", "Add"));
++            row(context, tr("Importar plugin", "Import plugin"), tr("Elegí un archivo .plugin de tu teléfono", "Pick a .plugin file from your phone"), () -> warnThen(this::pickFile));
++            row(context, tr("Catálogo de plugins", "Plugin catalog"), tr("Abre el canal de IthaGram con plugins para descargar", "Opens the IthaGram channel with plugins to download"), this::openCatalog);
+         }
+         section(context, tr("Plugins instalados", "Installed plugins"));
+@@ -131,8 +134,4 @@ public class IthaPluginsActivity extends BaseFragment {
+             }
+             info(context, tr("Usá el interruptor para activar o desactivar cada plugin.", "Use the switch to turn each plugin on or off."));
+-
+-            section(context, tr("Agregar", "Add"));
+-            row(context, tr("Importar plugin", "Import plugin"), tr("Elegí un archivo .plugin de tu teléfono", "Pick a .plugin file from your phone"), () -> warnThen(this::pickFile));
+-            row(context, tr("Catálogo de plugins", "Plugin catalog"), tr("Abre el canal de IthaGram con plugins para descargar", "Opens the IthaGram channel with plugins to download"), this::openCatalog);
+         }
+     }

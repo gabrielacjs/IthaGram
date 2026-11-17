@@ -108,6 +108,9 @@ public class IthaPluginsActivity extends BaseFragment {
 
         if (host != null) {
             addMasterRow(context, host);
+            section(context, tr("Agregar", "Add"));
+            row(context, tr("Importar plugin", "Import plugin"), tr("Elegí un archivo .plugin de tu teléfono", "Pick a .plugin file from your phone"), () -> warnThen(this::pickFile));
+            row(context, tr("Catálogo de plugins", "Plugin catalog"), tr("Abre el canal de IthaGram con plugins para descargar", "Opens the IthaGram channel with plugins to download"), this::openCatalog);
         }
         section(context, tr("Plugins instalados", "Installed plugins"));
 
@@ -130,10 +133,37 @@ public class IthaPluginsActivity extends BaseFragment {
                 addPluginCard(context, host, p, pinned.contains(p.id));
             }
             info(context, tr("Usá el interruptor para activar o desactivar cada plugin.", "Use the switch to turn each plugin on or off."));
-
-            section(context, tr("Agregar", "Add"));
-            row(context, tr("Importar plugin", "Import plugin"), tr("Elegí un archivo .plugin de tu teléfono", "Pick a .plugin file from your phone"), this::pickFile);
         }
+    }
+
+    /** Canal de Telegram con los archivos .plugin de IthaGram. */
+    private static final String CATALOG_URL = "https://t.me/IthaPlugin";
+
+    private void openCatalog() {
+        try {
+            org.telegram.messenger.browser.Browser.openUrl(ctx, Uri.parse(CATALOG_URL));
+        } catch (Throwable t) {
+            showError(String.valueOf(t.getMessage()));
+        }
+    }
+
+    /** La primera vez que se instala un plugin avisa que cada quien responde por lo que instala. */
+    private void warnThen(final Runnable next) {
+        final android.content.SharedPreferences sp = ctx.getSharedPreferences("itha_plugins_ui", Context.MODE_PRIVATE);
+        if (sp.getBoolean("warned", false) || getParentActivity() == null) {
+            next.run();
+            return;
+        }
+        AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity());
+        b.setTitle(tr("Antes de instalar", "Before installing"));
+        b.setMessage(tr("Los plugins son código de terceros y pueden hacer cosas en tu cuenta. Instalá solo los de gente en la que confíes: cada quien es responsable de los plugins que usa.",
+                "Plugins are third-party code and can act on your account. Only install ones from people you trust: everyone is responsible for the plugins they use."));
+        b.setPositiveButton(tr("Entendido", "Got it"), (d, w) -> {
+            sp.edit().putBoolean("warned", true).apply();
+            next.run();
+        });
+        b.setNegativeButton(tr("Cancelar", "Cancel"), null);
+        showDialog(b.create());
     }
 
     private void addMasterRow(final Context context, final IthaPlugins.Host host) {

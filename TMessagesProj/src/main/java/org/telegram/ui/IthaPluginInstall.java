@@ -89,6 +89,9 @@ public class IthaPluginInstall {
             if (update && oldVersion != null) {
                 msg.append("\n\nVersion instalada: ").append(oldVersion);
             }
+            if (!update) {
+                msg.append("\n\nInstala solo plugins de gente en la que confies: cada quien es responsable de los plugins que usa.");
+            }
             b.setMessage(msg.toString());
             b.setPositiveButton(update ? "Actualizar" : "Instalar", (d, w) -> {
                 Utilities.globalQueue.postRunnable(() -> {
