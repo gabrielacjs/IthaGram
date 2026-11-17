@@ -1,0 +1,12 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+index c93e3dc..cff6ab0 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/DialogsActivity.java
+@@ -13415,6 +13415,7 @@
+             args.putLong("user_id", UserConfig.getInstance(currentAccount).getClientUserId());
+             presentFragment(new ChatActivity(args));
+         });
++        io.add(R.drawable.msg_customize, org.telegram.messenger.DownloadQueueManager.tr("IthaGram Ajustes", "IthaGram Settings"), () -> presentFragment(new IthaSettingsActivity()));
+         if (ApplicationLoader.applicationLoaderInstance != null) {
+             ApplicationLoader.applicationLoaderInstance.addItemOptions(io);
+         }
