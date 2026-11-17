@@ -26,6 +26,7 @@ public class IthaPy {
                 public void run() {
                     Log.i("IthaDiag", "motor Nagram: listo, disponible=" + PythonPluginsEngine.INSTANCE.isEngineAvailable()
                             + " plugins=" + PluginsController.getInstance().getPlugins().size());
+                    IthaBridge.install();
                     installDropped(context.getApplicationContext());
                 }
             });

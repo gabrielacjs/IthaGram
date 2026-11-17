@@ -1,0 +1,41 @@
+diff --git a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaBridge.java b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaBridge.java
+index ec4b04e..31a0bd4 100644
+--- a/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaBridge.java
++++ b/TMessagesProj_App/src/main/java/org/telegram/messenger/regular/IthaBridge.java
+@@ -37,6 +37,7 @@ public class IthaBridge {
+                 try {
+                     Map<String, Object> ctx = buildContext(menuType, fragment, message);
+                     List<MenuItemRecord> list = PluginsController.getInstance().getMenuItemsForLocation(menuType, ctx);
++                    Log.i(TAG, "menu " + menuType + ": items=" + list.size() + " ctx=" + ctx.keySet() + " plugins=" + describePlugins());
+                     for (MenuItemRecord r : list) {
+                         icons.add(r.iconResId != 0 ? r.iconResId : R.drawable.msg_info);
+                         items.add(r.text);
+@@ -50,6 +51,7 @@ public class IthaBridge {
+             @Override
+             public boolean click(String menuType, Object fragment, int option, Object message) {
+                 MenuItemRecord r = recordById.get(option);
++                Log.i(TAG, "menu click " + menuType + " option=" + option + " encontrado=" + (r != null));
+                 if (r == null) {
+                     return false;
+                 }
+@@ -82,7 +84,19 @@ public class IthaBridge {
+         };
+         IthaHooks.sendActive = true;
+         IthaHooks.updatesActive = true;
+-        Log.i(TAG, "motor Nagram: enganches conectados");
++        Log.i(TAG, "motor Nagram: enganches conectados " + describePlugins());
++    }
++
++    private static String describePlugins() {
++        StringBuilder sb = new StringBuilder();
++        try {
++            for (com.exteragram.messenger.plugins.Plugin p : PluginsController.getInstance().getPlugins().values()) {
++                sb.append('[').append(p.getId()).append(" enabled=").append(p.isEnabled()).append(" error=").append(p.hasError() ? p.getError() : "no").append(']');
++            }
++        } catch (Throwable t) {
++            sb.append("?").append(t);
++        }
++        return sb.toString();
+     }
+ 
+     private static synchronized int idFor(MenuItemRecord r) {
