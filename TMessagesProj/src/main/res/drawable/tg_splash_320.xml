@@ -18,7 +18,7 @@
                     <path
                         android:name="circle"
                         android:pathData="M 160 110 C 146.744 110 134.018 115.271 124.645 124.645 C 115.271 134.018 110 146.744 110 160 C 110 173.256 115.271 185.982 124.645 195.355 C 134.018 204.729 146.744 210 160 210 C 173.256 210 185.982 204.729 195.355 195.355 C 204.729 185.982 210 173.256 210 160 C 210 146.744 204.729 134.018 195.355 124.645 C 185.982 115.271 173.256 110 160 110 Z"
-                        android:fillColor="#2aabee"
+                        android:fillColor="#FF111B4B"
                         android:fillAlpha="0"
                         android:strokeWidth="1"/>
                 </group>
@@ -31,12 +31,9 @@
                     <clip-path
                         android:name="mask"
                         android:pathData="M 160 60 C 133.489 60 108.036 70.543 89.289 89.289 C 70.543 108.036 60 133.489 60 160 C 60 186.511 70.543 211.964 89.289 230.711 C 108.036 249.457 133.489 260 160 260 C 186.511 260 211.964 249.457 230.711 230.711 C 249.457 211.964 260 186.511 260 160 C 260 133.489 249.457 108.036 230.711 89.289 C 211.964 70.543 186.511 60 160 60 Z"/>
-                    <path
-                        android:name="plane"
-                        android:pathData="M -14.734 278.944 C 14.418 266.243 33.857 257.87 43.583 253.824 C 71.355 242.273 77.125 240.267 80.886 240.199 C 81.714 240.186 83.563 240.391 84.761 241.363 C 85.773 242.184 86.051 243.293 86.185 244.071 C 86.318 244.85 86.484 246.623 86.352 248.008 C 84.847 263.82 78.335 302.193 75.022 319.903 C 73.62 327.397 70.86 329.91 68.188 330.155 C 62.381 330.69 57.971 326.318 52.347 322.631 C 43.545 316.861 38.573 313.27 30.03 307.64 C 20.157 301.134 26.557 297.558 32.184 291.714 C 33.656 290.184 59.243 266.911 59.738 264.8 C 59.8 264.536 59.858 263.552 59.273 263.032 C 58.688 262.512 57.825 262.69 57.202 262.831 C 56.32 263.032 42.26 272.325 15.022 290.711 C 11.031 293.452 7.416 294.787 4.177 294.717 C 0.607 294.64 -6.261 292.698 -11.367 291.038 C -17.63 289.003 -22.607 287.927 -22.174 284.469 C -21.948 282.669 -19.468 280.827 -14.734 278.944 Z"
-                        android:fillColor="#ffffff"
-                        android:fillAlpha="0"
-                        android:strokeWidth="1"/>
+                    <path android:name="left" android:pathData="M 38.85 260.2 L 38.12 260.81 L 32.31 274.01 L 31.34 275.82 L 31.22 276.55 L 26.98 285.75 L 26.38 287.57 L 22.63 295.68 L 22.51 296.41 L 18.75 304.52 L 18.63 305.24 L 14.88 313.36 L 14.88 313.72 L 14.39 314.44 L 14.27 315.17 L 11 322.19 L 10.03 324.86 L 9.07 326.67 L 8.1 329.09 L 8.1 330.18 L 8.7 331.27 L 9.31 331.76 L 10.64 332 L 11.85 331.64 L 29.04 320.74 L 31.1 319.65 L 32.92 318.32 L 33.4 318.2 L 35.22 316.87 L 35.7 316.75 L 39.82 314.08 L 40 314.08 L 40 260 Z" android:fillAlpha="0" android:strokeWidth="1"><aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="128.1" android:startY="140" android:endX="160" android:endY="212"><item android:offset="0" android:color="#FF7DB8FF"/><item android:offset="1" android:color="#FF5C6BEC"/></gradient></aapt:attr></path>
+                    <path android:name="right" android:pathData="M 40 314.08 L 40.18 314.08 L 68.15 331.64 L 69.36 332 L 70.69 331.76 L 71.3 331.27 L 71.9 330.18 L 71.78 328.73 L 61.37 305.24 L 61.25 304.52 L 57.49 296.41 L 56.89 294.59 L 53.62 287.57 L 53.02 285.75 L 48.78 276.55 L 48.66 275.82 L 43.45 264.44 L 42.85 262.63 L 41.88 260.81 L 41.15 260.2 L 40.18 259.96 L 40 260 Z" android:fillAlpha="0" android:strokeWidth="1"><aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="160" android:startY="139.96" android:endX="191.9" android:endY="212"><item android:offset="0" android:color="#FF5476C2"/><item android:offset="1" android:color="#FF4651B4"/></gradient></aapt:attr></path>
+                    <path android:name="dot" android:pathData="M 40 228.01 C 45.64 228.01 50.22 232.59 50.22 238.23 C 50.22 243.87 45.64 248.45 40 248.45 C 34.36 248.45 29.78 243.87 29.78 238.23 C 29.78 232.59 34.36 228.01 40 228.01 Z" android:fillAlpha="0" android:strokeWidth="1"><aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="149.78" android:startY="108.01" android:endX="170.22" android:endY="128.45"><item android:offset="0" android:color="#FF73ADFA"/><item android:offset="1" android:color="#FF5C6BEC"/></gradient></aapt:attr></path>
                 </group>
             </group>
         </vector>
@@ -63,15 +60,59 @@
             </set>
         </aapt:attr>
     </target>
-    <target android:name="plane">
+    <target android:name="left">
         <aapt:attr name="android:animation">
             <set>
                 <objectAnimator
                     android:propertyName="pathData"
                     android:startOffset="200"
                     android:duration="300"
-                    android:valueFrom="M -14.734 278.944 C 14.418 266.243 33.857 257.87 43.583 253.824 C 71.355 242.273 77.125 240.267 80.886 240.199 C 81.714 240.186 83.563 240.391 84.761 241.363 C 85.773 242.184 86.051 243.293 86.185 244.071 C 86.318 244.85 86.484 246.623 86.352 248.008 C 84.847 263.82 78.335 302.193 75.022 319.903 C 73.62 327.397 70.86 329.91 68.188 330.155 C 62.381 330.69 57.971 326.318 52.347 322.631 C 43.545 316.861 38.573 313.27 30.03 307.64 C 20.157 301.134 26.557 297.558 32.184 291.714 C 33.656 290.184 59.243 266.911 59.738 264.8 C 59.8 264.536 59.858 263.552 59.273 263.032 C 58.688 262.512 57.825 262.69 57.202 262.831 C 56.32 263.032 42.26 272.325 15.022 290.711 C 11.031 293.452 7.416 294.787 4.177 294.717 C 0.607 294.64 -6.261 292.698 -11.367 291.038 C -17.63 289.003 -22.607 287.927 -22.174 284.469 C -21.948 282.669 -19.468 280.827 -14.734 278.944 Z"
-                    android:valueTo="M 105.266 158.944 C 134.418 146.243 153.857 137.87 163.583 133.824 C 191.355 122.273 197.125 120.267 200.886 120.199 C 201.714 120.186 203.563 120.391 204.761 121.363 C 205.773 122.184 206.051 123.293 206.185 124.071 C 206.318 124.85 206.484 126.623 206.352 128.008 C 204.847 143.82 198.335 182.193 195.022 199.903 C 193.62 207.397 190.86 209.91 188.188 210.155 C 182.381 210.69 177.971 206.318 172.347 202.631 C 163.545 196.861 158.573 193.27 150.03 187.64 C 140.157 181.134 146.557 177.558 152.184 171.714 C 153.656 170.184 179.243 146.911 179.738 144.8 C 179.8 144.536 179.858 143.552 179.273 143.032 C 178.688 142.512 177.825 142.69 177.202 142.831 C 176.32 143.032 162.26 152.325 135.022 170.711 C 131.031 173.452 127.416 174.787 124.177 174.717 C 120.607 174.64 113.739 172.698 108.633 171.038 C 102.37 169.003 97.393 167.927 97.826 164.469 C 98.052 162.669 100.532 160.827 105.266 158.944 Z"
+                    android:valueFrom="M 38.85 260.2 L 38.12 260.81 L 32.31 274.01 L 31.34 275.82 L 31.22 276.55 L 26.98 285.75 L 26.38 287.57 L 22.63 295.68 L 22.51 296.41 L 18.75 304.52 L 18.63 305.24 L 14.88 313.36 L 14.88 313.72 L 14.39 314.44 L 14.27 315.17 L 11 322.19 L 10.03 324.86 L 9.07 326.67 L 8.1 329.09 L 8.1 330.18 L 8.7 331.27 L 9.31 331.76 L 10.64 332 L 11.85 331.64 L 29.04 320.74 L 31.1 319.65 L 32.92 318.32 L 33.4 318.2 L 35.22 316.87 L 35.7 316.75 L 39.82 314.08 L 40 314.08 L 40 260 Z"
+                    android:valueTo="M 158.85 140.2 L 158.12 140.81 L 152.31 154.01 L 151.34 155.82 L 151.22 156.55 L 146.98 165.75 L 146.38 167.57 L 142.63 175.68 L 142.51 176.41 L 138.75 184.52 L 138.63 185.24 L 134.88 193.36 L 134.88 193.72 L 134.39 194.44 L 134.27 195.17 L 131 202.19 L 130.03 204.86 L 129.07 206.67 L 128.1 209.09 L 128.1 210.18 L 128.7 211.27 L 129.31 211.76 L 130.64 212 L 131.85 211.64 L 149.04 200.74 L 151.1 199.65 L 152.92 198.32 L 153.4 198.2 L 155.22 196.87 L 155.7 196.75 L 159.82 194.08 L 160 194.08 L 160 140 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:interpolator/linear_out_slow_in"/>
+                <objectAnimator
+                    android:propertyName="fillAlpha"
+                    android:startOffset="200"
+                    android:duration="100"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"/>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="right">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="pathData"
+                    android:startOffset="200"
+                    android:duration="300"
+                    android:valueFrom="M 40 314.08 L 40.18 314.08 L 68.15 331.64 L 69.36 332 L 70.69 331.76 L 71.3 331.27 L 71.9 330.18 L 71.78 328.73 L 61.37 305.24 L 61.25 304.52 L 57.49 296.41 L 56.89 294.59 L 53.62 287.57 L 53.02 285.75 L 48.78 276.55 L 48.66 275.82 L 43.45 264.44 L 42.85 262.63 L 41.88 260.81 L 41.15 260.2 L 40.18 259.96 L 40 260 Z"
+                    android:valueTo="M 160 194.08 L 160.18 194.08 L 188.15 211.64 L 189.36 212 L 190.69 211.76 L 191.3 211.27 L 191.9 210.18 L 191.78 208.73 L 181.37 185.24 L 181.25 184.52 L 177.49 176.41 L 176.89 174.59 L 173.62 167.57 L 173.02 165.75 L 168.78 156.55 L 168.66 155.82 L 163.45 144.44 L 162.85 142.63 L 161.88 140.81 L 161.15 140.2 L 160.18 139.96 L 160 140 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:interpolator/linear_out_slow_in"/>
+                <objectAnimator
+                    android:propertyName="fillAlpha"
+                    android:startOffset="200"
+                    android:duration="100"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"/>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="dot">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="pathData"
+                    android:startOffset="200"
+                    android:duration="300"
+                    android:valueFrom="M 40 228.01 C 45.64 228.01 50.22 232.59 50.22 238.23 C 50.22 243.87 45.64 248.45 40 248.45 C 34.36 248.45 29.78 243.87 29.78 238.23 C 29.78 232.59 34.36 228.01 40 228.01 Z"
+                    android:valueTo="M 160 108.01 C 165.64 108.01 170.22 112.59 170.22 118.23 C 170.22 123.87 165.64 128.45 160 128.45 C 154.36 128.45 149.78 123.87 149.78 118.23 C 149.78 112.59 154.36 108.01 160 108.01 Z"
                     android:valueType="pathType"
                     android:interpolator="@android:interpolator/linear_out_slow_in"/>
                 <objectAnimator
