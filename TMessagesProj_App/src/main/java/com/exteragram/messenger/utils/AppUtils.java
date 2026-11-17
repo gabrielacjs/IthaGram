@@ -5,6 +5,11 @@ import java.io.StringWriter;
 
 /** IthaGram: version minima de AppUtils de exteraGram. */
 public class AppUtils {
+    /** IthaGram: log() del SDK de Python (android_utils.log) hacia logcat. */
+    public static void log(String data) {
+        android.util.Log.i("IthaPlugin", String.valueOf(data));
+    }
+
     public static int getVersionCode() {
         try {
             android.content.Context c = org.telegram.messenger.ApplicationLoader.applicationContext;

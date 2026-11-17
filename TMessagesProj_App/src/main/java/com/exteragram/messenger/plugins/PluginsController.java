@@ -594,14 +594,14 @@ public class PluginsController implements PluginsHooks {
     }
 
     public static void runOnPluginsQueue(Runnable runnable) {
-        if (com.exteragram.messenger.plugins.PluginEvents.pluginsQueue == null || !com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.isAlive()) {
+        if (Utilities.pluginsQueue == null || !Utilities.pluginsQueue.isAlive()) {
             synchronized (PluginsController.class) {
-                if (com.exteragram.messenger.plugins.PluginEvents.pluginsQueue == null || !com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.isAlive()) {
-                    com.exteragram.messenger.plugins.PluginEvents.pluginsQueue = new DispatchQueue("pluginsQueue");
+                if (Utilities.pluginsQueue == null || !Utilities.pluginsQueue.isAlive()) {
+                    Utilities.pluginsQueue = new DispatchQueue("pluginsQueue");
                 }
             }
         }
-        com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.postRunnable(runnable);
+        Utilities.pluginsQueue.postRunnable(runnable);
     }
 
     public void init(Runnable runnable) {
@@ -615,8 +615,8 @@ public class PluginsController implements PluginsHooks {
         NativeCrashHandler.checkAndHandleNativeCrash();
         applyArtOpts();
         watchdog.start();
-        if (com.exteragram.messenger.plugins.PluginEvents.pluginsQueue == null || !com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.isAlive()) {
-            com.exteragram.messenger.plugins.PluginEvents.pluginsQueue = new DispatchQueue("pluginsQueue");
+        if (Utilities.pluginsQueue == null || !Utilities.pluginsQueue.isAlive()) {
+            Utilities.pluginsQueue = new DispatchQueue("pluginsQueue");
         }
         if (preferences == null && ApplicationLoader.applicationContext != null) {
             preferences = ApplicationLoader.applicationContext.getSharedPreferences("plugin_settings", 0);
@@ -894,7 +894,7 @@ public class PluginsController implements PluginsHooks {
             }
             return;
         }
-        com.exteragram.messenger.plugins.PluginEvents.pluginsQueue.postRunnable(() -> {
+        Utilities.pluginsQueue.postRunnable(() -> {
             try {
                 PluginsEngine engine = getPluginEngine(pluginId);
                 if (engine == null) {

@@ -45,6 +45,8 @@ public class Utilities {
     public static volatile DispatchQueue2 themeQueue = new DispatchQueue2("themeQueue");
     public static volatile DispatchQueue2 externalNetworkQueue = new DispatchQueue2("externalNetworkQueue");
     public static volatile DispatchQueue videoPlayerQueue;
+    // IthaGram: cola de los plugins (el SDK de Python la busca aqui por nombre)
+    public static volatile DispatchQueue pluginsQueue;
 
     private final static String RANDOM_STRING_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

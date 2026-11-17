@@ -20,6 +20,8 @@ public class IthaPy {
             if (Build.VERSION.SDK_INT >= 28 && !context.getPackageName().equals(Application.getProcessName())) {
                 return;
             }
+            // diagnostico: deja que los errores del motor salgan por logcat (etiqueta tmessages)
+            org.telegram.messenger.BuildVars.LOGS_ENABLED = true;
             Log.i("IthaDiag", "motor Nagram: iniciando");
             PluginsController.getInstance().init(new Runnable() {
                 @Override

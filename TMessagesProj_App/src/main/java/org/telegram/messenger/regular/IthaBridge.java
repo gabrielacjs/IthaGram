@@ -31,6 +31,7 @@ public class IthaBridge {
     private static int nextId = FIRST_ID;
 
     public static void install() {
+        org.telegram.messenger.IthaPlugins.setHost(new IthaPyHost());
         IthaHooks.menuBus = new IthaHooks.MenuBus() {
             @Override
             public void fill(String menuType, Object fragment, Object message, ArrayList<Integer> icons, ArrayList<CharSequence> items, ArrayList<Integer> options) {
