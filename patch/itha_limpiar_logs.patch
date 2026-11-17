@@ -1,0 +1,10 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+index 7df4b9e..5b7bec7 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+@@ -166 +165,0 @@
+-        android.util.Log.i("IthaHooks", "registrado " + method + " en " + cls.getName());
+@@ -185 +183,0 @@
+-            android.util.Log.i("IthaHooks", "before " + method + " en " + thiz.getClass().getSimpleName());
+@@ -203 +200,0 @@
+-            android.util.Log.i("IthaHooks", "after " + method + " en " + thiz.getClass().getSimpleName());

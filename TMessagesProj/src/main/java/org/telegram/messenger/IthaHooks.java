@@ -163,7 +163,6 @@ public class IthaHooks {
         }
         Entry e = new Entry(cls, method, callback);
         entries.add(e);
-        android.util.Log.i("IthaHooks", "registrado " + method + " en " + cls.getName());
         return e;
     }
 
@@ -182,7 +181,6 @@ public class IthaHooks {
             if (!matches(e, method, thiz)) {
                 continue;
             }
-            android.util.Log.i("IthaHooks", "before " + method + " en " + thiz.getClass().getSimpleName());
             try {
                 e.callback.before(p);
             } catch (Throwable t) {
@@ -200,7 +198,6 @@ public class IthaHooks {
             if (!matches(e, method, thiz)) {
                 continue;
             }
-            android.util.Log.i("IthaHooks", "after " + method + " en " + thiz.getClass().getSimpleName());
             try {
                 e.callback.after(p);
             } catch (Throwable t) {
