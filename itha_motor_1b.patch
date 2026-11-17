@@ -1,0 +1,1342 @@
+diff --git a/TMessagesProj/build.gradle b/TMessagesProj/build.gradle
+index 917c9ab..d4cdb8e 100644
+--- a/TMessagesProj/build.gradle
++++ b/TMessagesProj/build.gradle
+@@ -1,290 +1,290 @@
+-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+-
+-apply plugin: 'com.android.library'
+-apply plugin: 'org.telegram.build-plugin'
+-apply plugin: 'idea'
+-
+-idea {
+-    module {
+-        excludeDirs += [
+-            file('jni/td'),
+-            file('jni/third_party/absl'),
+-            file('jni/third_party/boringssl'),
+-            file('jni/third_party/dav1d'),
+-            file('jni/third_party/ffmpeg'),
+-            file('jni/third_party/libvpx'),
+-            file('jni/third_party/libyuv'),
+-            file('jni/third_party/openh264'),
+-            file('jni/third_party/xiph'),
+-            file('jni/third_party/wamr'),
+-            file('jni/third_party/libprisma'),
+-            file('jni/third_party/boost-regex'),
+-            file('jni/tgcalls'),
+-            file('jni/tlottie'),
+-            file('jni/voip/webrtc'),
+-            file('jni/sqlite')
+-        ]
+-    }
+-}
+-
+-repositories {
+-    mavenCentral()
+-    google()
+-}
+-
+-configurations {
+-    compile.exclude module: 'support-v4'
+-}
+-
+-configurations.all {
+-    exclude group: 'com.google.firebase', module: 'firebase-core'
+-    exclude group: 'androidx.recyclerview', module: 'recyclerview'
+-}
+-
+-dependencies {
+-    implementation 'androidx.core:core:1.16.0'
+-    implementation 'androidx.palette:palette:1.0.0'
+-    implementation 'androidx.exifinterface:exifinterface:1.3.6'
+-    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+-    implementation "androidx.sharetarget:sharetarget:1.2.0"
+-    implementation 'androidx.interpolator:interpolator:1.0.0'
+-    implementation 'androidx.biometric:biometric:1.1.0'
+-    implementation 'androidx.webkit:webkit:1.14.0'
+-
+-    implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
+-    implementation "androidx.mediarouter:mediarouter:1.7.0"
+-    implementation 'com.google.zxing:core:3.5.4'
+-    implementation 'com.neovisionaries:nv-websocket-client:2.14'
+-
+-    implementation 'androidx.car.app:app:1.4.0'
+-    implementation 'androidx.car.app:app-projected:1.4.0'
+-    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+-
+-    compileOnly 'org.checkerframework:checker-qual:2.5.2'
+-    compileOnly 'org.checkerframework:checker-compat-qual:2.5.0'
+-
+-    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+-    implementation 'com.google.android.gms:play-services-auth:20.4.0'
+-    implementation 'com.google.android.gms:play-services-vision:20.1.3'
+-    implementation 'com.google.android.gms:play-services-wearable:18.0.0'
+-    implementation 'com.google.android.gms:play-services-location:21.0.1'
+-    implementation 'com.google.android.gms:play-services-wallet:19.1.0'
+-    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
+-    implementation 'com.stripe:stripe-android:2.0.2'
+-    implementation 'com.google.mlkit:language-id:17.0.6'
+-    implementation 'com.android.billingclient:billing:8.0.0'
+-    implementation 'com.google.code.gson:gson:2.11.0'
+-    implementation 'com.google.guava:guava:31.1-android'
+-    implementation 'com.google.android.play:integrity:1.3.0'
+-    implementation 'com.google.android.gms:play-services-safetynet:18.0.1'
+-
+-    implementation 'com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1'
+-    implementation 'com.google.android.gms:play-services-mlkit-image-labeling:16.0.8'
+-
+-    // Pinned: firebase-pnv alone would pull credentials 1.5.0 (passkeys were built on 1.6.0-alpha04).
+-    implementation "androidx.credentials:credentials:1.6.0-alpha04"
+-    implementation "androidx.credentials:credentials-play-services-auth:1.6.0-alpha04"
+-
+-    // 34.19.0 is the last BoM for minSdk 23: BoM 35.x requires minSdk 24 (33.16.0 was the last for Android 5).
+-    api platform('com.google.firebase:firebase-bom:34.19.0')
+-    implementation 'com.google.firebase:firebase-messaging'
+-    implementation "com.google.firebase:firebase-pnv"
+-    implementation 'com.google.firebase:firebase-appindexing:20.0.0'
+-
+-    implementation "io.noties.markwon:core:4.6.2"
+-    implementation "io.noties.markwon:ext-strikethrough:4.6.2"
+-    implementation "io.noties.markwon:ext-tables:4.6.2"
+-    implementation "io.noties.markwon:html:4.6.2"
+-    implementation "io.noties.markwon:inline-parser:4.6.2"
+-    implementation("io.noties.markwon:ext-latex:4.6.2") {
+-        exclude group: 'ru.noties', module: 'jlatexmath-android'
+-    }
+-
+-    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer")
+-    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-dash")
+-    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-hls")
+-    api project(":TMessagesProj_Modules:media3:media-lib-decoder-ffmpeg")
+-    api project(":TMessagesProj_Modules:media3:media-lib-session")
+-    api project(':jlatexmath')
+-
+-//    implementation 'com.google.mlkit:translate:17.0.3'
+-
+-    implementation 'com.google.android.recaptcha:recaptcha:18.7.1'
+-
+-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+-}
+-
+-android {
+-    compileSdkVersion 36
+-    buildToolsVersion '36.0.0'
+-    ndkVersion "27.2.12479018"
+-
+-
+-    externalNativeBuild {
+-        cmake {
+-            path 'jni/CMakeLists.txt'
+-        }
+-    }
+-
+-    // IWidgetEngine: the widget engine's isolated process (WidgetEngineService).
+-    buildFeatures {
+-        aidl true
+-    }
+-
+-    lintOptions {
+-        disable 'MissingTranslation'
+-        disable 'ExtraTranslation'
+-        disable 'BlockedPrivateApi'
+-    }
+-
+-    compileOptions {
+-        sourceCompatibility JavaVersion.VERSION_1_8
+-        targetCompatibility JavaVersion.VERSION_1_8
+-
+-        coreLibraryDesugaringEnabled true
+-    }
+-
+-    defaultConfig {
+-        minSdkVersion 23
+-        targetSdkVersion 36
+-        // NithaGram: credenciales propias desde local.properties o variables de entorno (si no, las publicas)
+-        def tgLocalProps = new Properties()
+-        def tgLocalFile = rootProject.file('local.properties')
+-        if (tgLocalFile.exists()) {
+-            tgLocalFile.withInputStream { tgLocalProps.load(it) }
+-        }
+-        def tgAppId = (tgLocalProps.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: '4').trim()
+-        def tgAppHash = (tgLocalProps.getProperty('TELEGRAM_APP_HASH') ?: System.getenv('TELEGRAM_APP_HASH') ?: '014b35b6184100b085b0d0572f9b5103').trim()
+-        buildConfigField 'int', 'APP_ID', tgAppId
+-        buildConfigField 'String', 'APP_HASH', '"' + tgAppHash + '"'
+-
+-        vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+-
+-        multiDexEnabled true
+-
+-        externalNativeBuild {
+-            cmake {
+-                version '3.22.1'
+-                arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-23' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+-                targets 'tmessages.49', 'twidget'
+-            }
+-        }
+-    }
+-
+-    buildTypes {
+-        debug {
+-            jniDebuggable true
+-            shrinkResources false
+-            multiDexEnabled true
+-            ndk.debugSymbolLevel = 'FULL'
+-            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+-            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_PRIVATE_URL") + "\""
+-            buildConfigField "boolean", "DEBUG_VERSION", "true"
+-            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
+-            buildConfigField "boolean", "BUNDLE", "false"
+-            buildConfigField "int", "VERSION_NUM", "0"
+-        }
+-
+-        HA_private {
+-            matchingFallbacks = ['release']
+-            jniDebuggable false
+-            multiDexEnabled true
+-            ndk.debugSymbolLevel = 'FULL'
+-            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+-            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_PRIVATE_URL") + "\""
+-            buildConfigField "boolean", "DEBUG_VERSION", "true"
+-            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
+-            buildConfigField "boolean", "BUNDLE", "false"
+-            buildConfigField "int", "VERSION_NUM", "1"
+-        }
+-
+-        HA_public {
+-            matchingFallbacks = ['release']
+-            jniDebuggable false
+-            multiDexEnabled true
+-            ndk.debugSymbolLevel = 'FULL'
+-            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+-            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_PUBLIC_URL") + "\""
+-            buildConfigField "boolean", "DEBUG_VERSION", "true"
+-            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
+-            buildConfigField "boolean", "BUNDLE", "false"
+-            buildConfigField "int", "VERSION_NUM", "4"
+-        }
+-
+-        HA_hardcore {
+-            matchingFallbacks = ['release']
+-            jniDebuggable false
+-            multiDexEnabled true
+-            ndk.debugSymbolLevel = 'FULL'
+-            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+-            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_HARDCORE_URL") + "\""
+-            buildConfigField "boolean", "DEBUG_VERSION", "true"
+-            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
+-            buildConfigField "boolean", "BUNDLE", "false"
+-            buildConfigField "int", "VERSION_NUM", "5"
+-        }
+-
+-        standalone {
+-            matchingFallbacks = ['release']
+-            jniDebuggable false
+-            multiDexEnabled true
+-            ndk.debugSymbolLevel = 'FULL'
+-            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+-            buildConfigField "String", "BETA_URL", "\"\""
+-            buildConfigField "boolean", "DEBUG_VERSION", "false"
+-            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
+-            buildConfigField "boolean", "BUNDLE", "false"
+-            buildConfigField "int", "VERSION_NUM", "6"
+-        }
+-
+-        release {
+-            jniDebuggable false
+-            shrinkResources false
+-            multiDexEnabled true
+-            ndk.debugSymbolLevel = 'FULL'
+-            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+-            buildConfigField "String", "BETA_URL", "\"\""
+-            buildConfigField "boolean", "DEBUG_VERSION", "false"
+-            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
+-            buildConfigField "boolean", "BUNDLE", "false"
+-            buildConfigField "int", "VERSION_NUM", "7"
+-        }
+-    }
+-
+-    namespace 'org.telegram.messenger'
+-}
+-
+-
+-def getProps(String propName) {
+-    def propsFile = rootProject.file('local.properties')
+-    if (propsFile.exists()) {
+-        def props = new Properties()
+-        props.load(new FileInputStream(propsFile))
+-        return props[propName]
+-    } else {
+-        return "";
+-    }
+-}
+-apply plugin: 'com.google.gms.google-services'
+-
+-task checkVisibility {
+-    doFirst {
+-        def isPrivateBuild = project.gradle.startParameter.taskNames.find {
+-            it.contains("HA_private") || it.contains("HA_hardcore") || it.contains("Debug") || it.contains("Release")
+-        }
+-        def isPublicAllowed = !project.hasProperty("IS_PRIVATE") || !project.property("IS_PRIVATE").toBoolean()
+-        if (!isPrivateBuild && !isPublicAllowed) {
+-            throw new GradleException("Building public version of private code!")
+-        }
+-    }
+-    doLast {
+-        if (project.gradle.startParameter.taskNames.find { it.contains("HA_public") }) {
+-            def privateBuild = file("${projectDir}_AppHockeyApp/afat/HA_private/Telegram-Beta.apk")
+-            if (privateBuild.exists()) {
+-                privateBuild.delete()
+-            }
+-        }
+-    }
+-}
+-
+-preBuild.dependsOn checkVisibility
++import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
++
++apply plugin: 'com.android.library'
++apply plugin: 'org.telegram.build-plugin'
++apply plugin: 'idea'
++
++idea {
++    module {
++        excludeDirs += [
++            file('jni/td'),
++            file('jni/third_party/absl'),
++            file('jni/third_party/boringssl'),
++            file('jni/third_party/dav1d'),
++            file('jni/third_party/ffmpeg'),
++            file('jni/third_party/libvpx'),
++            file('jni/third_party/libyuv'),
++            file('jni/third_party/openh264'),
++            file('jni/third_party/xiph'),
++            file('jni/third_party/wamr'),
++            file('jni/third_party/libprisma'),
++            file('jni/third_party/boost-regex'),
++            file('jni/tgcalls'),
++            file('jni/tlottie'),
++            file('jni/voip/webrtc'),
++            file('jni/sqlite')
++        ]
++    }
++}
++
++repositories {
++    mavenCentral()
++    google()
++}
++
++configurations {
++    compile.exclude module: 'support-v4'
++}
++
++configurations.all {
++    exclude group: 'com.google.firebase', module: 'firebase-core'
++    exclude group: 'androidx.recyclerview', module: 'recyclerview'
++}
++
++dependencies {
++    implementation 'androidx.core:core:1.16.0'
++    implementation 'androidx.palette:palette:1.0.0'
++    implementation 'androidx.exifinterface:exifinterface:1.3.6'
++    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
++    implementation "androidx.sharetarget:sharetarget:1.2.0"
++    implementation 'androidx.interpolator:interpolator:1.0.0'
++    implementation 'androidx.biometric:biometric:1.1.0'
++    implementation 'androidx.webkit:webkit:1.14.0'
++
++    implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
++    implementation "androidx.mediarouter:mediarouter:1.7.0"
++    implementation 'com.google.zxing:core:3.5.4'
++    implementation 'com.neovisionaries:nv-websocket-client:2.14'
++
++    implementation 'androidx.car.app:app:1.4.0'
++    implementation 'androidx.car.app:app-projected:1.4.0'
++    implementation 'org.nanohttpd:nanohttpd:2.3.1'
++
++    compileOnly 'org.checkerframework:checker-qual:2.5.2'
++    compileOnly 'org.checkerframework:checker-compat-qual:2.5.0'
++
++    implementation 'com.google.android.gms:play-services-maps:18.1.0'
++    implementation 'com.google.android.gms:play-services-auth:20.4.0'
++    implementation 'com.google.android.gms:play-services-vision:20.1.3'
++    implementation 'com.google.android.gms:play-services-wearable:18.0.0'
++    implementation 'com.google.android.gms:play-services-location:21.0.1'
++    implementation 'com.google.android.gms:play-services-wallet:19.1.0'
++    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
++    implementation 'com.stripe:stripe-android:2.0.2'
++    implementation 'com.google.mlkit:language-id:17.0.6'
++    implementation 'com.android.billingclient:billing:8.0.0'
++    implementation 'com.google.code.gson:gson:2.11.0'
++    implementation 'com.google.guava:guava:31.1-android'
++    implementation 'com.google.android.play:integrity:1.3.0'
++    implementation 'com.google.android.gms:play-services-safetynet:18.0.1'
++
++    implementation 'com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1'
++    implementation 'com.google.android.gms:play-services-mlkit-image-labeling:16.0.8'
++
++    // Pinned: firebase-pnv alone would pull credentials 1.5.0 (passkeys were built on 1.6.0-alpha04).
++    implementation "androidx.credentials:credentials:1.6.0-alpha04"
++    implementation "androidx.credentials:credentials-play-services-auth:1.6.0-alpha04"
++
++    // 34.19.0 is the last BoM for minSdk 23: BoM 35.x requires minSdk 24 (33.16.0 was the last for Android 5).
++    api platform('com.google.firebase:firebase-bom:34.19.0')
++    implementation 'com.google.firebase:firebase-messaging'
++    implementation "com.google.firebase:firebase-pnv"
++    implementation 'com.google.firebase:firebase-appindexing:20.0.0'
++
++    implementation "io.noties.markwon:core:4.6.2"
++    implementation "io.noties.markwon:ext-strikethrough:4.6.2"
++    implementation "io.noties.markwon:ext-tables:4.6.2"
++    implementation "io.noties.markwon:html:4.6.2"
++    implementation "io.noties.markwon:inline-parser:4.6.2"
++    implementation("io.noties.markwon:ext-latex:4.6.2") {
++        exclude group: 'ru.noties', module: 'jlatexmath-android'
++    }
++
++    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer")
++    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-dash")
++    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-hls")
++    api project(":TMessagesProj_Modules:media3:media-lib-decoder-ffmpeg")
++    api project(":TMessagesProj_Modules:media3:media-lib-session")
++    api project(':jlatexmath')
++
++//    implementation 'com.google.mlkit:translate:17.0.3'
++
++    implementation 'com.google.android.recaptcha:recaptcha:18.7.1'
++
++    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
++}
++
++android {
++    compileSdkVersion 36
++    buildToolsVersion '36.0.0'
++    ndkVersion "27.2.12479018"
++
++
++    externalNativeBuild {
++        cmake {
++            path 'jni/CMakeLists.txt'
++        }
++    }
++
++    // IWidgetEngine: the widget engine's isolated process (WidgetEngineService).
++    buildFeatures {
++        aidl true
++    }
++
++    lintOptions {
++        disable 'MissingTranslation'
++        disable 'ExtraTranslation'
++        disable 'BlockedPrivateApi'
++    }
++
++    compileOptions {
++        sourceCompatibility JavaVersion.VERSION_1_8
++        targetCompatibility JavaVersion.VERSION_1_8
++
++        coreLibraryDesugaringEnabled true
++    }
++
++    defaultConfig {
++        minSdkVersion 23
++        targetSdkVersion 36
++        // NithaGram: credenciales propias desde local.properties o variables de entorno (si no, las publicas)
++        def tgLocalProps = new Properties()
++        def tgLocalFile = rootProject.file('local.properties')
++        if (tgLocalFile.exists()) {
++            tgLocalFile.withInputStream { tgLocalProps.load(it) }
++        }
++        def tgAppId = (tgLocalProps.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: '4').trim()
++        def tgAppHash = (tgLocalProps.getProperty('TELEGRAM_APP_HASH') ?: System.getenv('TELEGRAM_APP_HASH') ?: '014b35b6184100b085b0d0572f9b5103').trim()
++        buildConfigField 'int', 'APP_ID', tgAppId
++        buildConfigField 'String', 'APP_HASH', '"' + tgAppHash + '"'
++
++        vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
++
++        multiDexEnabled true
++
++        externalNativeBuild {
++            cmake {
++                version '3.31.6'
++                arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-23' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
++                targets 'tmessages.49', 'twidget', 'aliuhook'
++            }
++        }
++    }
++
++    buildTypes {
++        debug {
++            jniDebuggable true
++            shrinkResources false
++            multiDexEnabled true
++            ndk.debugSymbolLevel = 'FULL'
++            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
++            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_PRIVATE_URL") + "\""
++            buildConfigField "boolean", "DEBUG_VERSION", "true"
++            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
++            buildConfigField "boolean", "BUNDLE", "false"
++            buildConfigField "int", "VERSION_NUM", "0"
++        }
++
++        HA_private {
++            matchingFallbacks = ['release']
++            jniDebuggable false
++            multiDexEnabled true
++            ndk.debugSymbolLevel = 'FULL'
++            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
++            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_PRIVATE_URL") + "\""
++            buildConfigField "boolean", "DEBUG_VERSION", "true"
++            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
++            buildConfigField "boolean", "BUNDLE", "false"
++            buildConfigField "int", "VERSION_NUM", "1"
++        }
++
++        HA_public {
++            matchingFallbacks = ['release']
++            jniDebuggable false
++            multiDexEnabled true
++            ndk.debugSymbolLevel = 'FULL'
++            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
++            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_PUBLIC_URL") + "\""
++            buildConfigField "boolean", "DEBUG_VERSION", "true"
++            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
++            buildConfigField "boolean", "BUNDLE", "false"
++            buildConfigField "int", "VERSION_NUM", "4"
++        }
++
++        HA_hardcore {
++            matchingFallbacks = ['release']
++            jniDebuggable false
++            multiDexEnabled true
++            ndk.debugSymbolLevel = 'FULL'
++            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
++            buildConfigField "String", "BETA_URL", "\"" + getProps("BETA_HARDCORE_URL") + "\""
++            buildConfigField "boolean", "DEBUG_VERSION", "true"
++            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
++            buildConfigField "boolean", "BUNDLE", "false"
++            buildConfigField "int", "VERSION_NUM", "5"
++        }
++
++        standalone {
++            matchingFallbacks = ['release']
++            jniDebuggable false
++            multiDexEnabled true
++            ndk.debugSymbolLevel = 'FULL'
++            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
++            buildConfigField "String", "BETA_URL", "\"\""
++            buildConfigField "boolean", "DEBUG_VERSION", "false"
++            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
++            buildConfigField "boolean", "BUNDLE", "false"
++            buildConfigField "int", "VERSION_NUM", "6"
++        }
++
++        release {
++            jniDebuggable false
++            shrinkResources false
++            multiDexEnabled true
++            ndk.debugSymbolLevel = 'FULL'
++            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
++            buildConfigField "String", "BETA_URL", "\"\""
++            buildConfigField "boolean", "DEBUG_VERSION", "false"
++            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
++            buildConfigField "boolean", "BUNDLE", "false"
++            buildConfigField "int", "VERSION_NUM", "7"
++        }
++    }
++
++    namespace 'org.telegram.messenger'
++}
++
++
++def getProps(String propName) {
++    def propsFile = rootProject.file('local.properties')
++    if (propsFile.exists()) {
++        def props = new Properties()
++        props.load(new FileInputStream(propsFile))
++        return props[propName]
++    } else {
++        return "";
++    }
++}
++apply plugin: 'com.google.gms.google-services'
++
++task checkVisibility {
++    doFirst {
++        def isPrivateBuild = project.gradle.startParameter.taskNames.find {
++            it.contains("HA_private") || it.contains("HA_hardcore") || it.contains("Debug") || it.contains("Release")
++        }
++        def isPublicAllowed = !project.hasProperty("IS_PRIVATE") || !project.property("IS_PRIVATE").toBoolean()
++        if (!isPrivateBuild && !isPublicAllowed) {
++            throw new GradleException("Building public version of private code!")
++        }
++    }
++    doLast {
++        if (project.gradle.startParameter.taskNames.find { it.contains("HA_public") }) {
++            def privateBuild = file("${projectDir}_AppHockeyApp/afat/HA_private/Telegram-Beta.apk")
++            if (privateBuild.exists()) {
++                privateBuild.delete()
++            }
++        }
++    }
++}
++
++preBuild.dependsOn checkVisibility
+diff --git a/TMessagesProj/jni/CMakeLists.txt b/TMessagesProj/jni/CMakeLists.txt
+index 01a2f33..e893f49 100644
+--- a/TMessagesProj/jni/CMakeLists.txt
++++ b/TMessagesProj/jni/CMakeLists.txt
+@@ -1,344 +1,400 @@
+-cmake_minimum_required(VERSION 3.16)
+-
+-set(CMAKE_CXX_STANDARD 17)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-set(CMAKE_CXX_EXTENSIONS OFF)
+-
+-set(CMAKE_CXX_FLAGS "-DANDROID -g")
+-set(CMAKE_C_FLAGS "-w -std=c11 -DANDROID -D_LARGEFILE_SOURCE=1 -g -Wno-error=implicit-function-declaration")
+-set(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
+-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -fvisibility=hidden -flto=full")
+-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=full")
+-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto=full -Wl,--gc-sections -Wl,--icf=safe -Wl,-Bsymbolic")
+-
+-if (${ANDROID_ABI} STREQUAL "armeabi-v7a" OR ${ANDROID_ABI} STREQUAL "arm64-v8a")
+-    enable_language(ASM)
+-else()
+-    enable_language(ASM_NASM)
+-endif()
+-
+-set(CAN_COMPILE_SME FALSE CACHE INTERNAL "Disable libyuv SME" FORCE)
+-add_subdirectory(
+-        third_party/libyuv
+-        ${CMAKE_CURRENT_BINARY_DIR}/libyuv
+-        EXCLUDE_FROM_ALL)
+-
+-# Abseil
+-set(ABSL_PROPAGATE_CXX_STD ON)
+-set(ABSL_BUILD_TESTING OFF)
+-set(ABSL_ENABLE_INSTALL OFF)
+-add_subdirectory(
+-        third_party/absl
+-        ${CMAKE_CURRENT_BINARY_DIR}/absl
+-        EXCLUDE_FROM_ALL)
+-
+-add_library(webrtc_absl INTERFACE)
+-target_link_libraries(webrtc_absl INTERFACE
+-        absl::base
+-        absl::strings
+-        absl::str_format
+-        absl::cord
+-        absl::synchronization
+-        absl::time
+-        absl::status
+-        absl::statusor
+-        absl::hash
+-        absl::flat_hash_map
+-        absl::flat_hash_set
+-        absl::flags
+-        absl::flags_parse
+-        absl::random_random
+-        absl::random_distributions
+-        absl::crc32c
+-        absl::log
+-        absl::check
+-)
+-
+-add_library(avutil STATIC IMPORTED)
+-set_target_properties(avutil PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libavutil.a)
+-
+-add_library(avformat STATIC IMPORTED)
+-set_target_properties(avformat PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libavformat.a)
+-
+-add_library(avcodec STATIC IMPORTED)
+-set_target_properties(avcodec PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libavcodec.a)
+-
+-add_library(swresample STATIC IMPORTED)
+-set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libswresample.a)
+-
+-add_library(swscale STATIC IMPORTED)
+-set_target_properties(swscale PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libswscale.a)
+-
+-add_library(crypto STATIC IMPORTED)
+-set_target_properties(crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libcrypto.a)
+-
+-add_library(ssl STATIC IMPORTED)
+-set_target_properties(ssl PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libssl.a)
+-
+-
+-#aesige
+-#add_library(aesige STATIC openssl/aes_ige.c)
+-#target_compile_options(aesige PUBLIC -Wall -frtti -finline-functions -ffast-math -Oz)
+-#target_include_directories(aesige PUBLIC third_party/boringssl/include openssl/include)
+-#target_link_libraries(aesige crypto)
+-
+-
+-add_library(libvpx STATIC IMPORTED)
+-set_target_properties(libvpx PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libvpx.a)
+-
+-add_library(libdav1d STATIC IMPORTED)
+-set_target_properties(libdav1d PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libdav1d.a)
+-
+-add_library(libopus STATIC IMPORTED)
+-set_target_properties(libopus PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libopus.a)
+-
+-add_library(tde2e STATIC IMPORTED)
+-set_target_properties(tde2e PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libtde2e.a)
+-
+-add_library(tdutils STATIC IMPORTED)
+-set_target_properties(tdutils PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libtdutils.a)
+-
+-add_subdirectory(
+-        prisma
+-        ${CMAKE_CURRENT_BINARY_DIR}/prisma
+-        EXCLUDE_FROM_ALL)
+-
+-#tgnet
+-add_library(tgnet STATIC
+-        openssl/aes_ige.c
+-        tgnet/ApiScheme.cpp
+-        tgnet/BuffersStorage.cpp
+-        tgnet/ByteArray.cpp
+-        tgnet/ByteStream.cpp
+-        tgnet/Connection.cpp
+-        tgnet/ConnectionSession.cpp
+-        tgnet/ConnectionsManager.cpp
+-        tgnet/TLSHello.cpp
+-        tgnet/ConnectionSocket.cpp
+-        tgnet/Datacenter.cpp
+-        tgnet/EventObject.cpp
+-        tgnet/FileLog.cpp
+-        tgnet/MTProtoScheme.cpp
+-        tgnet/NativeByteBuffer.cpp
+-        tgnet/Request.cpp
+-        tgnet/Timer.cpp
+-        tgnet/TLObject.cpp
+-        tgnet/ProxyCheckInfo.cpp
+-        tgnet/Handshake.cpp
+-        tgnet/Config.cpp)
+-target_compile_options(tgnet PUBLIC
+-        -Wall -frtti -finline-functions -ffast-math -Oz)
+-set_target_properties(tgnet PROPERTIES
+-        ANDROID_ARM_MODE arm)
+-target_compile_definitions(tgnet PUBLIC
+-        HAVE_PTHREAD)
+-target_include_directories(tgnet PUBLIC
+-        third_party/boringssl/include
+-        openssl/include)
+-target_link_libraries(tgnet
+-        crypto)
+-
+-# tlottie (prebuilt Rust static library)
+-add_library(tlottie STATIC IMPORTED)
+-set_target_properties(tlottie PROPERTIES
+-        IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libtlottie.a)
+-
+-# Wallet Engine: matching Rust archive and generated UniFFI C++20 wrapper.
+-set(WALLET_ENGINE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/prebuild/include/wallet-engine)
+-add_library(wallet_engine STATIC IMPORTED)
+-set_target_properties(wallet_engine PROPERTIES
+-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/prebuild/lib/${ANDROID_ABI}/libwallet_engine.a)
+-
+-add_library(wallet_engine_cpp STATIC
+-        ${WALLET_ENGINE_INCLUDE_DIR}/wallet_engine.cpp
+-        ${WALLET_ENGINE_INCLUDE_DIR}/gram_wallet.cpp)
+-# Keep C++20 local: existing JNI sources include Breakpad's C++17-only headers.
+-# Any new source that includes wallet_engine.hpp must also opt into C++20.
+-target_compile_features(wallet_engine_cpp PRIVATE cxx_std_20)
+-# Keep unused bindings discardable even when voip resets CMAKE_CXX_FLAGS below.
+-target_compile_options(wallet_engine_cpp PRIVATE -ffunction-sections -fdata-sections)
+-target_include_directories(wallet_engine_cpp PUBLIC ${WALLET_ENGINE_INCLUDE_DIR})
+-target_link_libraries(wallet_engine_cpp PUBLIC wallet_engine dl m)
+-
+-# Compile the JNI bridge as C++20 without changing the legacy JNI sources.
+-# An object library keeps its JNI entry points in the existing tmessages .so.
+-add_library(wallet_engine_jni OBJECT wallet/WalletEngineBridge.cpp wallet/GramWalletAdapter.cpp)
+-target_compile_features(wallet_engine_jni PRIVATE cxx_std_20)
+-set_target_properties(wallet_engine_jni PROPERTIES POSITION_INDEPENDENT_CODE ON)
+-target_link_libraries(wallet_engine_jni PRIVATE wallet_engine_cpp)
+-
+-#sqlite
+-add_library(sqlite STATIC
+-        sqlite/sqlite3.c)
+-target_compile_options(sqlite PUBLIC
+-        -fno-strict-aliasing -Oz)
+-set_target_properties(sqlite PROPERTIES
+-        ANDROID_ARM_MODE arm)
+-target_compile_definitions(sqlite PUBLIC
+-        NULL=0 SOCKLEN_T=socklen_t LOCALE_NOT_USED ANDROID_NDK DISABLE_IMPORTGL AVOID_TABLES ANDROID_TILE_BASED_DECODE HAVE_STRCHRNUL=0 ANDROID_ARMV6_IDCT)
+-
+-#breakpad
+-add_library(breakpad STATIC
+-        third_party/breakpad/src/client/linux/crash_generation/crash_generation_client.cc
+-        third_party/breakpad/src/client/linux/handler/exception_handler.cc
+-        third_party/breakpad/src/client/linux/handler/minidump_descriptor.cc
+-        third_party/breakpad/src/client/linux/log/log.cc
+-        third_party/breakpad/src/client/linux/dump_writer_common/thread_info.cc
+-        third_party/breakpad/src/client/linux/dump_writer_common/seccomp_unwinder.cc
+-        third_party/breakpad/src/client/linux/dump_writer_common/ucontext_reader.cc
+-        third_party/breakpad/src/client/linux/microdump_writer/microdump_writer.cc
+-        third_party/breakpad/src/client/linux/minidump_writer/linux_dumper.cc
+-        third_party/breakpad/src/client/linux/minidump_writer/linux_ptrace_dumper.cc
+-        third_party/breakpad/src/client/linux/minidump_writer/minidump_writer.cc
+-        third_party/breakpad/src/client/minidump_file_writer.cc
+-        third_party/breakpad/src/common/android/breakpad_getcontext.S
+-        third_party/breakpad/src/common/convert_UTF.c
+-        third_party/breakpad/src/common/md5.cc
+-        third_party/breakpad/src/common/string_conversion.cc
+-        third_party/breakpad/src/common/linux/elfutils.cc
+-        third_party/breakpad/src/common/linux/file_id.cc
+-        third_party/breakpad/src/common/linux/guid_creator.cc
+-        third_party/breakpad/src/common/linux/linux_libc_support.cc
+-        third_party/breakpad/src/common/linux/memory_mapped_file.cc
+-        third_party/breakpad/src/common/linux/safe_readlink.cc)
+-set_target_properties(breakpad PROPERTIES ANDROID_ARM_MODE arm)
+-set_property(SOURCE third_party/breakpad/src/common/android/breakpad_getcontext.S PROPERTY LANGUAGE C)
+-target_include_directories(breakpad PUBLIC
+-        third_party/breakpad/src/common/android/include
+-        third_party/breakpad/src)
+-
+-
+-#voip
+-include(${CMAKE_HOME_DIRECTORY}/voip/CMakeLists.txt)
+-
+-set(NATIVE_LIB "tmessages.49")
+-
+-#tmessages
+-add_library(${NATIVE_LIB} SHARED
+-        jni.c
+-        audio.c
+-        webm_encoder.c
+-        image.cpp
+-        intro/IntroRenderer.c
+-        SqliteWrapper.cpp
+-        utilities.cpp
+-        gifvideo.cpp
+-        lottie.cpp
+-        TgNetWrapper.cpp
+-        ffmpeg_jni.cc
+-        fast-edge.cpp
+-        genann.c
+-        secureid_ocr.cpp
+-        tde2e/bridge.cpp
+-        tests.cpp
+-)
+-
+-# HTML widgets are libtwidget.so, apart from the client library: the isolated engine process loads only it
+-# (WidgetEngineService), the client never does. What the client needs of the same code (the gesture policy, the CPU
+-# filter pass; no widget code reaches either) is compiled into the client library (twidget_client_sources).
+-include(twidget/twidget.cmake)
+-add_library(twidget SHARED twidget/twidget-onload.cpp twidget/twidget-seccomp.cpp)
+-twidget_target_sources(twidget)
+-twidget_client_sources(${NATIVE_LIB})
+-target_link_options(twidget PRIVATE "-Wl,-z,max-page-size=16384")
+-target_link_options(twidget PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/twidget/exports.map")
+-
+-# Compile JNI directly into the shared library so archive extraction cannot drop its exports.
+-set(PRISMA_BRIDGE_SOURCES
+-        "${CMAKE_CURRENT_SOURCE_DIR}/prisma/bridge/PrismaEngine.cpp"
+-        "${CMAKE_CURRENT_SOURCE_DIR}/prisma/bridge/PrismaJni.cpp")
+-target_sources(${NATIVE_LIB} PRIVATE ${PRISMA_BRIDGE_SOURCES})
+-target_include_directories(${NATIVE_LIB} PRIVATE
+-        "${CMAKE_CURRENT_SOURCE_DIR}/prisma/bridge")
+-set_property(SOURCE ${PRISMA_BRIDGE_SOURCES} APPEND PROPERTY
+-        COMPILE_OPTIONS -fexceptions -frtti)
+-set_property(SOURCE ${PRISMA_BRIDGE_SOURCES} APPEND PROPERTY
+-        COMPILE_DEFINITIONS BOOST_REGEX_STANDALONE)
+-
+-target_compile_options(${NATIVE_LIB} PUBLIC
+-        -ffast-math -Oz -funroll-loops -ffast-math -fno-strict-aliasing -fno-math-errno)
+-
+-target_compile_definitions(${NATIVE_LIB} PUBLIC
+-        BSD=1 NULL=0 SOCKLEN_T=socklen_t ANDROID_NDK DISABLE_IMPORTGL AVOID_TABLES ANDROID_TILE_BASED_DECODE __STDC_CONSTANT_MACROS ANDROID_ARMV6_IDCT OPUS_BUILD FIXED_POINT USE_ALLOCA restrict= __EMX__ LOCALE_NOT_USED HAVE_LRINT HAVE_LRINTF)
+-
+-target_sources(${NATIVE_LIB} PRIVATE
+-
+-        third_party/xiph/opusfile/src/info.c
+-        third_party/xiph/opusfile/src/internal.c
+-        third_party/xiph/opusfile/src/opusfile.c
+-        third_party/xiph/opusfile/src/stream.c
+-        third_party/xiph/ogg/src/bitwise.c
+-        third_party/xiph/ogg/src/framing.c)
+-
+-target_include_directories(${NATIVE_LIB} PUBLIC
+-        third_party/xiph/opus/include
+-        third_party/xiph/opus/silk
+-        third_party/xiph/opus/silk/fixed
+-        third_party/xiph/opus/celt
+-        third_party/xiph/opus
+-        third_party/xiph/opusfile/include
+-        third_party/xiph/ogg/include
+-        third_party/libyuv/include
+-        third_party/absl
+-        third_party/boringssl/include
+-        openssl/include
+-        prebuild/include/${ANDROID_ABI}
+-        third_party/ffmpeg
+-        third_party/libvpx
+-        third_party/dav1d/include
+-        emoji
+-        exoplayer/include
+-        intro
+-        tlottie/include
+-        tgcalls/
+-        webrtc/
+-        td/tde2e
+-        td/tde2e/td/e2e
+-)
+-
+-target_link_options(${NATIVE_LIB} PRIVATE "-Wl,-z,max-page-size=16384")
+-target_link_options(${NATIVE_LIB} PRIVATE "-Wl,-z,common-page-size=16384")
+-target_link_options(${NATIVE_LIB} PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/exports.map")
+-target_link_libraries(${NATIVE_LIB}
+-        -Wl,--whole-archive rnnoise openh264 voipandroid -Wl,--no-whole-archive
+-        webrtc_absl
+-        tgcalls
+-        wasm
+-        tgcalls_tp
+-        tgnet
+-        prisma
+-        tlottie
+-        wallet_engine_jni
+-        wallet_engine_cpp
+-        sqlite
+-        swscale
+-        avformat
+-        avcodec
+-        swresample
+-        libvpx
+-        libdav1d
+-        libopus
+-        tde2e
+-        tdutils
+-        yuv
+-        avutil
+-        ssl
+-        crypto
+-        jnigraphics
+-        log
+-        z
+-        GLESv2
+-        EGL
+-        android
+-        OpenSLES
+-        cpufeatures
+-        breakpad)
+-
+-#if (${ANDROID_ABI} STREQUAL "x86" OR ${ANDROID_ABI} STREQUAL "x86_64")
+-#    target_link_libraries(${NATIVE_LIB}
+-#            -Wl,--whole-archive vpxasm -Wl,--no-whole-archive
+-#            c)
+-#endif()
+-
+-include(AndroidNdkModules)
+-android_ndk_import_module_cpufeatures()
++cmake_minimum_required(VERSION 3.16)
++
++set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++set(CMAKE_CXX_EXTENSIONS OFF)
++
++set(CMAKE_CXX_FLAGS "-DANDROID -g")
++set(CMAKE_C_FLAGS "-w -std=c11 -DANDROID -D_LARGEFILE_SOURCE=1 -g -Wno-error=implicit-function-declaration")
++set(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp")
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -fvisibility=hidden -flto=full")
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=full")
++set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto=full -Wl,--gc-sections -Wl,--icf=safe -Wl,-Bsymbolic")
++
++if (${ANDROID_ABI} STREQUAL "armeabi-v7a" OR ${ANDROID_ABI} STREQUAL "arm64-v8a")
++    enable_language(ASM)
++else()
++    enable_language(ASM_NASM)
++endif()
++
++set(CAN_COMPILE_SME FALSE CACHE INTERNAL "Disable libyuv SME" FORCE)
++add_subdirectory(
++        third_party/libyuv
++        ${CMAKE_CURRENT_BINARY_DIR}/libyuv
++        EXCLUDE_FROM_ALL)
++
++# Abseil
++set(ABSL_PROPAGATE_CXX_STD ON)
++set(ABSL_BUILD_TESTING OFF)
++set(ABSL_ENABLE_INSTALL OFF)
++add_subdirectory(
++        third_party/absl
++        ${CMAKE_CURRENT_BINARY_DIR}/absl
++        EXCLUDE_FROM_ALL)
++
++add_library(webrtc_absl INTERFACE)
++target_link_libraries(webrtc_absl INTERFACE
++        absl::base
++        absl::strings
++        absl::str_format
++        absl::cord
++        absl::synchronization
++        absl::time
++        absl::status
++        absl::statusor
++        absl::hash
++        absl::flat_hash_map
++        absl::flat_hash_set
++        absl::flags
++        absl::flags_parse
++        absl::random_random
++        absl::random_distributions
++        absl::crc32c
++        absl::log
++        absl::check
++)
++
++add_library(avutil STATIC IMPORTED)
++set_target_properties(avutil PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libavutil.a)
++
++add_library(avformat STATIC IMPORTED)
++set_target_properties(avformat PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libavformat.a)
++
++add_library(avcodec STATIC IMPORTED)
++set_target_properties(avcodec PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libavcodec.a)
++
++add_library(swresample STATIC IMPORTED)
++set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libswresample.a)
++
++add_library(swscale STATIC IMPORTED)
++set_target_properties(swscale PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libswscale.a)
++
++add_library(crypto STATIC IMPORTED)
++set_target_properties(crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libcrypto.a)
++
++add_library(ssl STATIC IMPORTED)
++set_target_properties(ssl PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libssl.a)
++
++
++#aesige
++#add_library(aesige STATIC openssl/aes_ige.c)
++#target_compile_options(aesige PUBLIC -Wall -frtti -finline-functions -ffast-math -Oz)
++#target_include_directories(aesige PUBLIC third_party/boringssl/include openssl/include)
++#target_link_libraries(aesige crypto)
++
++
++add_library(libvpx STATIC IMPORTED)
++set_target_properties(libvpx PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libvpx.a)
++
++add_library(libdav1d STATIC IMPORTED)
++set_target_properties(libdav1d PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libdav1d.a)
++
++add_library(libopus STATIC IMPORTED)
++set_target_properties(libopus PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libopus.a)
++
++add_library(tde2e STATIC IMPORTED)
++set_target_properties(tde2e PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libtde2e.a)
++
++add_library(tdutils STATIC IMPORTED)
++set_target_properties(tdutils PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libtdutils.a)
++
++add_subdirectory(
++        prisma
++        ${CMAKE_CURRENT_BINARY_DIR}/prisma
++        EXCLUDE_FROM_ALL)
++
++#tgnet
++add_library(tgnet STATIC
++        openssl/aes_ige.c
++        tgnet/ApiScheme.cpp
++        tgnet/BuffersStorage.cpp
++        tgnet/ByteArray.cpp
++        tgnet/ByteStream.cpp
++        tgnet/Connection.cpp
++        tgnet/ConnectionSession.cpp
++        tgnet/ConnectionsManager.cpp
++        tgnet/TLSHello.cpp
++        tgnet/ConnectionSocket.cpp
++        tgnet/Datacenter.cpp
++        tgnet/EventObject.cpp
++        tgnet/FileLog.cpp
++        tgnet/MTProtoScheme.cpp
++        tgnet/NativeByteBuffer.cpp
++        tgnet/Request.cpp
++        tgnet/Timer.cpp
++        tgnet/TLObject.cpp
++        tgnet/ProxyCheckInfo.cpp
++        tgnet/Handshake.cpp
++        tgnet/Config.cpp)
++target_compile_options(tgnet PUBLIC
++        -Wall -frtti -finline-functions -ffast-math -Oz)
++set_target_properties(tgnet PROPERTIES
++        ANDROID_ARM_MODE arm)
++target_compile_definitions(tgnet PUBLIC
++        HAVE_PTHREAD)
++target_include_directories(tgnet PUBLIC
++        third_party/boringssl/include
++        openssl/include)
++target_link_libraries(tgnet
++        crypto)
++
++# tlottie (prebuilt Rust static library)
++add_library(tlottie STATIC IMPORTED)
++set_target_properties(tlottie PROPERTIES
++        IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/prebuild/lib/${ANDROID_ABI}/libtlottie.a)
++
++# Wallet Engine: matching Rust archive and generated UniFFI C++20 wrapper.
++set(WALLET_ENGINE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/prebuild/include/wallet-engine)
++add_library(wallet_engine STATIC IMPORTED)
++set_target_properties(wallet_engine PROPERTIES
++        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/prebuild/lib/${ANDROID_ABI}/libwallet_engine.a)
++
++add_library(wallet_engine_cpp STATIC
++        ${WALLET_ENGINE_INCLUDE_DIR}/wallet_engine.cpp
++        ${WALLET_ENGINE_INCLUDE_DIR}/gram_wallet.cpp)
++# Keep C++20 local: existing JNI sources include Breakpad's C++17-only headers.
++# Any new source that includes wallet_engine.hpp must also opt into C++20.
++target_compile_features(wallet_engine_cpp PRIVATE cxx_std_20)
++# Keep unused bindings discardable even when voip resets CMAKE_CXX_FLAGS below.
++target_compile_options(wallet_engine_cpp PRIVATE -ffunction-sections -fdata-sections)
++target_include_directories(wallet_engine_cpp PUBLIC ${WALLET_ENGINE_INCLUDE_DIR})
++target_link_libraries(wallet_engine_cpp PUBLIC wallet_engine dl m)
++
++# Compile the JNI bridge as C++20 without changing the legacy JNI sources.
++# An object library keeps its JNI entry points in the existing tmessages .so.
++add_library(wallet_engine_jni OBJECT wallet/WalletEngineBridge.cpp wallet/GramWalletAdapter.cpp)
++target_compile_features(wallet_engine_jni PRIVATE cxx_std_20)
++set_target_properties(wallet_engine_jni PROPERTIES POSITION_INDEPENDENT_CODE ON)
++target_link_libraries(wallet_engine_jni PRIVATE wallet_engine_cpp)
++
++#sqlite
++add_library(sqlite STATIC
++        sqlite/sqlite3.c)
++target_compile_options(sqlite PUBLIC
++        -fno-strict-aliasing -Oz)
++set_target_properties(sqlite PROPERTIES
++        ANDROID_ARM_MODE arm)
++target_compile_definitions(sqlite PUBLIC
++        NULL=0 SOCKLEN_T=socklen_t LOCALE_NOT_USED ANDROID_NDK DISABLE_IMPORTGL AVOID_TABLES ANDROID_TILE_BASED_DECODE HAVE_STRCHRNUL=0 ANDROID_ARMV6_IDCT)
++
++#breakpad
++add_library(breakpad STATIC
++        third_party/breakpad/src/client/linux/crash_generation/crash_generation_client.cc
++        third_party/breakpad/src/client/linux/handler/exception_handler.cc
++        third_party/breakpad/src/client/linux/handler/minidump_descriptor.cc
++        third_party/breakpad/src/client/linux/log/log.cc
++        third_party/breakpad/src/client/linux/dump_writer_common/thread_info.cc
++        third_party/breakpad/src/client/linux/dump_writer_common/seccomp_unwinder.cc
++        third_party/breakpad/src/client/linux/dump_writer_common/ucontext_reader.cc
++        third_party/breakpad/src/client/linux/microdump_writer/microdump_writer.cc
++        third_party/breakpad/src/client/linux/minidump_writer/linux_dumper.cc
++        third_party/breakpad/src/client/linux/minidump_writer/linux_ptrace_dumper.cc
++        third_party/breakpad/src/client/linux/minidump_writer/minidump_writer.cc
++        third_party/breakpad/src/client/minidump_file_writer.cc
++        third_party/breakpad/src/common/android/breakpad_getcontext.S
++        third_party/breakpad/src/common/convert_UTF.c
++        third_party/breakpad/src/common/md5.cc
++        third_party/breakpad/src/common/string_conversion.cc
++        third_party/breakpad/src/common/linux/elfutils.cc
++        third_party/breakpad/src/common/linux/file_id.cc
++        third_party/breakpad/src/common/linux/guid_creator.cc
++        third_party/breakpad/src/common/linux/linux_libc_support.cc
++        third_party/breakpad/src/common/linux/memory_mapped_file.cc
++        third_party/breakpad/src/common/linux/safe_readlink.cc)
++set_target_properties(breakpad PROPERTIES ANDROID_ARM_MODE arm)
++set_property(SOURCE third_party/breakpad/src/common/android/breakpad_getcontext.S PROPERTY LANGUAGE C)
++target_include_directories(breakpad PUBLIC
++        third_party/breakpad/src/common/android/include
++        third_party/breakpad/src)
++
++
++#voip
++include(${CMAKE_HOME_DIRECTORY}/voip/CMakeLists.txt)
++
++set(NATIVE_LIB "tmessages.49")
++
++#tmessages
++add_library(${NATIVE_LIB} SHARED
++        jni.c
++        audio.c
++        webm_encoder.c
++        image.cpp
++        intro/IntroRenderer.c
++        SqliteWrapper.cpp
++        utilities.cpp
++        gifvideo.cpp
++        lottie.cpp
++        TgNetWrapper.cpp
++        ffmpeg_jni.cc
++        fast-edge.cpp
++        genann.c
++        secureid_ocr.cpp
++        tde2e/bridge.cpp
++        tests.cpp
++)
++
++# HTML widgets are libtwidget.so, apart from the client library: the isolated engine process loads only it
++# (WidgetEngineService), the client never does. What the client needs of the same code (the gesture policy, the CPU
++# filter pass; no widget code reaches either) is compiled into the client library (twidget_client_sources).
++include(twidget/twidget.cmake)
++add_library(twidget SHARED twidget/twidget-onload.cpp twidget/twidget-seccomp.cpp)
++twidget_target_sources(twidget)
++twidget_client_sources(${NATIVE_LIB})
++target_link_options(twidget PRIVATE "-Wl,-z,max-page-size=16384")
++target_link_options(twidget PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/twidget/exports.map")
++
++# Compile JNI directly into the shared library so archive extraction cannot drop its exports.
++set(PRISMA_BRIDGE_SOURCES
++        "${CMAKE_CURRENT_SOURCE_DIR}/prisma/bridge/PrismaEngine.cpp"
++        "${CMAKE_CURRENT_SOURCE_DIR}/prisma/bridge/PrismaJni.cpp")
++target_sources(${NATIVE_LIB} PRIVATE ${PRISMA_BRIDGE_SOURCES})
++target_include_directories(${NATIVE_LIB} PRIVATE
++        "${CMAKE_CURRENT_SOURCE_DIR}/prisma/bridge")
++set_property(SOURCE ${PRISMA_BRIDGE_SOURCES} APPEND PROPERTY
++        COMPILE_OPTIONS -fexceptions -frtti)
++set_property(SOURCE ${PRISMA_BRIDGE_SOURCES} APPEND PROPERTY
++        COMPILE_DEFINITIONS BOOST_REGEX_STANDALONE)
++
++target_compile_options(${NATIVE_LIB} PUBLIC
++        -ffast-math -Oz -funroll-loops -ffast-math -fno-strict-aliasing -fno-math-errno)
++
++target_compile_definitions(${NATIVE_LIB} PUBLIC
++        BSD=1 NULL=0 SOCKLEN_T=socklen_t ANDROID_NDK DISABLE_IMPORTGL AVOID_TABLES ANDROID_TILE_BASED_DECODE __STDC_CONSTANT_MACROS ANDROID_ARMV6_IDCT OPUS_BUILD FIXED_POINT USE_ALLOCA restrict= __EMX__ LOCALE_NOT_USED HAVE_LRINT HAVE_LRINTF)
++
++target_sources(${NATIVE_LIB} PRIVATE
++
++        third_party/xiph/opusfile/src/info.c
++        third_party/xiph/opusfile/src/internal.c
++        third_party/xiph/opusfile/src/opusfile.c
++        third_party/xiph/opusfile/src/stream.c
++        third_party/xiph/ogg/src/bitwise.c
++        third_party/xiph/ogg/src/framing.c)
++
++target_include_directories(${NATIVE_LIB} PUBLIC
++        third_party/xiph/opus/include
++        third_party/xiph/opus/silk
++        third_party/xiph/opus/silk/fixed
++        third_party/xiph/opus/celt
++        third_party/xiph/opus
++        third_party/xiph/opusfile/include
++        third_party/xiph/ogg/include
++        third_party/libyuv/include
++        third_party/absl
++        third_party/boringssl/include
++        openssl/include
++        prebuild/include/${ANDROID_ABI}
++        third_party/ffmpeg
++        third_party/libvpx
++        third_party/dav1d/include
++        emoji
++        exoplayer/include
++        intro
++        tlottie/include
++        tgcalls/
++        webrtc/
++        td/tde2e
++        td/tde2e/td/e2e
++)
++
++target_link_options(${NATIVE_LIB} PRIVATE "-Wl,-z,max-page-size=16384")
++target_link_options(${NATIVE_LIB} PRIVATE "-Wl,-z,common-page-size=16384")
++target_link_options(${NATIVE_LIB} PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/exports.map")
++target_link_libraries(${NATIVE_LIB}
++        -Wl,--whole-archive rnnoise openh264 voipandroid -Wl,--no-whole-archive
++        webrtc_absl
++        tgcalls
++        wasm
++        tgcalls_tp
++        tgnet
++        prisma
++        tlottie
++        wallet_engine_jni
++        wallet_engine_cpp
++        sqlite
++        swscale
++        avformat
++        avcodec
++        swresample
++        libvpx
++        libdav1d
++        libopus
++        tde2e
++        tdutils
++        yuv
++        avutil
++        ssl
++        crypto
++        jnigraphics
++        log
++        z
++        GLESv2
++        EGL
++        android
++        OpenSLES
++        cpufeatures
++        breakpad)
++
++#IthaGram: aliuhook (motor de plugins): ART hook runtime (LSPlant + shadowhook), arm/arm64 only.
++if (NOT DEFINED ENABLE_PLUGINS)
++    set(ENABLE_PLUGINS ON)
++endif ()
++if (ENABLE_PLUGINS AND (${ANDROID_ABI} STREQUAL "arm64-v8a" OR ${ANDROID_ABI} STREQUAL "armeabi-v7a"))
++    set(LSPLANT_BUILD_SHARED OFF CACHE INTERNAL "" FORCE)
++    set(DEX_BUILDER_BUILD_SHARED OFF CACHE INTERNAL "" FORCE)
++    add_subdirectory(third_party/lsplant/lsplant/src/main/jni)
++
++    if (${ANDROID_ABI} STREQUAL "arm64-v8a")
++        set(SHADOWHOOK_ARCH arm64)
++    else ()
++        set(SHADOWHOOK_ARCH arm)
++    endif ()
++
++    set(SHADOWHOOK_DIR ${CMAKE_HOME_DIRECTORY}/third_party/shadowhook/shadowhook/src/main/cpp)
++    file(GLOB SHADOWHOOK_SOURCES
++            ${SHADOWHOOK_DIR}/*.c
++            ${SHADOWHOOK_DIR}/arch/${SHADOWHOOK_ARCH}/*.c
++            ${SHADOWHOOK_DIR}/arch/${SHADOWHOOK_ARCH}/*.S
++            ${SHADOWHOOK_DIR}/common/*.c
++            ${SHADOWHOOK_DIR}/third_party/xdl/*.c)
++    #sh_jni.c carries shadowhook's own JNI_OnLoad/Java bindings - we have our own.
++    list(FILTER SHADOWHOOK_SOURCES EXCLUDE REGEX "sh_jni\\.c$")
++
++    add_library(shadowhook STATIC ${SHADOWHOOK_SOURCES})
++    target_include_directories(shadowhook PRIVATE
++            ${SHADOWHOOK_DIR}
++            ${SHADOWHOOK_DIR}/include
++            ${SHADOWHOOK_DIR}/arch/${SHADOWHOOK_ARCH}
++            ${SHADOWHOOK_DIR}/common
++            ${SHADOWHOOK_DIR}/third_party/xdl
++            ${SHADOWHOOK_DIR}/third_party/bsd
++            ${SHADOWHOOK_DIR}/third_party/lss)
++
++    add_library(aliuhook SHARED
++            aliuhook/aliuhook.cpp)
++    set_target_properties(aliuhook PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
++    target_include_directories(aliuhook PRIVATE
++            ${CMAKE_HOME_DIRECTORY}/third_party/lsplant/lsplant/src/main/jni/include
++            ${SHADOWHOOK_DIR}/include)
++    target_compile_options(aliuhook PRIVATE -fvisibility=hidden)
++    target_link_options(aliuhook PRIVATE "-Wl,-z,max-page-size=16384")
++    #sources are compiled with the global -flto=full, so the link needs it too
++    target_link_options(aliuhook PRIVATE -flto=full -Wl,--gc-sections -Wl,--icf=safe)
++    target_link_libraries(aliuhook
++            lsplant_static
++            shadowhook
++            log
++            z
++            dl)
++else ()
++    # x86/x86_64: sin enganche nativo; libreria vacia para que el target 'aliuhook' exista en todas las ABIs
++    add_library(aliuhook SHARED aliuhook/aliuhook_stub.c)
++endif ()
++
++#if (${ANDROID_ABI} STREQUAL "x86" OR ${ANDROID_ABI} STREQUAL "x86_64")
++#    target_link_libraries(${NATIVE_LIB}
++#            -Wl,--whole-archive vpxasm -Wl,--no-whole-archive
++#            c)
++#endif()
++
++include(AndroidNdkModules)
++android_ndk_import_module_cpufeatures()
+diff --git a/TMessagesProj/jni/aliuhook/aliuhook_stub.c b/TMessagesProj/jni/aliuhook/aliuhook_stub.c
+new file mode 100644
+index 0000000..bb3b8f6
+--- /dev/null
++++ b/TMessagesProj/jni/aliuhook/aliuhook_stub.c
+@@ -0,0 +1,2 @@
++/* IthaGram: aliuhook vacio para ABIs sin soporte de enganche (x86). */
++int ithagram_aliuhook_stub = 0;

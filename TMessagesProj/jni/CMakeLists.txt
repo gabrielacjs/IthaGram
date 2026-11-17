@@ -334,6 +334,62 @@ target_link_libraries(${NATIVE_LIB}
         cpufeatures
         breakpad)
 
+#IthaGram: aliuhook (motor de plugins): ART hook runtime (LSPlant + shadowhook), arm/arm64 only.
+if (NOT DEFINED ENABLE_PLUGINS)
+    set(ENABLE_PLUGINS ON)
+endif ()
+if (ENABLE_PLUGINS AND (${ANDROID_ABI} STREQUAL "arm64-v8a" OR ${ANDROID_ABI} STREQUAL "armeabi-v7a"))
+    set(LSPLANT_BUILD_SHARED OFF CACHE INTERNAL "" FORCE)
+    set(DEX_BUILDER_BUILD_SHARED OFF CACHE INTERNAL "" FORCE)
+    add_subdirectory(third_party/lsplant/lsplant/src/main/jni)
+
+    if (${ANDROID_ABI} STREQUAL "arm64-v8a")
+        set(SHADOWHOOK_ARCH arm64)
+    else ()
+        set(SHADOWHOOK_ARCH arm)
+    endif ()
+
+    set(SHADOWHOOK_DIR ${CMAKE_HOME_DIRECTORY}/third_party/shadowhook/shadowhook/src/main/cpp)
+    file(GLOB SHADOWHOOK_SOURCES
+            ${SHADOWHOOK_DIR}/*.c
+            ${SHADOWHOOK_DIR}/arch/${SHADOWHOOK_ARCH}/*.c
+            ${SHADOWHOOK_DIR}/arch/${SHADOWHOOK_ARCH}/*.S
+            ${SHADOWHOOK_DIR}/common/*.c
+            ${SHADOWHOOK_DIR}/third_party/xdl/*.c)
+    #sh_jni.c carries shadowhook's own JNI_OnLoad/Java bindings - we have our own.
+    list(FILTER SHADOWHOOK_SOURCES EXCLUDE REGEX "sh_jni\\.c$")
+
+    add_library(shadowhook STATIC ${SHADOWHOOK_SOURCES})
+    target_include_directories(shadowhook PRIVATE
+            ${SHADOWHOOK_DIR}
+            ${SHADOWHOOK_DIR}/include
+            ${SHADOWHOOK_DIR}/arch/${SHADOWHOOK_ARCH}
+            ${SHADOWHOOK_DIR}/common
+            ${SHADOWHOOK_DIR}/third_party/xdl
+            ${SHADOWHOOK_DIR}/third_party/bsd
+            ${SHADOWHOOK_DIR}/third_party/lss)
+
+    add_library(aliuhook SHARED
+            aliuhook/aliuhook.cpp)
+    set_target_properties(aliuhook PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+    target_include_directories(aliuhook PRIVATE
+            ${CMAKE_HOME_DIRECTORY}/third_party/lsplant/lsplant/src/main/jni/include
+            ${SHADOWHOOK_DIR}/include)
+    target_compile_options(aliuhook PRIVATE -fvisibility=hidden)
+    target_link_options(aliuhook PRIVATE "-Wl,-z,max-page-size=16384")
+    #sources are compiled with the global -flto=full, so the link needs it too
+    target_link_options(aliuhook PRIVATE -flto=full -Wl,--gc-sections -Wl,--icf=safe)
+    target_link_libraries(aliuhook
+            lsplant_static
+            shadowhook
+            log
+            z
+            dl)
+else ()
+    # x86/x86_64: sin enganche nativo; libreria vacia para que el target 'aliuhook' exista en todas las ABIs
+    add_library(aliuhook SHARED aliuhook/aliuhook_stub.c)
+endif ()
+
 #if (${ANDROID_ABI} STREQUAL "x86" OR ${ANDROID_ABI} STREQUAL "x86_64")
 #    target_link_libraries(${NATIVE_LIB}
 #            -Wl,--whole-archive vpxasm -Wl,--no-whole-archive
