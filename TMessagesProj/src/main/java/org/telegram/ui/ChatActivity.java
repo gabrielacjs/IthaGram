@@ -3717,6 +3717,9 @@ public class ChatActivity extends BaseFragment implements
             @Override
             public void onItemClick(final int id) {
                 // the chat's menu is also opened from the sidebar: what it does is in the chat
+                if (org.telegram.messenger.IthaHooks.actionMenuClick("chat_action_menu", ChatActivity.this, id)) {
+                    return;
+                }
                 if (id != chat_menu_options && id != chat_menu_topics_panel && id != -1 && topicsPanel != null && topicsPanel.isOpen()) {
                     topicsPanel.close();
                 }
@@ -4582,6 +4585,8 @@ public class ChatActivity extends BaseFragment implements
         if (BuildConfig.DEBUG_PRIVATE_VERSION && headerItem != null) {
             headerItem.lazilyAddSubItem(888, R.drawable.menu_download_round, "Dump Canvas");
         }
+
+        org.telegram.messenger.IthaHooks.addChatMenu(this, headerItem);
 
         actionModeViews.clear();
         selectedMessagesCountTextView = null;

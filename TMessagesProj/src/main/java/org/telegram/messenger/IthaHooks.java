@@ -100,6 +100,52 @@ public class IthaHooks {
         }
     }
 
+    private static void addHeaderMenu(String type, Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item, boolean lazy) {
+        MenuBus b = menuBus;
+        if (b == null || !menuActive || item == null) {
+            return;
+        }
+        try {
+            java.util.ArrayList<Integer> icons = new java.util.ArrayList<>();
+            java.util.ArrayList<CharSequence> items = new java.util.ArrayList<>();
+            java.util.ArrayList<Integer> options = new java.util.ArrayList<>();
+            b.fill(type, fragment, null, icons, items, options);
+            // Python puede entregar los numeros como Long: se leen como Number
+            java.util.List<?> ids = options;
+            java.util.List<?> ics = icons;
+            for (int i = 0; i < ids.size(); i++) {
+                item.addSubItem(((Number) ids.get(i)).intValue(), ((Number) ics.get(i)).intValue(), items.get(i));
+            }
+        } catch (Throwable t) {
+            android.util.Log.e("IthaDiag", "ERROR addHeaderMenu " + type, t);
+            FileLog.e(t);
+        }
+    }
+
+    /** Botones de plugins al final del menu de tres puntos del perfil. */
+    public static void addProfileMenu(Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item) {
+        addHeaderMenu("profile_action_menu", fragment, item, false);
+    }
+
+    /** Botones de plugins al final del menu de tres puntos del chat. */
+    public static void addChatMenu(Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item) {
+        addHeaderMenu("chat_action_menu", fragment, item, true);
+    }
+
+    /** true = el item era de un plugin y ya se ejecuto. */
+    public static boolean actionMenuClick(String type, Object fragment, int option) {
+        MenuBus b = menuBus;
+        if (b == null || option < 100000) {
+            return false;
+        }
+        try {
+            return b.click(type, fragment, option, null);
+        } catch (Throwable t) {
+            FileLog.e(t);
+            return false;
+        }
+    }
+
     /** null = el plugin cancelo el envio. */
     public static SendMessagesHelper.SendMessageParams sendMessageHook(int account, SendMessagesHelper.SendMessageParams params) {
         Bus b = bus;

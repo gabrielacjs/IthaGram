@@ -9,6 +9,7 @@ import traceback
 from java import dynamic_proxy, jclass, jint
 
 from android_utils import log
+from client_utils import _set_hook_account
 
 IthaHooks = jclass("org.telegram.messenger.IthaHooks")
 
@@ -105,6 +106,7 @@ def _ordered(event_name):
 
 def execute_send_message(account, params):
     """Devuelve (cancelar, params). `params` es el SendMessageParams de Telegram."""
+    _set_hook_account(account)
     for pid, plugin in _ordered("send_message_hook"):
         try:
             res = plugin.on_send_message_hook(account, params)
@@ -121,6 +123,7 @@ def execute_send_message(account, params):
 
 
 def execute_update(account, update_name, update):
+    _set_hook_account(account)
     for pid, plugin in _ordered(update_name):
         try:
             res = plugin.on_update_hook(update_name, account, update)
@@ -137,6 +140,7 @@ def execute_update(account, update_name, update):
 
 
 def execute_updates(account, container_name, updates):
+    _set_hook_account(account)
     for pid, plugin in _ordered(container_name):
         try:
             res = plugin.on_updates_hook(container_name, account, updates)
@@ -260,7 +264,7 @@ except Exception as e:
 
 # ---- menus ----
 _MENU_BASE = 100000
-_menu_actions = {}
+_menu_actions = {}   # menu_type -> {opcion: data}  (cada tipo de menu tiene su propia lista)
 
 
 def _icon_id(name):
@@ -293,21 +297,51 @@ def _context(fragment, message):
     return ctx
 
 
+_MVEL_WARNED = set()
+
+
+def _condition_ok(data, ctx):
+    """Evalua la `condition` de un item de menu: funcion o texto estilo MVEL (aproximado)."""
+    cond = data.get("condition")
+    if cond is None or cond == "":
+        return True
+    try:
+        if callable(cond):
+            return bool(cond(ctx))
+        import re
+        expr = str(cond)
+        expr = expr.replace("&&", " and ").replace("||", " or ")
+        expr = re.sub(r"!(?!=)", " not ", expr)
+        expr = re.sub(r"\btrue\b", "True", expr)
+        expr = re.sub(r"\bfalse\b", "False", expr)
+        expr = re.sub(r"\bnull\b", "None", expr)
+        return bool(eval(expr, {"__builtins__": {}}, dict(ctx)))
+    except Exception:
+        key = str(data.get("item_id"))
+        if key not in _MVEL_WARNED:
+            _MVEL_WARNED.add(key)
+            log("condition de '%s' no se pudo evaluar, se muestra siempre: %s" % (key, traceback.format_exc().strip().splitlines()[-1]))
+        return True
+
+
 def fill_menu(menu_type, fragment, message, icons, items, options):
-    _menu_actions.clear()
+    actions = _menu_actions[menu_type] = {}
     Integer = jclass("java.lang.Integer")
+    ctx = _context(fragment, message)
     n = 0
     for data in menu_items_for(menu_type):
+        if not _condition_ok(data, ctx):
+            continue
         opt = _MENU_BASE + n
         n += 1
-        _menu_actions[opt] = data
+        actions[opt] = data
         items.add(str(data.get("text") or ""))
-        options.add(Integer.valueOf(jint(opt)))
-        icons.add(Integer.valueOf(jint(_icon_id(data.get("icon")))))
+        options.add(jint(opt))
+        icons.add(jint(_icon_id(data.get("icon"))))
 
 
 def click_menu(menu_type, fragment, option, message):
-    data = _menu_actions.get(int(option))
+    data = _menu_actions.get(menu_type, {}).get(int(option))
     if data is None:
         return False
     try:

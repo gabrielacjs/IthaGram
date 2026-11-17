@@ -2560,6 +2560,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (getParentActivity() == null) {
                     return;
                 }
+                if (org.telegram.messenger.IthaHooks.actionMenuClick("profile_action_menu", ProfileActivity.this, id)) {
+                    return;
+                }
                 if (id == -1) {
                     if (sharedMediaLayout != null && sharedMediaLayout.scrollSlidingTextTabStrip != null && sharedMediaLayout.scrollSlidingTextTabStrip.isReordering()) {
                         stopTabsReorder();
@@ -12579,6 +12582,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             otherItem.hideSubItem(edit_avatar);
             otherItem.hideSubItem(delete_avatar);
         }
+
+        org.telegram.messenger.IthaHooks.addProfileMenu(this, otherItem);
 
         isCallAvailable = callItemVisible;
 

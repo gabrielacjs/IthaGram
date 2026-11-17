@@ -1,0 +1,125 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+index b1d324d..1223faa 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+@@ -101,4 +101,50 @@ public class IthaHooks {
+     }
+ 
++    private static void addHeaderMenu(String type, Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item, boolean lazy) {
++        MenuBus b = menuBus;
++        if (b == null || !menuActive || item == null) {
++            return;
++        }
++        try {
++            java.util.ArrayList<Integer> icons = new java.util.ArrayList<>();
++            java.util.ArrayList<CharSequence> items = new java.util.ArrayList<>();
++            java.util.ArrayList<Integer> options = new java.util.ArrayList<>();
++            b.fill(type, fragment, null, icons, items, options);
++            for (int i = 0; i < options.size(); i++) {
++                if (lazy) {
++                    item.lazilyAddSubItem(options.get(i), icons.get(i), items.get(i));
++                } else {
++                    item.addSubItem(options.get(i), icons.get(i), items.get(i));
++                }
++            }
++        } catch (Throwable t) {
++            FileLog.e(t);
++        }
++    }
++
++    /** Botones de plugins al final del menu de tres puntos del perfil. */
++    public static void addProfileMenu(Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item) {
++        addHeaderMenu("profile_action_menu", fragment, item, false);
++    }
++
++    /** Botones de plugins al final del menu de tres puntos del chat. */
++    public static void addChatMenu(Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item) {
++        addHeaderMenu("chat_action_menu", fragment, item, true);
++    }
++
++    /** true = el item era de un plugin y ya se ejecuto. */
++    public static boolean actionMenuClick(String type, Object fragment, int option) {
++        MenuBus b = menuBus;
++        if (b == null || option < 100000) {
++            return false;
++        }
++        try {
++            return b.click(type, fragment, option, null);
++        } catch (Throwable t) {
++            FileLog.e(t);
++            return false;
++        }
++    }
++
+     /** null = el plugin cancelo el envio. */
+     public static SendMessagesHelper.SendMessageParams sendMessageHook(int account, SendMessagesHelper.SendMessageParams params) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 5085233..fc72699 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -3718,4 +3718,7 @@
+             public void onItemClick(final int id) {
+                 // the chat's menu is also opened from the sidebar: what it does is in the chat
++                if (org.telegram.messenger.IthaHooks.actionMenuClick("chat_action_menu", ChatActivity.this, id)) {
++                    return;
++                }
+                 if (id != chat_menu_options && id != chat_menu_topics_panel && id != -1 && topicsPanel != null && topicsPanel.isOpen()) {
+                     topicsPanel.close();
+@@ -4584,4 +4587,6 @@
+         }
+ 
++        org.telegram.messenger.IthaHooks.addChatMenu(this, headerItem);
++
+         actionModeViews.clear();
+         selectedMessagesCountTextView = null;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+index 7d5208c..4e725d6 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+@@ -2561,4 +2561,7 @@
+                     return;
+                 }
++                if (org.telegram.messenger.IthaHooks.actionMenuClick("profile_action_menu", ProfileActivity.this, id)) {
++                    return;
++                }
+                 if (id == -1) {
+                     if (sharedMediaLayout != null && sharedMediaLayout.scrollSlidingTextTabStrip != null && sharedMediaLayout.scrollSlidingTextTabStrip.isReordering()) {
+@@ -12581,4 +12584,6 @@
+         }
+ 
++        org.telegram.messenger.IthaHooks.addProfileMenu(this, otherItem);
++
+         isCallAvailable = callItemVisible;
+ 
+diff --git a/TMessagesProj_App/src/main/python/ithabus.py b/TMessagesProj_App/src/main/python/ithabus.py
+index 1a10dd3..14f72b2 100644
+--- a/TMessagesProj_App/src/main/python/ithabus.py
++++ b/TMessagesProj_App/src/main/python/ithabus.py
+@@ -265,5 +265,5 @@ except Exception as e:
+ # ---- menus ----
+ _MENU_BASE = 100000
+-_menu_actions = {}
++_menu_actions = {}   # menu_type -> {opcion: data}  (cada tipo de menu tiene su propia lista)
+ 
+ 
+@@ -326,5 +326,5 @@ def _condition_ok(data, ctx):
+ 
+ def fill_menu(menu_type, fragment, message, icons, items, options):
+-    _menu_actions.clear()
++    actions = _menu_actions[menu_type] = {}
+     Integer = jclass("java.lang.Integer")
+     ctx = _context(fragment, message)
+@@ -335,5 +335,5 @@ def fill_menu(menu_type, fragment, message, icons, items, options):
+         opt = _MENU_BASE + n
+         n += 1
+-        _menu_actions[opt] = data
++        actions[opt] = data
+         items.add(str(data.get("text") or ""))
+         options.add(Integer.valueOf(jint(opt)))
+@@ -342,5 +342,5 @@ def fill_menu(menu_type, fragment, message, icons, items, options):
+ 
+ def click_menu(menu_type, fragment, option, message):
+-    data = _menu_actions.get(int(option))
++    data = _menu_actions.get(menu_type, {}).get(int(option))
+     if data is None:
+         return False

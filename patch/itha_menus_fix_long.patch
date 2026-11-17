@@ -1,0 +1,58 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+index 7210ff2..d8767bc 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaHooks.java
+@@ -103,5 +103,4 @@ public class IthaHooks {
+     private static void addHeaderMenu(String type, Object fragment, org.telegram.ui.ActionBar.ActionBarMenuItem item, boolean lazy) {
+         MenuBus b = menuBus;
+-        android.util.Log.i("IthaDiag", "addHeaderMenu " + type + " bus=" + (b != null) + " active=" + menuActive + " item=" + (item != null));
+         if (b == null || !menuActive || item == null) {
+             return;
+@@ -112,9 +111,9 @@ public class IthaHooks {
+             java.util.ArrayList<Integer> options = new java.util.ArrayList<>();
+             b.fill(type, fragment, null, icons, items, options);
+-            android.util.Log.i("IthaDiag", "addHeaderMenu " + type + " botones=" + options.size());
+-            for (int i = 0; i < options.size(); i++) {
+-                android.util.Log.i("IthaDiag", "agregando opt=" + options.get(i) + " icono=" + icons.get(i) + " texto=" + items.get(i) + " clase=" + (items.get(i) == null ? "null" : items.get(i).getClass().getName()));
+-                item.addSubItem(options.get(i), icons.get(i), items.get(i));
+-                android.util.Log.i("IthaDiag", "addSubItem directo " + options.get(i) + " tiene=" + item.hasSubItem(options.get(i)));
++            // Python puede entregar los numeros como Long: se leen como Number
++            java.util.List<?> ids = options;
++            java.util.List<?> ics = icons;
++            for (int i = 0; i < ids.size(); i++) {
++                item.addSubItem(((Number) ids.get(i)).intValue(), ((Number) ics.get(i)).intValue(), items.get(i));
+             }
+         } catch (Throwable t) {
+diff --git a/TMessagesProj_App/src/main/python/ithabus.py b/TMessagesProj_App/src/main/python/ithabus.py
+index c2f9dee..a30f1f2 100644
+--- a/TMessagesProj_App/src/main/python/ithabus.py
++++ b/TMessagesProj_App/src/main/python/ithabus.py
+@@ -55,13 +55,5 @@ def remove_event_hook(pid, name):
+ 
+ 
+-def _diag(msg):
+-    try:
+-        jclass("android.util.Log").i("IthaDiag", str(msg))
+-    except Exception:
+-        pass
+-
+-
+ def add_menu_item(pid, data):
+-    _diag("add_menu_item pid=%s tipo=%s" % (pid, data.get("menu_type")))
+     item_id = data.get("item_id")
+     if not item_id:
+@@ -334,5 +326,4 @@ def _condition_ok(data, ctx):
+ 
+ def fill_menu(menu_type, fragment, message, icons, items, options):
+-    _diag("fill_menu tipo=%s items=%d" % (menu_type, len(menu_items_for(menu_type))))
+     actions = _menu_actions[menu_type] = {}
+     Integer = jclass("java.lang.Integer")
+@@ -346,6 +337,6 @@ def fill_menu(menu_type, fragment, message, icons, items, options):
+         actions[opt] = data
+         items.add(str(data.get("text") or ""))
+-        options.add(Integer.valueOf(jint(opt)))
+-        icons.add(Integer.valueOf(jint(_icon_id(data.get("icon")))))
++        options.add(jint(opt))
++        icons.add(jint(_icon_id(data.get("icon"))))
+ 
+ 

@@ -80,7 +80,7 @@ class HookResult:
         return getattr(self, key, default)
 
 
-# ---- filtros de hooks (se guardan; de momento no se aplican) ----
+# ---- filtros de hooks (se aplican en _HookCallback) ----
 class _Filter:
     def __init__(self, kind, index=None, value=None, clazz=None, filters=None, condition=None):
         self.kind = kind
@@ -146,6 +146,77 @@ class HookFilter:
         return _Filter("or", filters=list(filters))
 
 
+def _arg_at(param, index):
+    try:
+        return param.args[int(index)]
+    except Exception:
+        return None
+
+
+def _is_instance(obj, clazz):
+    if obj is None or clazz is None:
+        return False
+    try:
+        return isinstance(obj, clazz)
+    except Exception:
+        pass
+    try:
+        return bool(clazz.isInstance(obj))
+    except Exception:
+        return False
+
+
+def filter_ok(f, param):
+    """True si el filtro `f` deja pasar la llamada. Un filtro que falla no bloquea."""
+    try:
+        k = f.kind
+        try:
+            result = param.getResult()
+        except Exception:
+            result = None
+        if k == "result_is_null":
+            return result is None
+        if k == "result_not_null":
+            return result is not None
+        if k == "result_is_true":
+            return result is True or str(result) == "true"
+        if k == "result_is_false":
+            return result is False or str(result) == "false"
+        if k == "result_is_instance_of":
+            return _is_instance(result, f.clazz)
+        if k == "result_equal":
+            return result == f.value
+        if k == "result_not_equal":
+            return result != f.value
+        if k == "argument_is_null":
+            return _arg_at(param, f.index) is None
+        if k == "argument_not_null":
+            return _arg_at(param, f.index) is not None
+        if k == "argument_is_true":
+            return _arg_at(param, f.index) is True
+        if k == "argument_is_false":
+            return _arg_at(param, f.index) is False
+        if k == "argument_is_instance_of":
+            return _is_instance(_arg_at(param, f.index), f.clazz)
+        if k == "argument_equal":
+            return _arg_at(param, f.index) == f.value
+        if k == "argument_not_equal":
+            return _arg_at(param, f.index) != f.value
+        if k == "condition":
+            if callable(f.condition):
+                return bool(f.condition(param))
+            return True   # las condiciones MVEL (texto) no se evaluan en hooks de metodo
+        if k == "or":
+            return any(filter_ok(sub, param) for sub in (f.filters or []))
+    except Exception as e:
+        log("filtro de hook fallo (%s): %s" % (getattr(f, "kind", "?"), e))
+    return True
+
+
+def filters_ok(filters, param):
+    return all(filter_ok(f, param) for f in (filters or []))
+
+
 def hook_filters(*filters):
     def decorator(fn):
         fn.__hook_filters__ = list(filters)
@@ -208,19 +279,25 @@ class BaseHook(MethodHook):
 
 
 class _HookCallback(dynamic_proxy(_Callback)):
-    def __init__(self, hook, plugin_id):
+    def __init__(self, hook, plugin_id, before_filters=None, after_filters=None):
         super().__init__()
         self._hook = hook
         self._plugin_id = plugin_id
+        self._before_filters = before_filters or []
+        self._after_filters = after_filters or []
 
     def before(self, param):
         try:
+            if not filters_ok(self._before_filters, param):
+                return
             self._hook.before_hooked_method(param)
         except Exception as e:
             log("[%s] before_hooked_method error: %s" % (self._plugin_id, e))
 
     def after(self, param):
         try:
+            if not filters_ok(self._after_filters, param):
+                return
             self._hook.after_hooked_method(param)
         except Exception as e:
             log("[%s] after_hooked_method error: %s" % (self._plugin_id, e))
@@ -318,8 +395,8 @@ class BasePlugin:
         pass
 
     def client(self, account=None):
-        self.log("client(): todavia no esta disponible en IthaGram")
-        return None
+        from client_utils import AccountClient
+        return AccountClient(account)
 
     # ---- hooks de eventos (el plugin los sobrescribe) ----
     def pre_request_hook(self, request_name, account, request):
@@ -354,7 +431,7 @@ class BasePlugin:
             if callback is None:
                 callback = BaseHook(self, before=before, after=after,
                                     before_filters=before_filters, after_filters=after_filters)
-            cb = _HookCallback(callback, self.id)
+            cb = _HookCallback(callback, self.id, before_filters, after_filters)
             handle = IthaHooks.register(method.getDeclaringClass(), method.getName(), cb)
             if handle is None:
                 log("[%s] hook_method: '%s' todavia no se puede enganchar en IthaGram" % (self.id, method.getName()))

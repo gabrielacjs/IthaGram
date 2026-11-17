@@ -286,3 +286,8 @@ def start(plugin_dirs, state_dir):
         if pid not in _disabled:
             _try_load(pid)
     log("motor de plugins iniciado (%d plugins)" % len(_plugins))
+    try:
+        import ithabus
+        ithabus.execute_app_event("app_start")
+    except Exception:
+        log("app_start error: %s" % traceback.format_exc())
