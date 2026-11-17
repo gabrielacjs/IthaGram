@@ -80,6 +80,24 @@ public class IthaPyHost implements IthaPlugins.Host {
     }
 
     @Override
+    public boolean isMasterEnabled() {
+        try {
+            return engine().callAttr("is_master").toBoolean();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    @Override
+    public String setMasterEnabled(boolean enabled) {
+        try {
+            return result(engine().callAttr("set_master", enabled));
+        } catch (Throwable t) {
+            return String.valueOf(t.getMessage());
+        }
+    }
+
+    @Override
     public void fillSettings(String id, ViewGroup container, BaseFragment fragment) {
         try {
             engine().callAttr("fill_settings", id, container, fragment);

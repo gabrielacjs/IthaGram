@@ -33,6 +33,12 @@ public class IthaPlugins {
 
         String remove(String id);
 
+        /** Interruptor general: false = ningun plugin esta cargado. */
+        boolean isMasterEnabled();
+
+        /** Devuelve null si salio bien, o el mensaje de error. */
+        String setMasterEnabled(boolean enabled);
+
         /** Llena `container` con los ajustes del plugin (los arma el motor de Python). */
         void fillSettings(String id, ViewGroup container, BaseFragment fragment);
 

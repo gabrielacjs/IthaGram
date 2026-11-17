@@ -106,6 +106,9 @@ public class IthaPluginsActivity extends BaseFragment {
         final Context context = ctx;
         final IthaPlugins.Host host = IthaPlugins.getHost();
 
+        if (host != null) {
+            addMasterRow(context, host);
+        }
         section(context, tr("Plugins instalados", "Installed plugins"));
 
         if (host == null) {
@@ -131,6 +134,44 @@ public class IthaPluginsActivity extends BaseFragment {
             section(context, tr("Agregar", "Add"));
             row(context, tr("Importar plugin", "Import plugin"), tr("Elegí un archivo .plugin de tu teléfono", "Pick a .plugin file from your phone"), this::pickFile);
         }
+    }
+
+    private void addMasterRow(final Context context, final IthaPlugins.Host host) {
+        final boolean on = host.isMasterEnabled();
+        LinearLayout box = new LinearLayout(context);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        box.setBackground(Theme.createRoundRectDrawable(dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        box.setPadding(dp(16), dp(14), dp(16), dp(14));
+
+        LinearLayout texts = new LinearLayout(context);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView title = new TextView(context);
+        title.setText(tr("Usar plugins", "Use plugins"));
+        title.setTextSize(16);
+        title.setTypeface(AndroidUtilities.bold());
+        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        texts.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        TextView sub = new TextView(context);
+        sub.setText(on ? tr("Los plugins activados están funcionando", "Enabled plugins are running")
+                : tr("Todos los plugins están apagados", "All plugins are turned off"));
+        sub.setTextSize(13);
+        sub.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        texts.addView(sub, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
+        box.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        final Switch sw = new Switch(context);
+        sw.setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked, Theme.key_windowBackgroundWhite, Theme.key_windowBackgroundWhite);
+        sw.setChecked(on, false);
+        sw.setOnClickListener(v -> {
+            String err = host.setMasterEnabled(!on);
+            if (err != null) {
+                showError(err);
+            }
+            rebuild();
+        });
+        box.addView(sw, LayoutHelper.createLinear(37, 20));
+        listLayout.addView(box, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 12, 12, 12, 6));
     }
 
     private Set<String> pinnedSet() {

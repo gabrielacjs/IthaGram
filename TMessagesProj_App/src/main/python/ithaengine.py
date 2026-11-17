@@ -14,6 +14,7 @@ from base_plugin import BasePlugin
 _plugins = {}   # id -> instancia (cargados)
 _known = {}     # id -> info (path, nombre, ...)
 _disabled = set()
+_master = True     # interruptor general: apagado = no se carga ningun plugin
 _state_file = None
 _dirs = []         # carpetas de plugins (la ultima es donde se instala)
 _install_dir = None
@@ -38,20 +39,23 @@ def _parse_meta(src):
 
 
 def _load_state():
-    global _disabled
+    global _disabled, _master
     try:
         if _state_file and os.path.exists(_state_file):
             with open(_state_file, "r", encoding="utf-8") as f:
-                _disabled = set(json.load(f).get("disabled", []))
+                data = json.load(f)
+            _disabled = set(data.get("disabled", []))
+            _master = bool(data.get("master", True))
     except Exception:
         _disabled = set()
+        _master = True
 
 
 def _save_state():
     try:
         if _state_file:
             with open(_state_file, "w", encoding="utf-8") as f:
-                json.dump({"disabled": sorted(_disabled)}, f)
+                json.dump({"disabled": sorted(_disabled), "master": _master}, f)
     except Exception:
         pass
 
@@ -158,12 +162,36 @@ def list_plugins_json():
     return json.dumps(out)
 
 
+def is_master():
+    return _master
+
+
+def set_master(enabled):
+    """Enciende o apaga todos los plugins a la vez. Devuelve "" o el primer error al cargar."""
+    global _master
+    _master = bool(enabled)
+    _save_state()
+    if not _master:
+        for pid in list(_plugins):
+            _unload(pid)
+        return ""
+    first_error = ""
+    for pid in list(_known):
+        if pid not in _disabled and pid not in _plugins:
+            err = _try_load(pid)
+            if err and not first_error:
+                first_error = err
+    return first_error
+
+
 def set_enabled(pid, enabled):
     if pid not in _known:
         return "Plugin desconocido"
     if enabled:
         _disabled.discard(pid)
         _save_state()
+        if not _master:
+            return ""
         if pid not in _plugins:
             return _try_load(pid)
     else:
@@ -209,6 +237,8 @@ def import_plugin(path):
         _unload(pid)
     _disabled.discard(pid)
     _save_state()
+    if not _master:
+        return ""
     return _try_load(pid)
 
 
@@ -282,9 +312,12 @@ def start(plugin_dirs, state_dir):
                     log("error leyendo %s: %s" % (name, traceback.format_exc()))
         except Exception:
             log("error leyendo %s: %s" % (d, traceback.format_exc()))
-    for pid in list(_known):
-        if pid not in _disabled:
-            _try_load(pid)
+    if _master:
+        for pid in list(_known):
+            if pid not in _disabled:
+                _try_load(pid)
+    else:
+        log("plugins apagados desde el interruptor general")
     log("motor de plugins iniciado (%d plugins)" % len(_plugins))
     try:
         import ithabus
