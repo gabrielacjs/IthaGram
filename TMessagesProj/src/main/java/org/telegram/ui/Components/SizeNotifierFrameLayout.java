@@ -250,7 +250,6 @@ public class SizeNotifierFrameLayout extends FrameLayout implements Theme.Colora
                         int bottom = (int) (getRootView().getMeasuredHeight() - backgroundTranslationY + translationY);
                         drawable.setBounds(0, 0, getMeasuredWidth(), bottom);
                         drawable.draw(canvas);
-                        checkSnowflake(canvas);
                         if (bottomClip != 0) {
                             canvas.restore();
                         }
@@ -558,16 +557,7 @@ public class SizeNotifierFrameLayout extends FrameLayout implements Theme.Colora
         }
     }
 
-    private IthaParticles ithaParticles;
-
     private void checkSnowflake(Canvas canvas) {
-        if (backgroundView != null && IthaParticles.enabled()) {
-            if (ithaParticles == null) {
-                ithaParticles = new IthaParticles();
-            }
-            ithaParticles.onDraw(backgroundView, canvas);
-            return;
-        }
         if (backgroundView != null && Theme.canStartHolidayAnimation() && LiteMode.isEnabled(LiteMode.FLAG_CHAT_BACKGROUND)) {
             if (snowflakesEffect == null) {
                 snowflakesEffect = new SnowflakesEffect(1);
