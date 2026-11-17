@@ -10869,7 +10869,7 @@ public class ChatActivity extends BaseFragment implements
         if (currentEncryptedChat == null) {
             final boolean isSavedMessages = getDialogId() == getUserConfig().getClientUserId() && (chatMode == 0 || chatMode == MODE_SAVED);
             actionModeViews.add(actionMode.addItemWithWidth(save_to, R.drawable.msg_download, dp(48), LocaleController.getString(R.string.SaveToMusic)));
-            actionModeViews.add(actionMode.addItemWithWidth(queue_add_selected, R.drawable.msg_download, dp(48), org.telegram.messenger.DownloadQueueManager.tr("Agregar a la cola de descarga", "Add to download queue")));
+            actionModeViews.add(actionMode.addItemWithWidth(queue_add_selected, R.drawable.menu_album_add, dp(48), org.telegram.messenger.DownloadQueueManager.tr("Agregar a la cola de descarga", "Add to download queue")));
             actionModeViews.add(actionMode.addItemWithWidth(edit, R.drawable.msg_edit, dp(48), LocaleController.getString(R.string.Edit)));
             if (isSavedMessages) {
                 actionModeViews.add(actionMode.addItemWithWidth(tag_message, R.drawable.menu_tag_edit, dp(48), LocaleController.getString(R.string.AccDescrTagMessage)));

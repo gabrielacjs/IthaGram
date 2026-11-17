@@ -1,0 +1,6 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -10872 +10872 @@
+-            actionModeViews.add(actionMode.addItemWithWidth(queue_add_selected, R.drawable.msg_download, dp(48), org.telegram.messenger.DownloadQueueManager.tr("Agregar a la cola de descarga", "Add to download queue")));
++            actionModeViews.add(actionMode.addItemWithWidth(queue_add_selected, R.drawable.menu_album_add, dp(48), org.telegram.messenger.DownloadQueueManager.tr("Agregar a la cola de descarga", "Add to download queue")));
