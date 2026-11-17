@@ -1423,6 +1423,9 @@ public class ChatActivity extends BaseFragment implements
     }
 
     public void showHeaderItem(boolean show) {
+        if (avatarContainer != null) {
+            avatarContainer.ithaAltLazy = attachItem;
+        }
         if (show) {
             if (chatActivityEnterView.hasText() && TextUtils.isEmpty(chatActivityEnterView.getSlowModeTimer()) && !isSidebarAttach()) {
                 if (attachItem != null) {
@@ -1432,7 +1435,8 @@ public class ChatActivity extends BaseFragment implements
                     headerItem.setVisibility(View.GONE);
                 }
                 if (otherIcon != null) {
-                    otherIcon.setIconVisible(true);
+                    // IthaGram: sin el pedacito del clip sobre los tres puntos
+                    otherIcon.setIconVisible(false);
                 }
             } else {
                 if (attachItem != null) {
@@ -2248,6 +2252,9 @@ public class ChatActivity extends BaseFragment implements
 
         @Override
         public void onAttachButtonHidden() {
+            if (avatarContainer != null) {
+                avatarContainer.ithaAltLazy = attachItem;
+            }
             if (actionBar.isSearchFieldVisible() || isSidebarAttach()) {
                 return;
             }
@@ -2259,7 +2266,8 @@ public class ChatActivity extends BaseFragment implements
                     attachItem.setVisibility(View.VISIBLE);
                 }
                 if (otherIcon != null) {
-                    otherIcon.setIconVisible(true);
+                    // IthaGram: sin el pedacito del clip sobre los tres puntos
+                    otherIcon.setIconVisible(false);
                 }
             }
         }
@@ -4340,6 +4348,7 @@ public class ChatActivity extends BaseFragment implements
             if (avatarContainer != null) {
                 // IthaGram: avatar en el boton de menu: tocar abre el menu, mantener presionado abre el perfil
                 avatarContainer.ithaMenuItem = headerItem;
+        avatarContainer.ithaAltLazy = attachItem;
                 headerItem.setOnClickListener(v -> {
                     if (headerItem.hasSubMenu()) {
                         headerItem.toggleSubMenu();

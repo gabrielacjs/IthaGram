@@ -1,0 +1,516 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+index 4482be4..d25876b 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaConfig.java
+@@ -253,4 +253,60 @@ public class IthaConfig {
+         }
+         return sb;
+     }
++
++    // ---- particulas del fondo del chat ----
++
++    private static int particleType = -1, particleCount = -1, particleSpeed = -1, particleOpacity = -1;
++
++    /** 0 apagado, 1 nieve, 2 sakura, 3 lluvia, 4 hojas de otono, 5 matriz. */
++    public static int getParticleType() {
++        if (particleType < 0) {
++            particleType = Math.max(0, Math.min(5, prefs().getInt("particle_type", 0)));
++        }
++        return particleType;
++    }
++
++    public static void setParticleType(int value) {
++        particleType = Math.max(0, Math.min(5, value));
++        prefs().edit().putInt("particle_type", particleType).apply();
++    }
++
++    /** Cantidad de particulas (10 a 300). */
++    public static int getParticleCount() {
++        if (particleCount < 0) {
++            particleCount = Math.max(10, Math.min(300, prefs().getInt("particle_count", 80)));
++        }
++        return particleCount;
++    }
++
++    public static void setParticleCount(int value) {
++        particleCount = Math.max(10, Math.min(300, value));
++        prefs().edit().putInt("particle_count", particleCount).apply();
++    }
++
++    /** Velocidad en porcentaje (30 a 250). */
++    public static int getParticleSpeed() {
++        if (particleSpeed < 0) {
++            particleSpeed = Math.max(30, Math.min(250, prefs().getInt("particle_speed", 100)));
++        }
++        return particleSpeed;
++    }
++
++    public static void setParticleSpeed(int value) {
++        particleSpeed = Math.max(30, Math.min(250, value));
++        prefs().edit().putInt("particle_speed", particleSpeed).apply();
++    }
++
++    /** Opacidad en porcentaje (20 a 100). */
++    public static int getParticleOpacity() {
++        if (particleOpacity < 0) {
++            particleOpacity = Math.max(20, Math.min(100, prefs().getInt("particle_opacity", 80)));
++        }
++        return particleOpacity;
++    }
++
++    public static void setParticleOpacity(int value) {
++        particleOpacity = Math.max(20, Math.min(100, value));
++        prefs().edit().putInt("particle_opacity", particleOpacity).apply();
++    }
+ }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/IthaParticles.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/IthaParticles.java
+new file mode 100644
+index 0000000..b0f354f
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/IthaParticles.java
+@@ -0,0 +1,237 @@
++package org.telegram.ui.Components;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++
++import android.graphics.Canvas;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.RectF;
++import android.graphics.Typeface;
++import android.os.SystemClock;
++import android.view.View;
++
++import org.telegram.messenger.IthaConfig;
++import org.telegram.messenger.LiteMode;
++
++import java.util.ArrayList;
++import java.util.Random;
++
++/**
++ * IthaGram: particulas propias para el fondo del chat (nieve, sakura, lluvia, hojas, matriz).
++ * Se dibujan siempre que esten activadas en Itha Ajustes, sin depender de la fecha.
++ */
++public class IthaParticles {
++
++    public static final int OFF = 0, SNOW = 1, SAKURA = 2, RAIN = 3, LEAVES = 4, MATRIX = 5;
++
++    private static final int[] SAKURA_COLORS = {0xFFFFC1D6, 0xFFFFB0C8, 0xFFFFD6E3, 0xFFFF9FBD};
++    private static final int[] LEAF_COLORS = {0xFFD9731A, 0xFFE8A020, 0xFFB5381F, 0xFFC99A1E, 0xFF8F4A1B};
++    private static final char[] GLYPHS = new char[10 + 45];
++
++    static {
++        for (int i = 0; i < 10; i++) {
++            GLYPHS[i] = (char) ('0' + i);
++        }
++        for (int i = 0; i < 45; i++) {
++            GLYPHS[10 + i] = (char) (0xFF71 + i);
++        }
++    }
++
++    private static class P {
++        float x, y, vx, vy, size, rot, vrot, phase, sway, a;
++        int color;
++    }
++
++    private final ArrayList<P> list = new ArrayList<>();
++    private final Random random = new Random();
++    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Path path = new Path();
++    private final RectF rect = new RectF();
++    private final char[] one = new char[1];
++    private long last;
++    private int lastType = -1, lastW, lastH;
++    private float[] colY = new float[0];
++    private float[] colV = new float[0];
++
++    public static boolean enabled() {
++        return IthaConfig.getParticleType() != OFF && LiteMode.isEnabled(LiteMode.FLAG_CHAT_BACKGROUND);
++    }
++
++    public void onDraw(View parent, Canvas canvas) {
++        final int w = parent.getMeasuredWidth();
++        final int h = parent.getMeasuredHeight();
++        final int type = IthaConfig.getParticleType();
++        if (w <= 0 || h <= 0 || type == OFF) {
++            return;
++        }
++        final long now = SystemClock.uptimeMillis();
++        final float dt = last == 0 ? 16f : Math.min(40f, now - last);
++        last = now;
++        final float speed = IthaConfig.getParticleSpeed() / 100f;
++        final float alpha = IthaConfig.getParticleOpacity() / 100f;
++        if (type != lastType || w != lastW || h != lastH) {
++            lastType = type;
++            lastW = w;
++            lastH = h;
++            list.clear();
++            if (type == MATRIX) {
++                initMatrix(w, h);
++            }
++        }
++        if (type == MATRIX) {
++            drawMatrix(canvas, h, dt * speed, alpha, now);
++        } else {
++            drawFalling(canvas, type, w, h, dt / 1000f * speed, alpha);
++        }
++        parent.invalidate();
++    }
++
++    private void spawn(P p, int type, int w, int h, boolean anywhere) {
++        p.x = random.nextFloat() * w;
++        p.y = anywhere ? random.nextFloat() * h : -dp(12) - random.nextFloat() * dp(40);
++        p.phase = random.nextFloat() * 6.28f;
++        p.a = 0.6f + random.nextFloat() * 0.4f;
++        p.rot = random.nextFloat() * 360f;
++        p.vrot = 0;
++        p.sway = 0;
++        p.vx = 0;
++        switch (type) {
++            case SNOW:
++                p.size = dp(1) + random.nextFloat() * dp(2.2f);
++                p.vy = dp(18) + random.nextFloat() * dp(40);
++                p.sway = dp(10) + random.nextFloat() * dp(14);
++                p.color = 0xFFFFFFFF;
++                break;
++            case SAKURA:
++                p.size = dp(3) + random.nextFloat() * dp(3.5f);
++                p.vy = dp(22) + random.nextFloat() * dp(30);
++                p.vx = dp(8) + random.nextFloat() * dp(14);
++                p.sway = dp(14) + random.nextFloat() * dp(16);
++                p.vrot = -90f + random.nextFloat() * 180f;
++                p.color = SAKURA_COLORS[random.nextInt(SAKURA_COLORS.length)];
++                break;
++            case RAIN:
++                p.x = random.nextFloat() * (w + dp(80));
++                p.size = dp(9) + random.nextFloat() * dp(9);
++                p.vy = dp(520) + random.nextFloat() * dp(300);
++                p.vx = -dp(70);
++                p.a = 0.4f + random.nextFloat() * 0.4f;
++                p.color = 0xFFBFD9FF;
++                break;
++            default:
++                p.size = dp(4) + random.nextFloat() * dp(4);
++                p.vy = dp(30) + random.nextFloat() * dp(40);
++                p.vx = -dp(10) + random.nextFloat() * dp(30);
++                p.sway = dp(20) + random.nextFloat() * dp(20);
++                p.vrot = -120f + random.nextFloat() * 240f;
++                p.color = LEAF_COLORS[random.nextInt(LEAF_COLORS.length)];
++                break;
++        }
++    }
++
++    private void drawFalling(Canvas canvas, int type, int w, int h, float sec, float alpha) {
++        final int target = IthaConfig.getParticleCount();
++        while (list.size() < target) {
++            P p = new P();
++            spawn(p, type, w, h, true);
++            list.add(p);
++        }
++        while (list.size() > target) {
++            list.remove(list.size() - 1);
++        }
++        for (int i = 0, n = list.size(); i < n; i++) {
++            final P p = list.get(i);
++            p.phase += sec * 2f;
++            p.x += (p.vx + (float) Math.sin(p.phase) * p.sway) * sec;
++            p.y += p.vy * sec;
++            p.rot += p.vrot * sec;
++            if (p.y > h + p.size * 2 || p.x < -dp(40) || p.x > w + dp(40) + (type == RAIN ? dp(80) : 0)) {
++                spawn(p, type, w, h, false);
++            }
++            final int a = (int) (255 * alpha * p.a);
++            paint.setColor((p.color & 0x00FFFFFF) | (a << 24));
++            final float s = p.size;
++            switch (type) {
++                case SNOW:
++                    paint.setStyle(Paint.Style.FILL);
++                    canvas.drawCircle(p.x, p.y, s, paint);
++                    break;
++                case SAKURA:
++                    paint.setStyle(Paint.Style.FILL);
++                    canvas.save();
++                    canvas.translate(p.x, p.y);
++                    canvas.rotate(p.rot);
++                    rect.set(-s, -s * 0.55f, s, s * 0.55f);
++                    canvas.drawOval(rect, paint);
++                    canvas.restore();
++                    break;
++                case RAIN: {
++                    paint.setStyle(Paint.Style.STROKE);
++                    paint.setStrokeWidth(dp(1));
++                    paint.setStrokeCap(Paint.Cap.ROUND);
++                    final float m = (float) Math.hypot(p.vx, p.vy);
++                    canvas.drawLine(p.x, p.y, p.x + p.vx / m * s, p.y + p.vy / m * s, paint);
++                    break;
++                }
++                default:
++                    paint.setStyle(Paint.Style.FILL);
++                    path.reset();
++                    path.moveTo(0, -s);
++                    path.quadTo(s * 0.9f, -s * 0.2f, 0, s);
++                    path.quadTo(-s * 0.9f, -s * 0.2f, 0, -s);
++                    path.close();
++                    canvas.save();
++                    canvas.translate(p.x, p.y);
++                    canvas.rotate(p.rot);
++                    canvas.drawPath(path, paint);
++                    canvas.restore();
++                    break;
++            }
++        }
++    }
++
++    private void initMatrix(int w, int h) {
++        final int cols = w / dp(14) + 1;
++        colY = new float[cols];
++        colV = new float[cols];
++        for (int i = 0; i < cols; i++) {
++            colY[i] = -random.nextFloat() * h;
++            colV[i] = dp(90) + random.nextFloat() * dp(160);
++        }
++    }
++
++    private void drawMatrix(Canvas canvas, int h, float dtSpeed, float alpha, long now) {
++        final float colW = dp(14);
++        final float charH = dp(13);
++        final int tail = 14;
++        final float density = Math.min(1f, IthaConfig.getParticleCount() / 150f);
++        paint.setStyle(Paint.Style.FILL);
++        paint.setTypeface(Typeface.MONOSPACE);
++        paint.setTextSize(dp(12));
++        paint.setTextAlign(Paint.Align.CENTER);
++        for (int i = 0; i < colY.length; i++) {
++            if (((i * 7919) % 100) / 100f >= density) {
++                continue;
++            }
++            colY[i] += colV[i] * dtSpeed / 1000f;
++            if (colY[i] - tail * charH > h) {
++                colY[i] = -random.nextFloat() * h * 0.5f - charH;
++                colV[i] = dp(90) + random.nextFloat() * dp(160);
++            }
++            final float x = i * colW + colW / 2f;
++            final int headRow = (int) Math.floor(colY[i] / charH);
++            for (int k = 0; k < tail; k++) {
++                final float y = colY[i] - k * charH;
++                if (y < 0 || y > h) {
++                    continue;
++                }
++                final int hash = (i * 73856093) ^ ((headRow - k) * 19349663) ^ (int) ((now >> 8) + i) * 83492791;
++                one[0] = GLYPHS[(hash & 0x7fffffff) % GLYPHS.length];
++                final float f = 1f - k / (float) tail;
++                final int a = (int) (255 * alpha * f * f);
++                paint.setColor((k == 0 ? 0x00D8FFE0 : 0x0000FF46) | (a << 24));
++                canvas.drawText(one, 0, 1, x, y, paint);
++            }
++        }
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/SizeNotifierFrameLayout.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/SizeNotifierFrameLayout.java
+index 4702336..bc87d26 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/SizeNotifierFrameLayout.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/SizeNotifierFrameLayout.java
+@@ -557,7 +557,16 @@
+         }
+     }
+ 
++    private IthaParticles ithaParticles;
++
+     private void checkSnowflake(Canvas canvas) {
++        if (backgroundView != null && IthaParticles.enabled()) {
++            if (ithaParticles == null) {
++                ithaParticles = new IthaParticles();
++            }
++            ithaParticles.onDraw(backgroundView, canvas);
++            return;
++        }
+         if (backgroundView != null && Theme.canStartHolidayAnimation() && LiteMode.isEnabled(LiteMode.FLAG_CHAT_BACKGROUND)) {
+             if (snowflakesEffect == null) {
+                 snowflakesEffect = new SnowflakesEffect(1);
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaParticlesSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaParticlesSettingsActivity.java
+new file mode 100644
+index 0000000..0b7ec02
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaParticlesSettingsActivity.java
+@@ -0,0 +1,167 @@
++package org.telegram.ui;
++
++import android.content.Context;
++import android.view.Gravity;
++import android.view.View;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import org.telegram.messenger.AndroidUtilities;
++import org.telegram.messenger.IthaConfig;
++import org.telegram.messenger.R;
++import org.telegram.ui.ActionBar.ActionBar;
++import org.telegram.ui.ActionBar.AlertDialog;
++import org.telegram.ui.ActionBar.BaseFragment;
++import org.telegram.ui.ActionBar.Theme;
++import org.telegram.ui.Components.LayoutHelper;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++import static org.telegram.messenger.DownloadQueueManager.tr;
++
++/**
++ * IthaGram: ajustes de las particulas del fondo del chat (nieve, sakura, lluvia, hojas, matriz).
++ */
++public class IthaParticlesSettingsActivity extends BaseFragment {
++
++    private interface OnPick {
++        void pick(int index);
++    }
++
++    private LinearLayout listLayout;
++    private Context ctx;
++
++    @Override
++    public View createView(Context context) {
++        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
++        actionBar.setAllowOverlayTitle(true);
++        actionBar.setTitle(tr("Partículas", "Particles"));
++        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
++            @Override
++            public void onItemClick(int id) {
++                if (id == -1) {
++                    finishFragment();
++                }
++            }
++        });
++
++        FrameLayout root = new FrameLayout(context);
++        root.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
++        fragmentView = root;
++
++        ScrollView scroll = new ScrollView(context);
++        listLayout = new LinearLayout(context);
++        listLayout.setOrientation(LinearLayout.VERTICAL);
++        scroll.addView(listLayout, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
++        root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
++
++        ctx = context;
++        rebuild();
++        return fragmentView;
++    }
++
++    private String[] typeNames() {
++        return new String[]{
++                tr("Apagado", "Off"),
++                tr("Nieve", "Snow"),
++                tr("Pétalos de sakura", "Sakura petals"),
++                tr("Lluvia", "Rain"),
++                tr("Hojas de otoño", "Autumn leaves"),
++                tr("Matriz", "Matrix")
++        };
++    }
++
++    private static final int[] COUNTS = {30, 80, 150, 250};
++    private static final int[] SPEEDS = {60, 100, 160};
++    private static final int[] OPACITIES = {30, 50, 80, 100};
++
++    private String valueLabel(int value, int[] values, String[] labels) {
++        for (int i = 0; i < values.length; i++) {
++            if (values[i] == value) {
++                return labels[i];
++            }
++        }
++        return String.valueOf(value);
++    }
++
++    private void rebuild() {
++        listLayout.removeAllViews();
++        final Context context = ctx;
++
++        final String[] types = typeNames();
++        final String[] countNames = {tr("Pocas", "Few"), tr("Normal", "Normal"), tr("Muchas", "Many"), tr("Muchísimas", "Lots")};
++        final String[] speedNames = {tr("Lenta", "Slow"), tr("Normal", "Normal"), tr("Rápida", "Fast")};
++        final String[] opacityNames = {"30%", "50%", "80%", "100%"};
++
++        section(context, tr("Fondo del chat", "Chat background"));
++        row(context, tr("Efecto", "Effect"), types[IthaConfig.getParticleType()],
++                () -> choose(tr("Efecto", "Effect"), types, i -> IthaConfig.setParticleType(i)));
++        row(context, tr("Cantidad", "Amount"), valueLabel(IthaConfig.getParticleCount(), COUNTS, countNames),
++                () -> choose(tr("Cantidad", "Amount"), countNames, i -> IthaConfig.setParticleCount(COUNTS[i])));
++        row(context, tr("Velocidad", "Speed"), valueLabel(IthaConfig.getParticleSpeed(), SPEEDS, speedNames),
++                () -> choose(tr("Velocidad", "Speed"), speedNames, i -> IthaConfig.setParticleSpeed(SPEEDS[i])));
++        row(context, tr("Opacidad", "Opacity"), valueLabel(IthaConfig.getParticleOpacity(), OPACITIES, opacityNames),
++                () -> choose(tr("Opacidad", "Opacity"), opacityNames, i -> IthaConfig.setParticleOpacity(OPACITIES[i])));
++
++        note(context, tr("Las partículas se dibujan sobre el fondo de los chats, sin importar la fecha. Se apagan si desactivas las animaciones del fondo del chat en el ahorro de energía de Telegram.",
++                "Particles are drawn over the chat background, regardless of the date. They stop if chat background animations are disabled in Telegram's power saving settings."));
++    }
++
++    private void choose(String title, String[] names, OnPick callback) {
++        if (getParentActivity() == null) {
++            return;
++        }
++        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
++        builder.setTitle(title);
++        builder.setItems(names, (dialog, which) -> {
++            callback.pick(which);
++            rebuild();
++        });
++        showDialog(builder.create());
++    }
++
++    private void note(Context context, String text) {
++        TextView info = new TextView(context);
++        info.setText(text);
++        info.setTextSize(14);
++        info.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        info.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        info.setPadding(dp(20), dp(12), dp(20), dp(12));
++        listLayout.addView(info, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void section(Context context, String title) {
++        TextView header = new TextView(context);
++        header.setText(title);
++        header.setTextSize(14);
++        header.setTypeface(AndroidUtilities.bold());
++        header.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
++        header.setPadding(dp(20), dp(18), dp(20), dp(8));
++        listLayout.addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++
++    private void row(Context context, String title, String subtitle, Runnable action) {
++        LinearLayout row = new LinearLayout(context);
++        row.setOrientation(LinearLayout.VERTICAL);
++        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        row.setPadding(dp(20), dp(12), dp(20), dp(12));
++
++        TextView titleView = new TextView(context);
++        titleView.setText(title);
++        titleView.setTextSize(16);
++        titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
++        row.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++
++        if (subtitle != null) {
++            TextView subtitleView = new TextView(context);
++            subtitleView.setText(subtitle);
++            subtitleView.setTextSize(13);
++            subtitleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++            row.addView(subtitleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
++        }
++
++        row.setOnClickListener(v -> action.run());
++        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+index d1e3a2c..f41f96d 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+@@ -71,6 +71,9 @@ public class IthaSettingsActivity extends BaseFragment {
+         row(context, tr("Ajustes de chat", "Chat settings"),
+                 tr("Encabezado dentro de los chats", "Header inside chats"),
+                 () -> presentFragment(new IthaChatSettingsActivity()));
++        row(context, tr("Partículas", "Particles"),
++                tr("Nieve, sakura, lluvia, hojas y matriz en el fondo del chat", "Snow, sakura, rain, leaves and matrix on the chat background"),
++                () -> presentFragment(new IthaParticlesSettingsActivity()));
+         row(context, tr("Plugins", "Plugins"),
+                 tr("Extensiones .plugin (Python)", "Python .plugin extensions"),
+                 () -> presentFragment(new IthaPluginsActivity()));

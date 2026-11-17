@@ -1,0 +1,62 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index cdda9b0..27d6d02 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -1427 +1427 @@
+-            avatarContainer.ithaAltItem = attachItem;
++            avatarContainer.ithaAltLazy = attachItem;
+@@ -2255 +2255 @@
+-                avatarContainer.ithaAltItem = attachItem;
++                avatarContainer.ithaAltLazy = attachItem;
+@@ -4349 +4349 @@
+-        avatarContainer.ithaAltItem = attachItem;
++        avatarContainer.ithaAltLazy = attachItem;
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+index ae77988..1c618d7 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatAvatarContainer.java
+@@ -772,7 +772,11 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+     // IthaGram: avatar en el boton de menu (ocupa el lugar de los tres puntos)
+     public org.telegram.ui.ActionBar.ActionBarMenuItem ithaMenuItem;
+     /** El boton que Telegram muestra en su lugar mientras se escribe (el del clip). */
+-    public org.telegram.ui.ActionBar.ActionBarMenuItem ithaAltItem;
++    public org.telegram.ui.ActionBar.ActionBarMenu.LazyItem ithaAltLazy;
++
++    private org.telegram.ui.ActionBar.ActionBarMenuItem ithaAlt() {
++        return ithaAltLazy != null ? ithaAltLazy.getView() : null;
++    }
+     private float ithaModeFactor;
+     private boolean ithaMenuSlotLast, ithaMenuPlaced, ithaOverlayLast;
+ 
+@@ -789,8 +793,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+         if (ithaMenuItem != null && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getWidth() > 0) {
+             return ithaMenuItem;
+         }
+-        if (ithaAltItem != null && ithaAltItem.getVisibility() == VISIBLE && ithaAltItem.getWidth() > 0) {
+-            return ithaAltItem;
++        final org.telegram.ui.ActionBar.ActionBarMenuItem alt = ithaAlt();
++        if (alt != null && alt.getVisibility() == VISIBLE && alt.getWidth() > 0) {
++            return alt;
+         }
+         return null;
+     }
+@@ -812,8 +817,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+         if (ithaMenuItem != null) {
+             org.telegram.messenger.IthaConfig.menuAvatarItems.put(ithaMenuItem, this);
+         }
+-        if (ithaAltItem != null) {
+-            org.telegram.messenger.IthaConfig.menuAvatarItems.put(ithaAltItem, this);
++        if (ithaAlt() != null) {
++            org.telegram.messenger.IthaConfig.menuAvatarItems.put(ithaAlt(), this);
+         }
+         final boolean on = ithaMenuSlotAvatar();
+         if (on != ithaMenuSlotLast) {
+@@ -822,7 +827,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
+         }
+         // el menu desplegable dibuja una copia del avatar mientras se abre y se cierra: los tres puntos nunca se ven
+         final org.telegram.ui.ActionBar.ActionBarMenuItem slotItem = ithaSlotItem();
+-        final org.telegram.ui.ActionBar.ActionBarMenuItem[] menuItems = {ithaMenuItem, ithaAltItem};
++        final org.telegram.ui.ActionBar.ActionBarMenuItem[] menuItems = {ithaMenuItem, ithaAlt()};
+         for (org.telegram.ui.ActionBar.ActionBarMenuItem item : menuItems) {
+             if (item != null && item.getIconView() != null && (on || ithaMenuPlaced)) {
+                 final int visibility = on && item == slotItem ? INVISIBLE : VISIBLE;

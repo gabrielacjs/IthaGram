@@ -771,14 +771,33 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     // IthaGram: avatar en el boton de menu (ocupa el lugar de los tres puntos)
     public org.telegram.ui.ActionBar.ActionBarMenuItem ithaMenuItem;
+    /** El boton que Telegram muestra en su lugar mientras se escribe (el del clip). */
+    public org.telegram.ui.ActionBar.ActionBarMenu.LazyItem ithaAltLazy;
+
+    private org.telegram.ui.ActionBar.ActionBarMenuItem ithaAlt() {
+        return ithaAltLazy != null ? ithaAltLazy.getView() : null;
+    }
     private float ithaModeFactor;
     private boolean ithaMenuSlotLast, ithaMenuPlaced, ithaOverlayLast;
 
     /** Dice si el avatar esta ahora mismo en el boton de menu (opcion activa, boton visible y sin busqueda ni seleccion). */
     public boolean ithaMenuSlotAvatar() {
-        return org.telegram.messenger.IthaConfig.isChatAvatarMenu() && hasVisibleAvatar() && ithaMenuItem != null
-                && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getWidth() > 0 && ithaMenuItem.getParent() instanceof android.view.View
+        final org.telegram.ui.ActionBar.ActionBarMenuItem slot = ithaSlotItem();
+        return org.telegram.messenger.IthaConfig.isChatAvatarMenu() && hasVisibleAvatar() && slot != null
+                && slot.getParent() instanceof android.view.View
                 && getParent() instanceof ActionBar && ithaModeFactor <= 0.001f;
+    }
+
+    /** El boton que ocupa ahora el lugar del menu: los tres puntos o, mientras se escribe, el del clip. */
+    public org.telegram.ui.ActionBar.ActionBarMenuItem ithaSlotItem() {
+        if (ithaMenuItem != null && ithaMenuItem.getVisibility() == VISIBLE && ithaMenuItem.getWidth() > 0) {
+            return ithaMenuItem;
+        }
+        final org.telegram.ui.ActionBar.ActionBarMenuItem alt = ithaAlt();
+        if (alt != null && alt.getVisibility() == VISIBLE && alt.getWidth() > 0) {
+            return alt;
+        }
+        return null;
     }
 
     public android.view.View ithaAvatarView() {
@@ -798,17 +817,23 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (ithaMenuItem != null) {
             org.telegram.messenger.IthaConfig.menuAvatarItems.put(ithaMenuItem, this);
         }
+        if (ithaAlt() != null) {
+            org.telegram.messenger.IthaConfig.menuAvatarItems.put(ithaAlt(), this);
+        }
         final boolean on = ithaMenuSlotAvatar();
         if (on != ithaMenuSlotLast) {
             // el texto gana o pierde el espacio del avatar: recalcular
             post(this::requestLayout);
         }
         // el menu desplegable dibuja una copia del avatar mientras se abre y se cierra: los tres puntos nunca se ven
-        final boolean avatarShown = on;
-        if (ithaMenuItem != null && ithaMenuItem.getIconView() != null && (on || ithaMenuPlaced)) {
-            final int visibility = avatarShown ? INVISIBLE : VISIBLE;
-            if (ithaMenuItem.getIconView().getVisibility() != visibility) {
-                ithaMenuItem.getIconView().setVisibility(visibility);
+        final org.telegram.ui.ActionBar.ActionBarMenuItem slotItem = ithaSlotItem();
+        final org.telegram.ui.ActionBar.ActionBarMenuItem[] menuItems = {ithaMenuItem, ithaAlt()};
+        for (org.telegram.ui.ActionBar.ActionBarMenuItem item : menuItems) {
+            if (item != null && item.getIconView() != null && (on || ithaMenuPlaced)) {
+                final int visibility = on && item == slotItem ? INVISIBLE : VISIBLE;
+                if (item.getIconView().getVisibility() != visibility) {
+                    item.getIconView().setVisibility(visibility);
+                }
             }
         }
         final android.view.View[] moved = {avatarImageView, communityItem, timeItem, starBgItem, starFgItem};
@@ -833,9 +858,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (getClipChildren()) {
             setClipChildren(false);
         }
-        final android.view.View menuView = (android.view.View) ithaMenuItem.getParent();
-        final float cx = menuView.getX() + ithaMenuItem.getX() + ithaMenuItem.getWidth() / 2f;
-        final float cy = menuView.getY() + ithaMenuItem.getY() + ithaMenuItem.getHeight() / 2f;
+        final android.view.View menuView = (android.view.View) slotItem.getParent();
+        final float cx = menuView.getX() + slotItem.getX() + slotItem.getWidth() / 2f;
+        final float cy = menuView.getY() + slotItem.getY() + slotItem.getHeight() / 2f;
         final float ax = getX() + avatarImageView.getLeft() + avatarImageView.getWidth() / 2f;
         final float ay = getY() + avatarImageView.getTop() + avatarImageView.getHeight() / 2f;
         for (android.view.View v : moved) {

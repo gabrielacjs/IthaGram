@@ -151,6 +151,11 @@ public class IthaChatSettingsActivity extends BaseFragment {
             super(context);
         }
 
+        /** Primera letra del nombre sin partir caracteres especiales (emojis y letras decorativas ocupan dos chars). */
+        private String initialOf(String value) {
+            return new String(Character.toChars(value.codePointAt(0))).toUpperCase();
+        }
+
         @Override
         protected void onDraw(Canvas canvas) {
             final int w = getMeasuredWidth();
@@ -158,7 +163,9 @@ public class IthaChatSettingsActivity extends BaseFragment {
             final float cy = h / 2f;
 
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Theme.getColor(Theme.key_chat_wallpaper));
+            // fondo neutro segun el tema (el color de fondo del chat puede ser cualquiera, hasta rojo)
+            paint.setColor(androidx.core.graphics.ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundGray),
+                    Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), 0.1f));
             canvas.drawRect(0, 0, w, h, paint);
 
             final int bubble = Theme.getColor(Theme.key_windowBackgroundWhite);
@@ -229,7 +236,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
                 paint.setColor(0xffffffff);
                 paint.setTypeface(AndroidUtilities.bold());
                 paint.setTextSize(dp(16));
-                final String initial = name.substring(0, 1).toUpperCase();
+                final String initial = initialOf(name);
                 canvas.drawText(initial, acx - paint.measureText(initial) / 2f, cy + dp(5.5f), paint);
                 if (!right) {
                     textLeft = cl + dp(52);
@@ -261,7 +268,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
                 paint.setColor(0xffffffff);
                 paint.setTypeface(AndroidUtilities.bold());
                 paint.setTextSize(dp(15));
-                final String initial = name.substring(0, 1).toUpperCase();
+                final String initial = initialOf(name);
                 canvas.drawText(initial, mx - paint.measureText(initial) / 2f, cy + dp(5), paint);
             }
         }

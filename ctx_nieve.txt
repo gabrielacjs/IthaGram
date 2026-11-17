@@ -1,0 +1,29 @@
+﻿C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\messenger\LocaleController.java:1231: int eventType = parser.getEventType();
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:72: import org.telegram.ui.Components.SnowflakesEffect;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:130: private SnowflakesEffect snowflakesEffect;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:498: if (snowflakesEffect == null) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:500: snowflakesEffect = new SnowflakesEffect(0);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:504: snowflakesEffect = null;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:556: if (snowflakesEffect == null) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:557: snowflakesEffect = new SnowflakesEffect(0);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:560: if (snowflakesEffect != null) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:561: snowflakesEffect = null;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:564: if (snowflakesEffect != null) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\ActionBar.java:565: snowflakesEffect.onDraw(this, canvas);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\ActionBar\Theme.java:4542: public static int getEventType() {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\GroupCallRecordAlert.java:298: if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SizeNotifierFrameLayout.java:91: SnowflakesEffect snowflakesEffect;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SizeNotifierFrameLayout.java:562: if (snowflakesEffect == null) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SizeNotifierFrameLayout.java:563: snowflakesEffect = new SnowflakesEffect(1);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SizeNotifierFrameLayout.java:564: snowflakesEffect.setForcedColor(0xFFFFFFFF);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SizeNotifierFrameLayout.java:566: snowflakesEffect.onDraw(backgroundView, canvas);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SnowflakesEffect.java:28: public class SnowflakesEffect {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SnowflakesEffect.java:85: public SnowflakesEffect(int viewType) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\SwipeGestureSettingsView.java:371: if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\CallSwipeView.java:237: if (isEnabled() && ev.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\VoIpSnowView.java:9: import org.telegram.ui.Components.SnowflakesEffect;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\VoIpSnowView.java:12: private SnowflakesEffect snowflakesEffect;
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\VoIpSnowView.java:20: if (LiteMode.isEnabled(LiteMode.FLAG_CALLS_ANIMATIONS) && Theme.getEventType() == 0) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\VoIpSnowView.java:21: snowflakesEffect = new SnowflakesEffect(0);
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\VoIpSnowView.java:30: if (snowflakesEffect != null) {
+C:\Users\GabiS\Desktop\IthaGram\TMessagesProj\src\main\java\org\telegram\ui\Components\voip\VoIpSnowView.java:31: snowflakesEffect.onDraw(this, canvas);
