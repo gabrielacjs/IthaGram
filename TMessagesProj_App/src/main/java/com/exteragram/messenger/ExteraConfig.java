@@ -35,7 +35,7 @@ public class ExteraConfig {
         loaded = true;
         preferences = ApplicationLoader.applicationContext.getSharedPreferences("itha_plugins_engine", Context.MODE_PRIVATE);
         editor = preferences.edit();
-        pluginsEngine = preferences.getBoolean("pluginsEngine", false);
+        pluginsEngine = preferences.getBoolean("pluginsEngine", true);
         pluginsSafeMode = preferences.getBoolean("pluginsSafeMode", false);
         pluginsDevMode = preferences.getBoolean("pluginsDevMode", false);
         pluginsDisableArtOpts = preferences.getBoolean("pluginsDisableArtOpts", false);
