@@ -114,7 +114,14 @@ public class IthaHooks {
             java.util.List<?> ids = options;
             java.util.List<?> ics = icons;
             for (int i = 0; i < ids.size(); i++) {
-                item.addSubItem(((Number) ids.get(i)).intValue(), ((Number) ics.get(i)).intValue(), items.get(i));
+                int id = ((Number) ids.get(i)).intValue();
+                int icon = ((Number) ics.get(i)).intValue();
+                if (lazy) {
+                    // lazy: quedan despues de los items que Telegram agrega de la misma forma (al final)
+                    item.lazilyAddSubItem(id, icon, items.get(i));
+                } else {
+                    item.addSubItem(id, icon, items.get(i));
+                }
             }
         } catch (Throwable t) {
             android.util.Log.e("IthaDiag", "ERROR addHeaderMenu " + type, t);
