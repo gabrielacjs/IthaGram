@@ -1,0 +1,29 @@
+diff --git a/TMessagesProj_App/src/main/python/ithabus.py b/TMessagesProj_App/src/main/python/ithabus.py
+index a30f1f2..5a810dc 100644
+--- a/TMessagesProj_App/src/main/python/ithabus.py
++++ b/TMessagesProj_App/src/main/python/ithabus.py
+@@ -290,9 +290,22 @@ def _context(fragment, message):
+     except Exception:
+         pass
++    dialog_id = 0
+     try:
+-        ctx["dialog_id"] = fragment.getDialogId()
+-        ctx["dialogId"] = ctx["dialog_id"]
++        dialog_id = int(fragment.getDialogId())
+     except Exception:
+         pass
++    if not dialog_id:
++        # el perfil de una persona o grupo no siempre devuelve el id: se saca de sus argumentos
++        try:
++            args = fragment.getArguments()
++            if args is not None:
++                uid = int(args.getLong("user_id", 0))
++                cid = int(args.getLong("chat_id", 0))
++                did = int(args.getLong("dialog_id", 0))
++                dialog_id = uid or (-cid if cid else 0) or did
++        except Exception:
++            pass
++    ctx["dialog_id"] = dialog_id
++    ctx["dialogId"] = dialog_id
+     return ctx
+ 
