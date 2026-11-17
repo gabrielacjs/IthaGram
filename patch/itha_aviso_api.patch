@@ -1,0 +1,25 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+index 520e8cb..d1e3a2c 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+@@ -74,6 +74,20 @@ public class IthaSettingsActivity extends BaseFragment {
+         row(context, tr("Plugins", "Plugins"),
+                 tr("Extensiones .plugin (Python)", "Python .plugin extensions"),
+                 () -> presentFragment(new IthaPluginsActivity()));
++
++        section(context, tr("Acerca de", "About"));
++        note(context, tr("IthaGram es una app no oficial que usa la API de Telegram. No está afiliada a Telegram.",
++                "IthaGram is an unofficial app that uses the Telegram API. It is not affiliated with Telegram."));
++    }
++
++    private void note(Context context, String text) {
++        TextView info = new TextView(context);
++        info.setText(text);
++        info.setTextSize(14);
++        info.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        info.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        info.setPadding(dp(20), dp(12), dp(20), dp(12));
++        listLayout.addView(info, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+     }
+ 
+     private void section(Context context, String title) {
