@@ -34,7 +34,7 @@ public class IthaBadges {
     private static final String ENDPOINT = "https://ithagram-insignias.itha131932.workers.dev/v1/badges";
     private static final String PUBLIC_KEY = "XAV2ZqIcpQQ2oO6NxL2V3lwme9e8qwlTSPOnhrf5Tps=";
     private static final String PREFS = "itha_badges";
-    private static final long TTL_SECONDS = 6 * 60 * 60;
+    private static final long TTL_SECONDS = 10 * 60;
     private static final long RETRY_MS = 60 * 1000;
     private static final long MAX_SKEW_SECONDS = 2 * 24 * 60 * 60;
     private static final int MAX_IDS = 50;
