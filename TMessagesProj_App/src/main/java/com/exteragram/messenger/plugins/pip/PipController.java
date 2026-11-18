@@ -22,7 +22,7 @@ public class PipController {
         if (requirements != null) {
             for (String r : requirements) {
                 String name = r == null ? "" : r.trim().split("[\\s\\[<>=!~;@]", 2)[0].toLowerCase().replace('_', '-');
-                if (!(name.equals("requests") || name.equals("urllib3") || name.equals("certifi") || name.equals("idna") || name.equals("charset-normalizer"))) {
+                if (!(name.equals("requests") || name.equals("urllib3") || name.equals("certifi") || name.equals("idna") || name.equals("charset-normalizer") || name.equals("pillow"))) {
                     missing.add(r);
                 }
             }

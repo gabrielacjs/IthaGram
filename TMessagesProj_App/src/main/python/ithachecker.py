@@ -15,8 +15,8 @@ BASE_METHODS = set(SDK["base_plugin"]) | {"on_plugin_load", "on_plugin_unload", 
     "remove_menu_item", "add_file_hook", "remove_file_hook", "add_intent_hook", "remove_intent_hook"}
 COLOR_CALLS = {"setTextColor", "setBackgroundColor", "setColor", "setTint", "setColorFilter", "setHintTextColor", "setCardBackgroundColor"}
 # Paquetes pip que la app ya trae incluidos (Chaquopy: pip install "requests" y sus dependencias)
-BUNDLED_PIP = {"requests", "urllib3", "certifi", "idna", "charset-normalizer"}
-BUNDLED_MODS = {"requests", "urllib3", "certifi", "idna", "charset_normalizer"}
+BUNDLED_PIP = {"requests", "urllib3", "certifi", "idna", "charset-normalizer", "pillow"}
+BUNDLED_MODS = {"requests", "urllib3", "certifi", "idna", "charset_normalizer", "PIL"}
 DANGEROUS = {"eval", "exec", "compile", "__import__"}
 DANGEROUS_ATTR = {("os", "system"), ("os", "popen"), ("os", "remove"), ("os", "rmdir"), ("shutil", "rmtree"), ("os", "chmod")}
 DANGEROUS_MODS = {"subprocess", "ctypes", "socket", "pty", "marshal", "pickle"}
@@ -118,15 +118,17 @@ def analyze(source: bytes):
                 yel.append("Importa `dev_server` (herramienta de desarrollo).")
         elif top in STDLIB:
             if top in DANGEROUS_MODS:
-                yel.append(f"Importa `{top}` (línea {line}): acceso de bajo nivel, revisa para qué lo usa.")
-            if mod in NET_MODS or top in NET_MODS:
-                yel.append(f"Usa red (`{mod}`, línea {line}).")
+                info.append(f"Aviso: importa `{top}` (línea {line}), acceso de bajo nivel.")
+            is_net = (top in NET_MODS and top != "urllib") or mod == "urllib.request" or (mod == "urllib" and name == "request")
+            if is_net:
+                info.append(f"Aviso: usa red (`{mod}`, línea {line}).")
         elif top in JAVA_PREFIX or top in ("java",):
             full = mod if not name or name == "*" else mod + "." + name
             if top in ("org", "com") and (mod.startswith("org.telegram") or mod.startswith("com.exteragram")):
                 java_refs.add((full, line))
         elif top in BUNDLED_MODS:
-            yel.append(f"Usa red (`{top}`, línea {line}).")
+            if top in ("requests", "urllib3"):
+                info.append(f"Aviso: usa red (`{top}`, línea {line}).")
         else:
             red.append(f"Importa `{top}` (línea {line}): paquete externo no incluido en el motor.")
     for n in ast.walk(tree):  # find_class("...")
@@ -186,9 +188,9 @@ def analyze(source: bytes):
         for n in ast.walk(plugin_cls):  # tipos de menu
             if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "MenuItemType" and n.attr in MENU_CONST:
                 if MENU_CONST[n.attr] not in SUPPORTED_MENUS:
-                    yel.append(f"Usa el menú `{n.attr}`, que IthaGram todavía no tiene conectado (solo chat, perfil y mensaje).")
+                    yel.append(f"Usa el menú `{n.attr}`: IthaGram no tiene menú lateral (la app usa pestañas abajo), así que ese botón no aparece.")
             if isinstance(n, ast.Constant) and isinstance(n.value, str) and n.value in ("drawer_menu", "main_menu"):
-                yel.append(f"Usa el menú `{n.value}`, que IthaGram todavía no tiene conectado.")
+                yel.append(f"Usa el menú `{n.value}`: IthaGram no tiene menú lateral (la app usa pestañas abajo), así que ese botón no aparece.")
 
     # ---- patrones conocidos y seguridad ----
     flagged_colors, danger, urls, names_used = set(), set(), set(), set()
@@ -209,12 +211,25 @@ def analyze(source: bytes):
     if flagged_colors and not AUTO_FIX_COLORS:
         ls = ", ".join(f"{a} (línea {l})" for a, l in sorted(flagged_colors)[:5])
         yel.append(f"Pasa un número directo a un método de color ({ls}): en Android reciente puede dar 'Invalid ID'; hay que envolverlo con `jint(...)`.")
-    if danger:
-        yel.append("Ejecuta código dinámico o borra/cambia archivos: " + ", ".join(sorted(danger)[:6]) + ". Revisa que sea legítimo.")
-    if urls:
-        yel.append("Se conecta o menciona estos dominios: " + ", ".join(sorted(urls)[:8]) + ".")
-    if re.search(r"(exec|eval)\s*\(\s*(base64|zlib|codecs|bytes)", text) or re.search(r"b64decode", text) and "exec" in text:
-        red.append("Parece ofuscado (decodifica y ejecuta código): no lo instales.")
+    dyn = sorted(x for x in danger if x.startswith(("`eval", "`exec", "`compile", "`__import__")))
+    files = sorted(x for x in danger if x not in dyn)
+    if dyn:
+        yel.append("Ejecuta código dinámico: " + ", ".join(dyn[:6]) + ". Revisa que sea legítimo.")
+    if files:
+        info.append("Aviso: borra o cambia archivos: " + ", ".join(files[:6]) + ".")
+    DECODERS = {"b64decode", "b32decode", "b16decode", "decompress", "unhexlify", "fromhex", "a85decode"}
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ("exec", "eval"):
+            for sub in ast.walk(n):
+                if isinstance(sub, ast.Call):
+                    f = sub.func
+                    nm = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
+                    if nm in DECODERS:
+                        red.append("Parece ofuscado (decodifica y ejecuta código): no lo instales.")
+                        break
+            else:
+                continue
+            break
 
     if red:
         return "rojo", red, yel, info
@@ -230,11 +245,11 @@ def render(verdict, red, yel, info):
     if info:
         out += [info[0], ""]
     if red:
-        out += ["Problemas graves:"] + [f"• {x}" for x in red] + [""]
+        out += ["Problemas graves:"] + [f"• {x}" for x in dict.fromkeys(red)] + [""]
     if yel:
         out += ["A revisar:"] + [f"• {x}" for x in dict.fromkeys(yel)] + [""]
     if len(info) > 1:
-        out += [f"• {x}" for x in info[1:]] + [""]
+        out += [f"• {x}" for x in dict.fromkeys(info[1:])] + [""]
     if verdict == "verde":
         out.append("Esto es un análisis estático: no garantiza que funcione. La prueba final es instalarlo en la app.")
     return "\n".join(out).strip()

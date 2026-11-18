@@ -222,6 +222,7 @@ chaquopy {
         // librerias de Python que usan algunos plugins (se descargan al compilar)
         pip {
             install "requests"
+            install "Pillow"
         }
         pyc {
             src = false

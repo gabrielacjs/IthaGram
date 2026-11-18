@@ -21,6 +21,37 @@ _COLOR_METHODS = {
 _HELPER = "__itha_color__"
 _installed = False
 
+# Nombres que algunos plugins importan de un modulo del SDK donde aqui no existen, pero si estan en otro.
+# (modulo destino, nombre, modulo origen)
+_ALIASES = [
+    ("android_utils", "get_context", "client_utils"),
+    ("hook_utils", "MethodHook", "base_plugin"),
+]
+
+
+def _apply_aliases():
+    """Cada modulo destino recibe un __getattr__ (PEP 562) que busca el nombre en el modulo origen.
+    Solo se consulta si el nombre NO existe ya en el destino, y el origen se importa recien al usarlo."""
+    import importlib
+    wanted = {}
+    for dst, name, src in _ALIASES:
+        wanted.setdefault(dst, {})[name] = src
+    for dst, names in wanted.items():
+        try:
+            module = importlib.import_module(dst)
+            previous = getattr(module, "__getattr__", None)
+
+            def lookup(attr, names=names, previous=previous, dst=dst):
+                if attr in names:
+                    return getattr(importlib.import_module(names[attr]), attr)
+                if previous is not None:
+                    return previous(attr)
+                raise AttributeError("module '%s' has no attribute '%s'" % (dst, attr))
+
+            module.__getattr__ = lookup
+        except Exception:
+            pass
+
 
 def _itha_color(v):
     """Si es un int de Python lo vuelve jint (entero de 32 bits con signo); lo demas pasa sin tocar."""
@@ -75,6 +106,7 @@ def install():
         return
     _installed = True
     setattr(builtins, _HELPER, _itha_color)
+    _apply_aliases()
     original = _machinery.SourceFileLoader.get_code
 
     def get_code(self, fullname):

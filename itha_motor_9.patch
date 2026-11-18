@@ -1,0 +1,127 @@
+diff --git a/TMessagesProj_App/src/main/python/ithachecker.py b/TMessagesProj_App/src/main/python/ithachecker.py
+index 180e786..92d0d1d 100644
+--- a/TMessagesProj_App/src/main/python/ithachecker.py
++++ b/TMessagesProj_App/src/main/python/ithachecker.py
+@@ -118,16 +118,16 @@ def analyze(source: bytes):
+                 yel.append("Importa `dev_server` (herramienta de desarrollo).")
+         elif top in STDLIB:
+             if top in DANGEROUS_MODS:
+-                yel.append(f"Importa `{top}` (línea {line}): acceso de bajo nivel, revisa para qué lo usa.")
++                info.append(f"Aviso: importa `{top}` (línea {line}), acceso de bajo nivel.")
+             is_net = (top in NET_MODS and top != "urllib") or mod == "urllib.request" or (mod == "urllib" and name == "request")
+             if is_net:
+-                yel.append(f"Usa red (`{mod}`, línea {line}).")
++                info.append(f"Aviso: usa red (`{mod}`, línea {line}).")
+         elif top in JAVA_PREFIX or top in ("java",):
+             full = mod if not name or name == "*" else mod + "." + name
+             if top in ("org", "com") and (mod.startswith("org.telegram") or mod.startswith("com.exteragram")):
+                 java_refs.add((full, line))
+         elif top in BUNDLED_MODS:
+-            yel.append(f"Usa red (`{top}`, línea {line}).")
++            info.append(f"Aviso: usa red (`{top}`, línea {line}).")
+         else:
+             red.append(f"Importa `{top}` (línea {line}): paquete externo no incluido en el motor.")
+     for n in ast.walk(tree):  # find_class("...")
+@@ -210,12 +210,25 @@ def analyze(source: bytes):
+     if flagged_colors and not AUTO_FIX_COLORS:
+         ls = ", ".join(f"{a} (línea {l})" for a, l in sorted(flagged_colors)[:5])
+         yel.append(f"Pasa un número directo a un método de color ({ls}): en Android reciente puede dar 'Invalid ID'; hay que envolverlo con `jint(...)`.")
+-    if danger:
+-        yel.append("Ejecuta código dinámico o borra/cambia archivos: " + ", ".join(sorted(danger)[:6]) + ". Revisa que sea legítimo.")
+-    if urls:
+-        yel.append("Se conecta o menciona estos dominios: " + ", ".join(sorted(urls)[:8]) + ".")
+-    if re.search(r"(exec|eval)\s*\(\s*(base64|zlib|codecs|bytes)", text) or re.search(r"b64decode", text) and "exec" in text:
+-        red.append("Parece ofuscado (decodifica y ejecuta código): no lo instales.")
++    dyn = sorted(x for x in danger if x.startswith(("`eval", "`exec", "`compile", "`__import__")))
++    files = sorted(x for x in danger if x not in dyn)
++    if dyn:
++        yel.append("Ejecuta código dinámico: " + ", ".join(dyn[:6]) + ". Revisa que sea legítimo.")
++    if files:
++        info.append("Aviso: borra o cambia archivos: " + ", ".join(files[:6]) + ".")
++    DECODERS = {"b64decode", "b32decode", "b16decode", "decompress", "unhexlify", "fromhex", "a85decode"}
++    for n in ast.walk(tree):
++        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ("exec", "eval"):
++            for sub in ast.walk(n):
++                if isinstance(sub, ast.Call):
++                    f = sub.func
++                    nm = f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
++                    if nm in DECODERS:
++                        red.append("Parece ofuscado (decodifica y ejecuta código): no lo instales.")
++                        break
++            else:
++                continue
++            break
+ 
+     if red:
+         return "rojo", red, yel, info
+@@ -231,11 +244,11 @@ def render(verdict, red, yel, info):
+     if info:
+         out += [info[0], ""]
+     if red:
+-        out += ["Problemas graves:"] + [f"• {x}" for x in red] + [""]
++        out += ["Problemas graves:"] + [f"• {x}" for x in dict.fromkeys(red)] + [""]
+     if yel:
+         out += ["A revisar:"] + [f"• {x}" for x in dict.fromkeys(yel)] + [""]
+     if len(info) > 1:
+-        out += [f"• {x}" for x in info[1:]] + [""]
++        out += [f"• {x}" for x in dict.fromkeys(info[1:])] + [""]
+     if verdict == "verde":
+         out.append("Esto es un análisis estático: no garantiza que funcione. La prueba final es instalarlo en la app.")
+     return "\n".join(out).strip()
+diff --git a/TMessagesProj_App/src/main/python/ithachecker_sdk.py b/TMessagesProj_App/src/main/python/ithachecker_sdk.py
+index 02986e3..fbe9872 100644
+--- a/TMessagesProj_App/src/main/python/ithachecker_sdk.py
++++ b/TMessagesProj_App/src/main/python/ithachecker_sdk.py
+@@ -1,2 +1,2 @@
+ """Nombres publicos del SDK de plugins (generado)."""
+-SDK = {'file_utils': ['FilesController', 'PluginsController', '_app', '_matches_extensions', 'annotations', 'delete_file', 'ensure_dir_exists', 'exists', 'get_audios_dir', 'get_cache_dir', 'get_documents_dir', 'get_files_dir', 'get_images_dir', 'get_plugins_dir', 'get_videos_dir', 'jclass', 'list_dir', 'log', 'os', 'plugin_data_dir', 'read_file', 'read_file_bytes', 'read_text', 'write_file', 'write_file_bytes', 'write_text'], 'markdown_utils': ['Enum', 'ParsedMessage', 'RawEntity', 'TLEntityType', 'TLRPC', '_CLOSING', '_TLRPC_ENTITY_MAP', '_closing_len', '_emit_entity', '_match_link', '_match_token', 'annotations', 'count_chars_until', 'dataclass', 'field', 'jclass', 'parse_markdown', 'to_utf16_len'], 'intents': ['Any', 'Callable', 'Dict', 'HandlerHandle', 'HandlerNotRegistered', 'IntentsManager', 'List', 'Optional', 'Tuple', 'XC_MethodHook', 'XposedBridge', '_HandlerInfo', '_HostHook', '_INTENTS_MIN_VERSION', '_IntentsManagerMeta', '_PATH_ARG_RE', '_STANDARD_CONTEXT', '_build_path_regex', '_enabled', '_intents_manager', 'annotations', 'dataclass', 'disable', 'enable', 'field', 'format_exc', 'get_intents_manager', 'inspect', 'isenabled', 'jclass', 'parse_qsl', 're', 'secrets', 'sys', 'urlparse'], 'client_utils': ['AccountClient', 'AccountInstance', 'ArrayList', 'CACHE_CLEAR_QUEUE', 'ConnectionsManager', 'EXTERNAL_NETWORK_QUEUE', 'GLOBAL_QUEUE', 'LaunchActivity', 'MediaController', 'MessagesController', 'NotificationCenter', 'NotificationCenterDelegate', 'PHONE_BOOK_QUEUE', 'PLUGINS_QUEUE', 'R', 'RequestCallback', 'RequestDelegate', 'SEARCH_QUEUE', 'STAGE_QUEUE', 'SendMessagesHelper', 'THEME_QUEUE', 'UserConfig', 'Utilities', '_HookAccountLocal', '_PARAM_FIELDS', '_build_send_params', '_hook_account_local', '_resolve_account', '_set_hook_account', '_to_java_list', 'annotations', 'dynamic_proxy', 'edit_message', 'get_account_instance', 'get_client', 'get_connections_manager', 'get_contacts_controller', 'get_context', 'get_current_account', 'get_download_controller', 'get_file_loader', 'get_file_ref_controller', 'get_hook_account', 'get_last_fragment', 'get_location_controller', 'get_media_controller', 'get_media_data_controller', 'get_messages_controller', 'get_messages_storage', 'get_notification_center', 'get_notifications_controller', 'get_notifications_settings', 'get_queue_by_name', 'get_secret_chat_helper', 'get_selected_account', 'get_send_messages_helper', 'get_stats_controller', 'get_user_config', 'get_user_id', 'jclass', 'log', 'parse_text', 'run_on_queue', 'run_on_ui_thread', 'send_audio', 'send_document', 'send_message', 'send_photo', 'send_request', 'send_text', 'send_video'], 'log_utils': ['Any', 'Callable', 'Dict', 'IntEnum', 'List', 'LogLevel', 'LogRecord', 'Logger', 'Optional', 'Tuple', 'Union', '_ANDROID_WRITERS', '_Dumper', '_LEVEL_ALIASES', '_LOGCAT_MESSAGE_LIMIT', '_LOGCAT_TAG_LIMIT', '_PLUGIN_TAG_PREFIX', '_Timer', '_Unreadable', '__all__', '_caller_frame', '_coerce_level', '_default_level', '_dev_mode', '_format_exc_info', '_format_location', '_format_message', '_java_iter', '_java_type_name', '_log_class', '_plugin_id_from_frame', '_plugin_logger', '_plugin_loggers', '_plugin_loggers_lock', '_read_dev_mode', '_report_internal_error', '_reset_plugin_logger', '_scalar_repr', '_set_dev_mode', '_split_for_logcat', '_strip_plugin_prefix', '_truncate', '_write_logcat', 'annotations', 'dump', 'get_logger', 'os', 'sys', 'threading', 'time', 'traceback'], 'hook_utils': ['_as_class_object', '_find_field', 'annotations', 'find_class', 'get_private_field', 'get_static_private_field', 'jclass', 'log', 'set_private_field', 'set_static_private_field', 'traceback'], 'plugin_settings': ['Path', '_all_shared_prefs', '_cache', '_load_settings_from_file', '_lock', '_plugins_dir_path', '_restore_plugin_settings', '_save_settings_to_file', '_settings_file', '_settings_of', 'annotations', 'clear_settings', 'get_all_settings', 'get_setting', 'init', 'json', 'os', 'set_all_settings', 'set_setting', 'threading'], 'base_plugin': ['AppEvent', 'ArrayList', 'BaseHook', 'BasePlugin', 'HookFilter', 'HookResult', 'HookStrategy', 'JavaHookFilter', 'MenuItemData', 'MenuItemType', 'MethodHook', 'MethodReplacement', 'PluginError', 'PluginsConstants', 'PluginsController', 'PyMethodHook', 'PyMethodReplacement', 'XposedBridge', 'XposedHook', '_build_py_hook', '_install_hook', '_log', '_make_filter', '_method_hook_filters', '_to_java_filters', 'annotations', 'fn_hook_filters', 'hook_filters', 'jclass', 'plugin_settings'], 'android_utils': ['AndroidUtilities', 'AppUtils', 'OnClickListener', 'OnLongClickListener', 'R', '_OnClickListenerIface', '_OnLongClickListenerIface', '_Runnable', 'annotations', 'copy_to_clipboard', 'dp', 'dynamic_proxy', 'get_context', 'get_string', 'jclass', 'log', 'run_on_ui_thread'], 'ui.bulletin': ['BulletinFactory', 'BulletinHelper', 'LaunchActivity', 'LocaleController', 'R', 'R_tg', '_factory', '_raw', '_resolve_fragment', '_string', 'annotations', 'dynamic_proxy', 'jclass', 'log', 'run_on_ui_thread'], 'ui': [], 'ui.settings': ['ClassProxy', 'Custom', 'Divider', 'EditText', 'Factory', 'Header', 'Input', 'Selector', 'SimpleSettingFactory', 'Switch', 'Text', 'UItem', 'UItemFactory', 'Utilities', '_FactoryInstance', '_build_custom_factory', '_to_args_array', 'annotations', 'dataclass', 'dynamic_proxy', 'field', 'jclass', 'log'], 'ui.alert': ['AlertDialog', 'AlertDialogBuilder', 'DialogInterfaceOnClickListenerIface', 'OnButtonClickListenerIface', 'OnCancelListenerIface', 'OnDismissListenerIface', '_ButtonListener', '_CancelListener', '_DismissListener', '_ItemsListener', 'annotations', 'dynamic_proxy', 'jclass', 'log'], 'elyxcore': ['Any', 'Asset', 'AssetNotFoundException', 'Assets', 'AssetsDirNotFoundException', 'Callback', 'Callback2', 'Callback3', 'CallbackReturn', 'JavaRunnable', 'LazyDict', 'OnClickListener', 'Runnable', 'SettingsController', 'Strings', 'Utilities', 'View', '__all__', '__getattr__', '_public_api', '_setup', '_stop', 'annotations', 'gen', 'gen2', 'get_environment', 'import_module', 'java', 'mvel_execute'], 'elyxcore.assets': ['AndroidUtilities', 'ApplicationLoader', 'Asset', 'AssetNotFoundException', 'Assets', 'AssetsDirNotFoundException', 'Bitmap', 'BitmapDrawable', 'Drawable', 'File', 'ImageLocation', 'Path', 'RLottieDrawable', 'SvgHelper', '_JC', '_SAFE_NAME_CHARS', '_sVwCaL', 'annotations', 'java', 'json', 'load_data_file', 'normalize_name', 'string', 'yaml', 'zipfile'], 'elyxcore.settings': ['SettingsController', 'annotations', 'plugin_settings'], 'elyxcore.localization': ['LocaleController', 'Strings', 'annotations', 'dlog', 'java', 'pluralization_string'], 'elyxcore.utils': ['LazyDict', '_gen_cache', '_make_proxy_base', '_mvel_compiled', 'annotations', 'gen', 'gen2', 'hash_map', 'java', 'java_map_type', 'mvel_execute', 'resize_image', 'safe_func', 'safe_run_on_queue'], 'extera_utils.text_formatting': ['RawEntity', 'TLEntityType', 'TLRPC', '_ATTR_RE', '_HTML_TAGS', '_TAG_RE', '_parse_html', 'annotations', 'jclass', 'parse_markdown', 'parse_text', 're', 'to_utf16_len'], 'extera_utils.classes': ['Any', 'Base', 'Callable', 'ClassBuilder', 'ClassProxy', 'Constructor', 'Dict', 'Field', 'GetMethod', 'List', 'MVELMethod', 'MVELOverride', 'Method', 'Optional', 'Overload', 'Override', 'PreConstructor', 'PyObj', 'SetMethod', 'Tuple', 'Utilities', '_CLASSBUILDER_ATTR', '_CONSTRUCTOR_ATTR', '_CallbackBridge', '_ClassMeta', '_CtorDecl', '_DexMakerHookProxy', '_FieldAccessorDecl', '_FieldDecl', '_JFIELD_ATTR', '_JFieldHolder', '_JFieldHolder_MVEL', '_LegacyDecl', '_METHOD_ATTR', '_MODIFIER_PUBLIC', '_MethodDecl', '_MvelDecl', '_OVERLOAD_ATTR', '_OVERRIDE_ATTR', '_PRECONSTRUCTOR_ATTR', '_PRIMITIVE_CLASS', '_args_to_list', '_decorate', '_enabled', '_infer_method_decl', '_instantiate_java', '_normalize_pre_constructor_result', '_resolve_java_type', '_to_java_class_array', '_to_java_object_list', '_to_java_string_list', '_type_display_name', 'annotations', 'class_proxy', 'disable', 'dynamic_proxy', 'enable', 'extends', 'inspect', 'isenabled', 'jMVELmethod', 'jMVELoverride', 'jarray', 'java_subclass', 'jboolean', 'jbyte', 'jchar', 'jclass', 'jclassbuilder', 'jconstructor', 'jdouble', 'jfield', 'jfloat', 'jgetmethod', 'jint', 'jlong', 'jmethod', 'jmvelmethod', 'jmveloverride', 'joverload', 'joverride', 'jpreconstructor', 'jsetmethod', 'jshort', 're'], 'extera_utils.get_caller': ['ELYX_PLUGIN_NAMESPACE', 'Optional', '_ArORAVb', '_enabled', '_format_location', '_get_callable_location', '_next', '_plugin_id_from_basename', '_plugin_id_from_location', '_sdk_version', 'annotations', 'disable', 'enable', 'get_caller_plugin_id', 'get_plugin_id', 'inspect', 'isenabled', 'pathlib', 'sys', 'wduiQ'], 'extera_utils': [], 'extera_utils.metadata_parser': ['_ATTR_MAP', '_PKs', '_normalize_value', 'annotations', 'ast', 'get_metadata']}
++SDK = {'file_utils': ['FilesController', 'PluginsController', '_app', '_matches_extensions', 'annotations', 'delete_file', 'ensure_dir_exists', 'exists', 'get_audios_dir', 'get_cache_dir', 'get_documents_dir', 'get_files_dir', 'get_images_dir', 'get_plugins_dir', 'get_videos_dir', 'jclass', 'list_dir', 'log', 'os', 'plugin_data_dir', 'read_file', 'read_file_bytes', 'read_text', 'write_file', 'write_file_bytes', 'write_text'], 'markdown_utils': ['Enum', 'ParsedMessage', 'RawEntity', 'TLEntityType', 'TLRPC', '_CLOSING', '_TLRPC_ENTITY_MAP', '_closing_len', '_emit_entity', '_match_link', '_match_token', 'annotations', 'count_chars_until', 'dataclass', 'field', 'jclass', 'parse_markdown', 'to_utf16_len'], 'intents': ['Any', 'Callable', 'Dict', 'HandlerHandle', 'HandlerNotRegistered', 'IntentsManager', 'List', 'Optional', 'Tuple', 'XC_MethodHook', 'XposedBridge', '_HandlerInfo', '_HostHook', '_INTENTS_MIN_VERSION', '_IntentsManagerMeta', '_PATH_ARG_RE', '_STANDARD_CONTEXT', '_build_path_regex', '_enabled', '_intents_manager', 'annotations', 'dataclass', 'disable', 'enable', 'field', 'format_exc', 'get_intents_manager', 'inspect', 'isenabled', 'jclass', 'parse_qsl', 're', 'secrets', 'sys', 'urlparse'], 'client_utils': ['AccountClient', 'AccountInstance', 'ArrayList', 'CACHE_CLEAR_QUEUE', 'ConnectionsManager', 'EXTERNAL_NETWORK_QUEUE', 'GLOBAL_QUEUE', 'LaunchActivity', 'MediaController', 'MessagesController', 'NotificationCenter', 'NotificationCenterDelegate', 'PHONE_BOOK_QUEUE', 'PLUGINS_QUEUE', 'R', 'RequestCallback', 'RequestDelegate', 'SEARCH_QUEUE', 'STAGE_QUEUE', 'SendMessagesHelper', 'THEME_QUEUE', 'UserConfig', 'Utilities', '_HookAccountLocal', '_PARAM_FIELDS', '_build_send_params', '_hook_account_local', '_resolve_account', '_set_hook_account', '_to_java_list', 'annotations', 'dynamic_proxy', 'edit_message', 'get_account_instance', 'get_client', 'get_connections_manager', 'get_contacts_controller', 'get_context', 'get_current_account', 'get_download_controller', 'get_file_loader', 'get_file_ref_controller', 'get_hook_account', 'get_last_fragment', 'get_location_controller', 'get_media_controller', 'get_media_data_controller', 'get_messages_controller', 'get_messages_storage', 'get_notification_center', 'get_notifications_controller', 'get_notifications_settings', 'get_queue_by_name', 'get_secret_chat_helper', 'get_selected_account', 'get_send_messages_helper', 'get_stats_controller', 'get_user_config', 'get_user_id', 'jclass', 'log', 'parse_text', 'run_on_queue', 'run_on_ui_thread', 'send_audio', 'send_document', 'send_message', 'send_photo', 'send_request', 'send_text', 'send_video'], 'log_utils': ['Any', 'Callable', 'Dict', 'IntEnum', 'List', 'LogLevel', 'LogRecord', 'Logger', 'Optional', 'Tuple', 'Union', '_ANDROID_WRITERS', '_Dumper', '_LEVEL_ALIASES', '_LOGCAT_MESSAGE_LIMIT', '_LOGCAT_TAG_LIMIT', '_PLUGIN_TAG_PREFIX', '_Timer', '_Unreadable', '__all__', '_caller_frame', '_coerce_level', '_default_level', '_dev_mode', '_format_exc_info', '_format_location', '_format_message', '_java_iter', '_java_type_name', '_log_class', '_plugin_id_from_frame', '_plugin_logger', '_plugin_loggers', '_plugin_loggers_lock', '_read_dev_mode', '_report_internal_error', '_reset_plugin_logger', '_scalar_repr', '_set_dev_mode', '_split_for_logcat', '_strip_plugin_prefix', '_truncate', '_write_logcat', 'annotations', 'dump', 'get_logger', 'os', 'sys', 'threading', 'time', 'traceback'], 'hook_utils': ['MethodHook', '_as_class_object', '_find_field', 'annotations', 'find_class', 'get_private_field', 'get_static_private_field', 'jclass', 'log', 'set_private_field', 'set_static_private_field', 'traceback'], 'plugin_settings': ['Path', '_all_shared_prefs', '_cache', '_load_settings_from_file', '_lock', '_plugins_dir_path', '_restore_plugin_settings', '_save_settings_to_file', '_settings_file', '_settings_of', 'annotations', 'clear_settings', 'get_all_settings', 'get_setting', 'init', 'json', 'os', 'set_all_settings', 'set_setting', 'threading'], 'base_plugin': ['AppEvent', 'ArrayList', 'BaseHook', 'BasePlugin', 'HookFilter', 'HookResult', 'HookStrategy', 'JavaHookFilter', 'MenuItemData', 'MenuItemType', 'MethodHook', 'MethodReplacement', 'PluginError', 'PluginsConstants', 'PluginsController', 'PyMethodHook', 'PyMethodReplacement', 'XposedBridge', 'XposedHook', '_build_py_hook', '_install_hook', '_log', '_make_filter', '_method_hook_filters', '_to_java_filters', 'annotations', 'fn_hook_filters', 'hook_filters', 'jclass', 'plugin_settings'], 'android_utils': ['AndroidUtilities', 'AppUtils', 'OnClickListener', 'OnLongClickListener', 'R', '_OnClickListenerIface', '_OnLongClickListenerIface', '_Runnable', 'annotations', 'copy_to_clipboard', 'dp', 'dynamic_proxy', 'get_context', 'get_string', 'jclass', 'log', 'run_on_ui_thread'], 'ui.bulletin': ['BulletinFactory', 'BulletinHelper', 'LaunchActivity', 'LocaleController', 'R', 'R_tg', '_factory', '_raw', '_resolve_fragment', '_string', 'annotations', 'dynamic_proxy', 'jclass', 'log', 'run_on_ui_thread'], 'ui': [], 'ui.settings': ['ClassProxy', 'Custom', 'Divider', 'EditText', 'Factory', 'Header', 'Input', 'Selector', 'SimpleSettingFactory', 'Switch', 'Text', 'UItem', 'UItemFactory', 'Utilities', '_FactoryInstance', '_build_custom_factory', '_to_args_array', 'annotations', 'dataclass', 'dynamic_proxy', 'field', 'jclass', 'log'], 'ui.alert': ['AlertDialog', 'AlertDialogBuilder', 'DialogInterfaceOnClickListenerIface', 'OnButtonClickListenerIface', 'OnCancelListenerIface', 'OnDismissListenerIface', '_ButtonListener', '_CancelListener', '_DismissListener', '_ItemsListener', 'annotations', 'dynamic_proxy', 'jclass', 'log'], 'elyxcore': ['Any', 'Asset', 'AssetNotFoundException', 'Assets', 'AssetsDirNotFoundException', 'Callback', 'Callback2', 'Callback3', 'CallbackReturn', 'JavaRunnable', 'LazyDict', 'OnClickListener', 'Runnable', 'SettingsController', 'Strings', 'Utilities', 'View', '__all__', '__getattr__', '_public_api', '_setup', '_stop', 'annotations', 'gen', 'gen2', 'get_environment', 'import_module', 'java', 'mvel_execute'], 'elyxcore.assets': ['AndroidUtilities', 'ApplicationLoader', 'Asset', 'AssetNotFoundException', 'Assets', 'AssetsDirNotFoundException', 'Bitmap', 'BitmapDrawable', 'Drawable', 'File', 'ImageLocation', 'Path', 'RLottieDrawable', 'SvgHelper', '_JC', '_SAFE_NAME_CHARS', '_sVwCaL', 'annotations', 'java', 'json', 'load_data_file', 'normalize_name', 'string', 'yaml', 'zipfile'], 'elyxcore.settings': ['SettingsController', 'annotations', 'plugin_settings'], 'elyxcore.localization': ['LocaleController', 'Strings', 'annotations', 'dlog', 'java', 'pluralization_string'], 'elyxcore.utils': ['LazyDict', '_gen_cache', '_make_proxy_base', '_mvel_compiled', 'annotations', 'gen', 'gen2', 'hash_map', 'java', 'java_map_type', 'mvel_execute', 'resize_image', 'safe_func', 'safe_run_on_queue'], 'extera_utils.text_formatting': ['RawEntity', 'TLEntityType', 'TLRPC', '_ATTR_RE', '_HTML_TAGS', '_TAG_RE', '_parse_html', 'annotations', 'jclass', 'parse_markdown', 'parse_text', 're', 'to_utf16_len'], 'extera_utils.classes': ['Any', 'Base', 'Callable', 'ClassBuilder', 'ClassProxy', 'Constructor', 'Dict', 'Field', 'GetMethod', 'List', 'MVELMethod', 'MVELOverride', 'Method', 'Optional', 'Overload', 'Override', 'PreConstructor', 'PyObj', 'SetMethod', 'Tuple', 'Utilities', '_CLASSBUILDER_ATTR', '_CONSTRUCTOR_ATTR', '_CallbackBridge', '_ClassMeta', '_CtorDecl', '_DexMakerHookProxy', '_FieldAccessorDecl', '_FieldDecl', '_JFIELD_ATTR', '_JFieldHolder', '_JFieldHolder_MVEL', '_LegacyDecl', '_METHOD_ATTR', '_MODIFIER_PUBLIC', '_MethodDecl', '_MvelDecl', '_OVERLOAD_ATTR', '_OVERRIDE_ATTR', '_PRECONSTRUCTOR_ATTR', '_PRIMITIVE_CLASS', '_args_to_list', '_decorate', '_enabled', '_infer_method_decl', '_instantiate_java', '_normalize_pre_constructor_result', '_resolve_java_type', '_to_java_class_array', '_to_java_object_list', '_to_java_string_list', '_type_display_name', 'annotations', 'class_proxy', 'disable', 'dynamic_proxy', 'enable', 'extends', 'inspect', 'isenabled', 'jMVELmethod', 'jMVELoverride', 'jarray', 'java_subclass', 'jboolean', 'jbyte', 'jchar', 'jclass', 'jclassbuilder', 'jconstructor', 'jdouble', 'jfield', 'jfloat', 'jgetmethod', 'jint', 'jlong', 'jmethod', 'jmvelmethod', 'jmveloverride', 'joverload', 'joverride', 'jpreconstructor', 'jsetmethod', 'jshort', 're'], 'extera_utils.get_caller': ['ELYX_PLUGIN_NAMESPACE', 'Optional', '_ArORAVb', '_enabled', '_format_location', '_get_callable_location', '_next', '_plugin_id_from_basename', '_plugin_id_from_location', '_sdk_version', 'annotations', 'disable', 'enable', 'get_caller_plugin_id', 'get_plugin_id', 'inspect', 'isenabled', 'pathlib', 'sys', 'wduiQ'], 'extera_utils': [], 'extera_utils.metadata_parser': ['_ATTR_MAP', '_PKs', '_normalize_value', 'annotations', 'ast', 'get_metadata']}
+diff --git a/TMessagesProj_App/src/main/python/ithacompat.py b/TMessagesProj_App/src/main/python/ithacompat.py
+index 3487f9c..7860f93 100644
+--- a/TMessagesProj_App/src/main/python/ithacompat.py
++++ b/TMessagesProj_App/src/main/python/ithacompat.py
+@@ -21,27 +21,34 @@ _COLOR_METHODS = {
+ _HELPER = "__itha_color__"
+ _installed = False
+ 
+-# Funciones que algunos plugins importan de un modulo del SDK donde aqui no existen, pero si estan en otro.
++# Nombres que algunos plugins importan de un modulo del SDK donde aqui no existen, pero si estan en otro.
+ # (modulo destino, nombre, modulo origen)
+ _ALIASES = [
+     ("android_utils", "get_context", "client_utils"),
++    ("hook_utils", "MethodHook", "base_plugin"),
+ ]
+ 
+ 
+ def _apply_aliases():
++    """Cada modulo destino recibe un __getattr__ (PEP 562) que busca el nombre en el modulo origen.
++    Solo se consulta si el nombre NO existe ya en el destino, y el origen se importa recien al usarlo."""
+     import importlib
++    wanted = {}
+     for dst, name, src in _ALIASES:
++        wanted.setdefault(dst, {})[name] = src
++    for dst, names in wanted.items():
+         try:
+             module = importlib.import_module(dst)
+-            if hasattr(module, name):
+-                continue
+-
+-            def make(src_name=src, fn_name=name):
+-                def alias(*args, **kwargs):
+-                    return getattr(importlib.import_module(src_name), fn_name)(*args, **kwargs)
+-                alias.__name__ = fn_name
+-                return alias
+-            setattr(module, name, make())
++            previous = getattr(module, "__getattr__", None)
++
++            def lookup(attr, names=names, previous=previous, dst=dst):
++                if attr in names:
++                    return getattr(importlib.import_module(names[attr]), attr)
++                if previous is not None:
++                    return previous(attr)
++                raise AttributeError("module '%s' has no attribute '%s'" % (dst, attr))
++
++            module.__getattr__ = lookup
+         except Exception:
+             pass
+ 
