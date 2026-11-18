@@ -99,12 +99,26 @@ def _is_plugin_source(data):
     return b"BasePlugin" in data and b"class BasePlugin" not in data
 
 
+def _ensure_tmp():
+    """Chaquopy apunta TMPDIR a cache/chaquopy/tmp pero no crea la carpeta: sin ella tempfile falla en los plugins."""
+    try:
+        import os
+        import tempfile
+        d = os.environ.get("TMPDIR")
+        if d:
+            os.makedirs(d, exist_ok=True)
+        tempfile.tempdir = None  # que vuelva a calcular la carpeta temporal
+    except Exception:
+        pass
+
+
 def install():
     """Engancha el cargador de modulos .py. Es seguro llamarlo varias veces."""
     global _installed
     if _installed:
         return
     _installed = True
+    _ensure_tmp()
     setattr(builtins, _HELPER, _itha_color)
     _apply_aliases()
     original = _machinery.SourceFileLoader.get_code
