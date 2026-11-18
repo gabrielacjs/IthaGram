@@ -27,6 +27,7 @@ try:
 except AttributeError:
     STDLIB = set()
 
+AUTO_FIX_COLORS = True  # en la app los colores se corrigen solos al cargar (ithacompat)
 CLASS_EXISTS = None  # funcion opcional: nombre completo -> bool (en la app usa las clases reales)
 
 _classes = None
@@ -205,7 +206,7 @@ def analyze(source: bytes):
         if isinstance(n, ast.Constant) and isinstance(n.value, str):
             for u in re.findall(r"https?://([A-Za-z0-9.-]+)", n.value):
                 urls.add(u.lower())
-    if flagged_colors:
+    if flagged_colors and not AUTO_FIX_COLORS:
         ls = ", ".join(f"{a} (línea {l})" for a, l in sorted(flagged_colors)[:5])
         yel.append(f"Pasa un número directo a un método de color ({ls}): en Android reciente puede dar 'Invalid ID'; hay que envolverlo con `jint(...)`.")
     if danger:

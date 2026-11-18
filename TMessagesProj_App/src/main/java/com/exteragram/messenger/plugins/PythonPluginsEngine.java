@@ -344,6 +344,12 @@ public class PythonPluginsEngine implements PluginsController.PluginsEngine {
             PyObject sdkVersionModule = python.getModule("_sdk_version");
             PyObject startResult = sdkVersionModule.callAttr("__start__");
             sdkInitialized = startResult != null && startResult.toBoolean();
+            // IthaGram: arreglos automaticos para plugins (colores jint, etc.) antes de que se cargue ninguno
+            try {
+                python.getModule("ithacompat").callAttr("install");
+            } catch (Throwable t) {
+                android.util.Log.e("IthaDiag", "ithacompat FALLO", t);
+            }
             // The SDK is now pure Python (bundled in assets/plugins_pysdk), so the
             // Cython .so version / safe-mode checks that used to need patching are gone.
             if (sdkInitialized) {

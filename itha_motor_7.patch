@@ -1,0 +1,137 @@
+diff --git a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
+index 2a1e469..697d71c 100644
+--- a/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
++++ b/TMessagesProj_App/src/main/java/com/exteragram/messenger/plugins/PythonPluginsEngine.java
+@@ -344,6 +344,12 @@ public class PythonPluginsEngine implements PluginsController.PluginsEngine {
+             PyObject sdkVersionModule = python.getModule("_sdk_version");
+             PyObject startResult = sdkVersionModule.callAttr("__start__");
+             sdkInitialized = startResult != null && startResult.toBoolean();
++            // IthaGram: arreglos automaticos para plugins (colores jint, etc.) antes de que se cargue ninguno
++            try {
++                python.getModule("ithacompat").callAttr("install");
++            } catch (Throwable t) {
++                android.util.Log.e("IthaDiag", "ithacompat FALLO", t);
++            }
+             // The SDK is now pure Python (bundled in assets/plugins_pysdk), so the
+             // Cython .so version / safe-mode checks that used to need patching are gone.
+             if (sdkInitialized) {
+diff --git a/TMessagesProj_App/src/main/python/ithachecker.py b/TMessagesProj_App/src/main/python/ithachecker.py
+index ef787e5..1929a76 100644
+--- a/TMessagesProj_App/src/main/python/ithachecker.py
++++ b/TMessagesProj_App/src/main/python/ithachecker.py
+@@ -27,6 +27,7 @@ try:
+ except AttributeError:
+     STDLIB = set()
+ 
++AUTO_FIX_COLORS = True  # en la app los colores se corrigen solos al cargar (ithacompat)
+ CLASS_EXISTS = None  # funcion opcional: nombre completo -> bool (en la app usa las clases reales)
+ 
+ _classes = None
+@@ -205,7 +206,7 @@ def analyze(source: bytes):
+         if isinstance(n, ast.Constant) and isinstance(n.value, str):
+             for u in re.findall(r"https?://([A-Za-z0-9.-]+)", n.value):
+                 urls.add(u.lower())
+-    if flagged_colors:
++    if flagged_colors and not AUTO_FIX_COLORS:
+         ls = ", ".join(f"{a} (línea {l})" for a, l in sorted(flagged_colors)[:5])
+         yel.append(f"Pasa un número directo a un método de color ({ls}): en Android reciente puede dar 'Invalid ID'; hay que envolverlo con `jint(...)`.")
+     if danger:
+diff --git a/TMessagesProj_App/src/main/python/ithacompat.py b/TMessagesProj_App/src/main/python/ithacompat.py
+new file mode 100644
+index 0000000..d5c6669
+--- /dev/null
++++ b/TMessagesProj_App/src/main/python/ithacompat.py
+@@ -0,0 +1,93 @@
++"""IthaGram: arreglos automaticos para que los plugins funcionen sin tocarlos.
++
++Se activa una vez al arrancar el SDK de plugins (install). Al importar el archivo de un plugin, antes de
++compilarlo, corrige patrones que fallan en Android reciente:
++
++  * Colores: Chaquopy convierte un int de Python en el overload "long" de setTextColor/setBackgroundColor/...
++    (ColorLong) y revienta con 'Invalid ID'. Se envuelve el argumento con jint(...) y se pasa a entero con signo.
++
++Si algo falla al transformar, el plugin se compila tal cual (nunca se rompe por esto).
++"""
++import ast
++import builtins
++import importlib.machinery as _machinery
++
++# metodos que reciben UN color como unico argumento
++_COLOR_METHODS = {
++    "setTextColor", "setBackgroundColor", "setColor", "setHintTextColor", "setLinkTextColor",
++    "setHighlightColor", "setCardBackgroundColor", "setStrokeColor", "setTint", "drawColor",
++    "setBackgroundTintList_color", "setTitleTextColor", "setSubtitleTextColor",
++}
++_HELPER = "__itha_color__"
++_installed = False
++
++
++def _itha_color(v):
++    """Si es un int de Python lo vuelve jint (entero de 32 bits con signo); lo demas pasa sin tocar."""
++    if isinstance(v, int) and not isinstance(v, bool):
++        from java import jint
++        v &= 0xFFFFFFFF
++        if v > 0x7FFFFFFF:
++            v -= 1 << 32
++        return jint(v)
++    return v
++
++
++class _ColorFix(ast.NodeTransformer):
++    changed = 0
++
++    def visit_Call(self, node):
++        self.generic_visit(node)
++        f = node.func
++        if isinstance(f, ast.Attribute) and f.attr in _COLOR_METHODS and len(node.args) == 1 and not node.keywords \
++                and not isinstance(node.args[0], ast.Starred):
++            arg = node.args[0]
++            wrapped = ast.Call(func=ast.Name(id=_HELPER, ctx=ast.Load()), args=[arg], keywords=[])
++            ast.copy_location(wrapped, arg)
++            node.args[0] = wrapped
++            self.changed += 1
++        return node
++
++
++def transform_source(data, path="<plugin>"):
++    """Devuelve el codigo compilado con los arreglos aplicados, o None si no hace falta / no se pudo."""
++    try:
++        text = data.decode("utf-8") if isinstance(data, (bytes, bytearray)) else data
++        tree = ast.parse(text, path)
++        fix = _ColorFix()
++        fix.visit(tree)
++        if not fix.changed:
++            return None
++        ast.fix_missing_locations(tree)
++        return compile(tree, path, "exec", dont_inherit=True)
++    except Exception:
++        return None
++
++
++def _is_plugin_source(data):
++    return b"BasePlugin" in data and b"class BasePlugin" not in data
++
++
++def install():
++    """Engancha el cargador de modulos .py. Es seguro llamarlo varias veces."""
++    global _installed
++    if _installed:
++        return
++    _installed = True
++    setattr(builtins, _HELPER, _itha_color)
++    original = _machinery.SourceFileLoader.get_code
++
++    def get_code(self, fullname):
++        try:
++            path = self.get_filename(fullname)
++            if path.endswith(".py"):
++                data = self.get_data(path)
++                if _is_plugin_source(data):
++                    code = transform_source(data, path)
++                    if code is not None:
++                        return code  # se salta el .pyc (podria ser una copia sin arreglar)
++        except Exception:
++            pass
++        return original(self, fullname)
++
++    _machinery.SourceFileLoader.get_code = get_code
