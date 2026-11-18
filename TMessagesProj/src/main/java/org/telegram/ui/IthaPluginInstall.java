@@ -5,6 +5,7 @@ import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.IthaPluginCheck;
+import org.telegram.messenger.IthaPluginScan;
 import org.telegram.messenger.IthaPlugins;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.Utilities;
@@ -81,6 +82,8 @@ public class IthaPluginInstall {
             final File fileFinal = file;
             final boolean update = installed;
             final String shownName = name;
+            final IthaPluginScan.Result scan = IthaPluginScan.scan(src);
+            final boolean danger = scan.level == IthaPluginScan.DANGER;
             AlertDialog.Builder b = new AlertDialog.Builder(activity);
             b.setTitle(update ? "Actualizar plugin" : "Instalar plugin");
             StringBuilder msg = new StringBuilder(shownName);
@@ -93,6 +96,7 @@ public class IthaPluginInstall {
             if (!update) {
                 msg.append("\n\nInstala solo plugins de gente en la que confies: cada quien es responsable de los plugins que usa.");
             }
+            msg.append("\n\n").append(scan.format());
             b.setMessage(msg.toString());
             final Runnable doInstall = () -> {
                 Utilities.globalQueue.postRunnable(() -> {
@@ -112,7 +116,14 @@ public class IthaPluginInstall {
                     });
                 });
             };
-            b.setPositiveButton(update ? "Actualizar" : "Instalar", (d, w) -> doInstall.run());
+            final Runnable install = danger ? () -> confirmDanger(fragment, activity, doInstall) : doInstall;
+            if (danger) {
+                b.setPositiveButton("No instalar", null);
+                b.setNegativeButton("Instalar igual", (d, w) -> install.run());
+            } else {
+                b.setPositiveButton(update ? "Actualizar" : "Instalar", (d, w) -> doInstall.run());
+                b.setNegativeButton("Cancelar", null);
+            }
             final IthaPluginCheck.Checker checker = IthaPluginCheck.getChecker();
             if (checker != null) {
                 final String sourceText = src;
@@ -129,19 +140,28 @@ public class IthaPluginInstall {
                             AlertDialog.Builder r = new AlertDialog.Builder(activity);
                             r.setTitle("Compatibilidad");
                             r.setMessage(text);
-                            r.setPositiveButton(update ? "Actualizar" : "Instalar", (d2, w2) -> doInstall.run());
+                            r.setPositiveButton(update ? "Actualizar" : "Instalar", (d2, w2) -> install.run());
                             r.setNegativeButton("Cancelar", null);
                             fragment.showDialog(r.create());
                         });
                     });
                 });
             }
-            b.setNegativeButton("Cancelar", null);
             fragment.showDialog(b.create());
             return true;
         } catch (Throwable t) {
             org.telegram.messenger.FileLog.e(t);
             return false;
         }
+    }
+
+    /** Segunda confirmacion cuando la revision encontro algo peligroso. */
+    private static void confirmDanger(ChatActivity fragment, Activity activity, Runnable doInstall) {
+        AlertDialog.Builder c = new AlertDialog.Builder(activity);
+        c.setTitle("Plugin peligroso");
+        c.setMessage("Este plugin tiene funciones que pueden borrar tu cuenta, cerrar tus sesiones o robar datos. Si lo instalas, es bajo tu propio riesgo.");
+        c.setPositiveButton("No instalar", null);
+        c.setNegativeButton("Instalar de todos modos", (d, w) -> doInstall.run());
+        fragment.showDialog(c.create());
     }
 }
