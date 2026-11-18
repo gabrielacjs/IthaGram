@@ -373,7 +373,9 @@ public class ProfileGiftsView extends View implements NotificationCenter.Notific
 
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
-        if (gifts.isEmpty() || expandProgress >= 1.0f || collapseProgress <= 0f) return;
+        final java.util.List<String> ithaKinds = dialogId > 0 ? org.telegram.messenger.IthaBadges.kindsFor(dialogId, () -> invalidate()) : null;
+        final boolean hasIthaBadges = ithaKinds != null && !ithaKinds.isEmpty();
+        if ((gifts.isEmpty() && !hasIthaBadges) || expandProgress >= 1.0f || collapseProgress <= 0f) return;
 
         final float realX = avatarContainer.getX();
         final float realY = avatarContainer.getY();
@@ -464,6 +466,93 @@ public class ProfileGiftsView extends View implements NotificationCenter.Notific
             gift.draw(canvas, gx, gy, scale, 0, alpha, 1f);
         }
 
+        if (hasIthaBadges) {
+            // las insignias giran alrededor del avatar, como burbujas en orbita
+            final int count = Math.min(4, ithaKinds.size());
+            final float tSec = (android.os.SystemClock.uptimeMillis() % 1000000L) / 1000f;
+            final float rx = aw / 2f + dp(34);
+            final float ry = ah / 2f + dp(18);
+            for (int i = 0; i < count; ++i) {
+                final String kind = ithaKinds.get(i);
+                final float enter = ithaEnter(kind).set(1.0f);
+                final float theta = (float) (tSec * (2 * Math.PI / 10.0) + i * 2 * Math.PI / count + 0.6);
+                final float depth = (float) Math.sin(theta); // 1 = adelante, -1 = atras
+                float gx = acx + (float) Math.cos(theta) * rx;
+                float gy = acy + depth * ry * 0.55f;
+                float scale = lerp(0.5f, 1.0f, enter) * (1f + 0.16f * depth);
+                final float alpha = enter * (1.0f - expandProgress) * (1.0f - actionBarProgress) * closedAlpha * (0.8f + 0.1f * (depth + 1f));
+
+                final float collapseWithEnter = (isOpening || enter >= 1f) ? collapseProgress : Math.min(enter, collapseProgress);
+                final float delayFraction = 0.2f;
+                final float maxDelayFraction = 1.6f * delayFraction;
+                final float intervalFraction = 1f - maxDelayFraction;
+                final float delay = 0.5f * i * delayFraction;
+                final float collapse = collapseWithEnter >= 1f - delay ? 1f
+                        : Utilities.clamp01((collapseWithEnter - maxDelayFraction + delay) / intervalFraction);
+                if (collapse < 1f) {
+                    gx = AndroidUtilities.lerp(realCX, gx, giftCollapseXInterpolator.getInterpolation(collapse));
+                    gy = AndroidUtilities.lerp(realCY, gy, giftCollapseYInterpolator.getInterpolation(collapse));
+                    scale = AndroidUtilities.lerp(scale / 2f, scale, collapse);
+                }
+
+                // efecto gelatina: se estira y se aplasta mientras gira
+                final float wobble = 0.06f * (float) Math.sin(tSec * 3.1f + i * 1.7f);
+                drawIthaBadge(canvas, kind, gx, gy, scale * (1f + wobble), scale * (1f - wobble), alpha);
+            }
+            if (count > 0) {
+                postInvalidateOnAnimation();
+            }
+        }
+
+        canvas.restore();
+    }
+
+    private final java.util.HashMap<String, AnimatedFloat> ithaEnter = new java.util.HashMap<>();
+    private final java.util.HashMap<String, android.graphics.drawable.Drawable> ithaDrawables = new java.util.HashMap<>();
+    private final Paint ithaPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    private AnimatedFloat ithaEnter(String kind) {
+        AnimatedFloat f = ithaEnter.get(kind);
+        if (f == null) {
+            f = new AnimatedFloat(this, 0, 320, null);
+            f.force(0.0f);
+            ithaEnter.put(kind, f);
+        }
+        return f;
+    }
+
+    private void drawIthaBadge(Canvas canvas, String kind, float cx, float cy, float scaleX, float scaleY, float alpha) {
+        if (alpha <= 0.0f) return;
+        final int color = org.telegram.messenger.IthaBadgeDrawable.colorFor(kind);
+        if (color == 0) return;
+        android.graphics.drawable.Drawable d = ithaDrawables.get(kind);
+        if (d == null) {
+            d = new org.telegram.messenger.IthaBadgeDrawable(kind, 30);
+            ithaDrawables.put(kind, d);
+        }
+        canvas.save();
+        canvas.translate(cx, cy);
+        canvas.scale(scaleX, scaleY);
+        // resplandor suave
+        ithaPaint.setStyle(Paint.Style.FILL);
+        ithaPaint.setShader(new RadialGradient(0, 0, dp(36), new int[]{Theme.multAlpha(color, 0.55f), Theme.multAlpha(color, 0.0f)}, new float[]{0, 1}, Shader.TileMode.CLAMP));
+        ithaPaint.setAlpha((int) (0xFF * alpha));
+        canvas.drawCircle(0, 0, dp(36), ithaPaint);
+        ithaPaint.setShader(null);
+        // burbuja translucida
+        ithaPaint.setColor(color);
+        ithaPaint.setAlpha((int) (0x38 * alpha));
+        canvas.drawCircle(0, 0, dp(23), ithaPaint);
+        ithaPaint.setStyle(Paint.Style.STROKE);
+        ithaPaint.setStrokeWidth(dp(1));
+        ithaPaint.setColor(color);
+        ithaPaint.setAlpha((int) (0x80 * alpha));
+        canvas.drawCircle(0, 0, dp(23), ithaPaint);
+        ithaPaint.setStyle(Paint.Style.FILL);
+        final int sz = dp(38);
+        d.setBounds(-sz / 2, -sz / 2, sz / 2, sz / 2);
+        d.setAlpha((int) (0xFF * alpha));
+        d.draw(canvas);
         canvas.restore();
     }
 

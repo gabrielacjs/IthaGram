@@ -1,0 +1,13 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaBadgeDrawable.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaBadgeDrawable.java
+index 5b456e9..c65068c 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/IthaBadgeDrawable.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaBadgeDrawable.java
+@@ -34,7 +34,7 @@ public class IthaBadgeDrawable extends Drawable {
+             case FUNDADOR: return 0xFFFFD23F;
+             case BETA: return 0xFF2EC4B6;
+             case DISENADOR: return 0xFFFFB347;
+-            case PLUGINS: return 0xFFA56BFF;
++            case PLUGINS: return 0xFFFF5252;
+         }
+         return 0;
+     }

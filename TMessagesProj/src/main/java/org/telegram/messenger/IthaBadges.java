@@ -106,6 +106,19 @@ public class IthaBadges {
         return entry != null && !entry.kinds.isEmpty() ? new IthaBadgeDrawable(entry.kinds.get(0), sizeDp) : null;
     }
 
+    /** Insignias conocidas del usuario (vacia si no tiene). Si no se saben aun, las pide y avisa con onUpdate. */
+    public static List<String> kindsFor(long userId, Runnable onUpdate) {
+        if (userId <= 0) {
+            return new ArrayList<>();
+        }
+        ensureLoaded();
+        Entry entry = cache.get(userId);
+        if (entry == null || now() - entry.fetchedAt > TTL_SECONDS) {
+            request(userId, onUpdate);
+        }
+        return entry != null ? entry.kinds : new ArrayList<String>();
+    }
+
     /** Solo mira lo que ya se sabe, sin pedir nada. */
     public static Drawable peekDrawable(long userId, int sizeDp) {
         if (userId <= 0) {

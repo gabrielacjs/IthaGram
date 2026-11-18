@@ -33,8 +33,8 @@ public class IthaBadgeDrawable extends Drawable {
             case COLABORADOR: return 0xFF7F9BFF;
             case FUNDADOR: return 0xFFFFD23F;
             case BETA: return 0xFF2EC4B6;
-            case DISENADOR: return 0xFFFFB347;
-            case PLUGINS: return 0xFFA56BFF;
+            case DISENADOR: return 0xFFE040FB;
+            case PLUGINS: return 0xFFC9A0FF;
         }
         return 0;
     }
