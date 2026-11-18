@@ -8191,9 +8191,13 @@ public class MessageObject {
             entityItalic.offset = 0;
             entityItalic.length = text.length();
             entities.add(entityItalic);
-            return addEntitiesToText(text, entities, isOutOwner(), true, photoViewer, useManualParse);
+            boolean ithaResult = addEntitiesToText(text, entities, isOutOwner(), true, photoViewer, useManualParse);
+            IthaColorPreview.apply(text);
+            return ithaResult;
         } else {
-            return addEntitiesToText(text, getEntities(), isOutOwner(), true, photoViewer, useManualParse);
+            boolean ithaResult = addEntitiesToText(text, getEntities(), isOutOwner(), true, photoViewer, useManualParse);
+            IthaColorPreview.apply(text);
+            return ithaResult;
         }
     }
 
