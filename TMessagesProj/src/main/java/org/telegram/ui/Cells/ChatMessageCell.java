@@ -1704,6 +1704,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     private long currentNameBotVerificationId;
     private String nameStatusSlug;
     public AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable currentNameStatusDrawable;
+    private Drawable ithaBadgeDrawable;
+    private long ithaBadgeUserId;
     public AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable currentNameEmojiStatusDrawable;
 
     TLRPC.User currentForwardUser;
@@ -16087,6 +16089,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             if (currentNameStatus != null && !viaBot) {
                 nameWidth -= dp(4 + 12 + 4);
             }
+            ithaBadgeUserId = needAuthorName && messageObject.customName == null && currentUser != null ? currentUser.id : 0;
+            ithaBadgeDrawable = ithaBadgeUserId != 0 ? org.telegram.messenger.IthaBadges.getDrawable(ithaBadgeUserId, 18, () -> invalidate()) : null;
+            if (ithaBadgeDrawable != null && !viaBot) {
+                nameWidth -= dp(20);
+            }
             if (currentNameBotVerificationId != 0) {
                 nameWidth -= dp(4 + 12 + 4);
             }
@@ -18442,7 +18449,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             Choreographer60FpsContent.getInstance().removeFrameCallback(invalidateOutboundsRunnable);
         }
 
-        if ((currentNameStatusDrawable != null || currentNameEmojiStatusDrawable != null || topicButton != null && (drawTopic || transitionParams.animateDrawTopic)) && drawNameLayout && nameLayout != null && (currentPosition == null || currentPosition.minX == 0 && currentPosition.minY == 0) && !(currentMessageObject.deleted && !drawingToBitmap && currentMessagesGroup != null && currentMessagesGroup.messages.size() >= 1)) {
+        if (ithaBadgeDrawable == null && ithaBadgeUserId != 0) {
+            ithaBadgeDrawable = org.telegram.messenger.IthaBadges.peekDrawable(ithaBadgeUserId, 18);
+        }
+        if ((currentNameStatusDrawable != null || currentNameEmojiStatusDrawable != null || ithaBadgeDrawable != null || topicButton != null && (drawTopic || transitionParams.animateDrawTopic)) && drawNameLayout && nameLayout != null && (currentPosition == null || currentPosition.minX == 0 && currentPosition.minY == 0) && !(currentMessageObject.deleted && !drawingToBitmap && currentMessagesGroup != null && currentMessagesGroup.messages.size() >= 1)) {
             int color;
             float nameX, nameY;
             if (currentMessageObject.shouldDrawWithoutBackground()) {
@@ -18552,6 +18562,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 );
                 currentNameStatusDrawable.setColor(ColorUtils.setAlphaComponent(color, 115));
                 currentNameStatusDrawable.draw(canvas);
+            }
+            if (ithaBadgeDrawable != null) {
+                final int ithaX = (int) (Math.abs(nx) + (viaNameWidth > 0 ? viaNameWidth - dp(4 + 28) : nameLayoutWidth) + dp(2) + (currentNameStatus != null ? dp(22) : 0));
+                final int ithaY = (int) (ny + nameLayout.getHeight() / 2f);
+                ithaBadgeDrawable.setBounds(ithaX, ithaY - dp(9), ithaX + dp(18), ithaY + dp(9));
+                ithaBadgeDrawable.draw(canvas);
             }
 
             float end;

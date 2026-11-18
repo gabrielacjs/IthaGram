@@ -11786,7 +11786,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     nameTextView.setRightDrawable2(getVerifiedCrossfadeDrawable());
                     nameTextViewRightDrawable2ContentDescription = LocaleController.getString(R.string.AccDescrVerified);
                 } else {
-                    nameTextView.setRightDrawable2(null);
+                    final Drawable ithaBadge = org.telegram.messenger.IthaBadges.getDrawable(user.id, 22, () -> updateProfileData(false));
+                    nameTextView.setRightDrawable2(ithaBadge);
                     nameTextViewRightDrawable2ContentDescription = null;
                 }
                 if (user != null && !MessagesController.isSupportUser(user) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0) {
