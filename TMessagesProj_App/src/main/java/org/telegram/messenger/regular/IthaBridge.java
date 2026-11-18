@@ -85,6 +85,15 @@ public class IthaBridge {
         };
         IthaHooks.sendActive = true;
         IthaHooks.updatesActive = true;
+        // Revisar compatibilidad de un plugin antes de instalarlo (analisis en Python, sin ejecutar el plugin)
+        org.telegram.messenger.IthaPluginCheck.setChecker(new org.telegram.messenger.IthaPluginCheck.Checker() {
+            @Override
+            public String check(String source) {
+                com.chaquo.python.PyObject mod = com.chaquo.python.Python.getInstance().getModule("ithachecker");
+                mod.callAttr("set_loader", IthaBridge.class.getClassLoader());
+                return mod.callAttr("check_text", source).toString();
+            }
+        });
         Log.i(TAG, "motor Nagram: enganches conectados " + describePlugins());
         installResumeReplay();
     }

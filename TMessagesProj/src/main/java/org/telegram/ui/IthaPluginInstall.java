@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.IthaPluginCheck;
 import org.telegram.messenger.IthaPlugins;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.Utilities;
@@ -93,7 +94,7 @@ public class IthaPluginInstall {
                 msg.append("\n\nInstala solo plugins de gente en la que confies: cada quien es responsable de los plugins que usa.");
             }
             b.setMessage(msg.toString());
-            b.setPositiveButton(update ? "Actualizar" : "Instalar", (d, w) -> {
+            final Runnable doInstall = () -> {
                 Utilities.globalQueue.postRunnable(() -> {
                     String err;
                     try {
@@ -110,7 +111,31 @@ public class IthaPluginInstall {
                         }
                     });
                 });
-            });
+            };
+            b.setPositiveButton(update ? "Actualizar" : "Instalar", (d, w) -> doInstall.run());
+            final IthaPluginCheck.Checker checker = IthaPluginCheck.getChecker();
+            if (checker != null) {
+                final String sourceText = src;
+                b.setNeutralButton("Revisar compatibilidad", (d, w) -> {
+                    Utilities.globalQueue.postRunnable(() -> {
+                        String report;
+                        try {
+                            report = checker.check(sourceText);
+                        } catch (Throwable t) {
+                            report = "No pude revisar el plugin: " + t.getMessage();
+                        }
+                        final String text = report;
+                        AndroidUtilities.runOnUIThread(() -> {
+                            AlertDialog.Builder r = new AlertDialog.Builder(activity);
+                            r.setTitle("Compatibilidad");
+                            r.setMessage(text);
+                            r.setPositiveButton(update ? "Actualizar" : "Instalar", (d2, w2) -> doInstall.run());
+                            r.setNegativeButton("Cancelar", null);
+                            fragment.showDialog(r.create());
+                        });
+                    });
+                });
+            }
             b.setNegativeButton("Cancelar", null);
             fragment.showDialog(b.create());
             return true;

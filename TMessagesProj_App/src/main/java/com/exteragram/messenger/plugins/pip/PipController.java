@@ -17,8 +17,18 @@ public class PipController {
     }
 
     public List<String> installDependencies(List<String> requirements, String pluginId, InstallerDelegate delegate) throws Exception {
-        if (requirements != null && !requirements.isEmpty()) {
-            throw new UnsupportedDependencyException("pip no soportado todavia: " + requirements);
+        // La app ya trae "requests" (y sus dependencias) dentro del propio Python: se aceptan sin instalar nada.
+        List<String> missing = new ArrayList<>();
+        if (requirements != null) {
+            for (String r : requirements) {
+                String name = r == null ? "" : r.trim().split("[\\s\\[<>=!~;@]", 2)[0].toLowerCase().replace('_', '-');
+                if (!(name.equals("requests") || name.equals("urllib3") || name.equals("certifi") || name.equals("idna") || name.equals("charset-normalizer"))) {
+                    missing.add(r);
+                }
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw new UnsupportedDependencyException("pip no soportado todavia: " + missing);
         }
         return new ArrayList<>();
     }
