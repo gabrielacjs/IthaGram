@@ -375,6 +375,9 @@ public class ThemeEditorView {
             private Bitmap colorWheelBitmap;
 
             private EditTextBoldCursor[] colorEditText = new EditTextBoldCursor[4];
+            private EditTextBoldCursor hexEditText;
+            private LinearLayout hexLayout;
+            private LinearLayout recentsLayout;
 
             private int colorWheelRadius;
 
@@ -475,6 +478,7 @@ public class ThemeEditorView {
                                 currentColor = (currentColor & 0x00ffffff) | ((color & 0xff) << 24);
                             }
                             setColor(currentColor);
+                            updateHexText(getColor());
                             for (int a = 0; a < currentThemeDesription.size(); a++) {
                                 currentThemeDesription.get(a).setColor(getColor(), false);
                             }
@@ -491,6 +495,188 @@ public class ThemeEditorView {
                         return false;
                     });
                 }
+
+                // IthaGram: campo para escribir el color en hexadecimal (#RRGGBB o #AARRGGBB)
+                hexEditText = new EditTextBoldCursor(context);
+                hexEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                hexEditText.setTextColor(0xff212121);
+                hexEditText.setCursorColor(0xff212121);
+                hexEditText.setCursorSize(AndroidUtilities.dp(20));
+                hexEditText.setCursorWidth(1.5f);
+                hexEditText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+                hexEditText.setBackground(null);
+                ThemeBind.lineColors(hexEditText, Theme.key_dialogInputField, Theme.key_dialogInputFieldActivated, Theme.key_text_RedBold);
+                hexEditText.setMaxLines(1);
+                hexEditText.setSingleLine(true);
+                hexEditText.setGravity(Gravity.CENTER);
+                hexEditText.setHint("AARRGGBB");
+                hexEditText.setTypeface(android.graphics.Typeface.MONOSPACE);
+                hexEditText.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+                hexEditText.setFilters(new InputFilter[]{
+                        new InputFilter.LengthFilter(9),
+                        (source, start, end, dest, dstart, dend) -> {
+                            StringBuilder allowed = new StringBuilder();
+                            for (int i = start; i < end; i++) {
+                                char c = source.charAt(i);
+                                if (c == '#' || Character.digit(c, 16) >= 0) {
+                                    allowed.append(Character.toUpperCase(c));
+                                }
+                            }
+                            return allowed.length() == end - start && allowed.toString().contentEquals(source.subSequence(start, end)) ? null : allowed.toString();
+                        }
+                });
+                hexLayout = new LinearLayout(context);
+                hexLayout.setOrientation(LinearLayout.HORIZONTAL);
+                hexLayout.setGravity(Gravity.CENTER_VERTICAL);
+                hexLayout.setBaselineAligned(false);
+                TextView hashView = new TextView(context);
+                hashView.setText("#");
+                hashView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+                hashView.setTextColor(0xff8a8a8a);
+                hashView.setGravity(Gravity.CENTER_VERTICAL);
+                hashView.setTypeface(android.graphics.Typeface.MONOSPACE);
+                hexLayout.addView(hashView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 36, 0, 0, 6, 0));
+                hexLayout.addView(hexEditText, LayoutHelper.createLinear(110, 36, 0, 0, 0, 0));
+                addView(hexLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 44, 0, 0));
+
+                // IthaGram: colores recientes debajo del selector
+                recentsLayout = new LinearLayout(context);
+                recentsLayout.setOrientation(LinearLayout.HORIZONTAL);
+                addView(recentsLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 36, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0, 0, 64));
+                rebuildRecents();
+                hexEditText.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable editable) {
+                        if (ignoreTextChange) {
+                            return;
+                        }
+                        String text = editable.toString().trim();
+                        if (text.startsWith("#")) {
+                            text = text.substring(1);
+                        }
+                        if (text.length() != 6 && text.length() != 8) {
+                            return;
+                        }
+                        int parsed;
+                        try {
+                            parsed = (int) Long.parseLong(text, 16);
+                        } catch (Exception e) {
+                            return;
+                        }
+                        int currentColor = getColor();
+                        if (text.length() == 6) {
+                            currentColor = (currentColor & 0xff000000) | (parsed & 0x00ffffff);
+                        } else {
+                            currentColor = parsed;
+                        }
+                        applyColor(currentColor, false);
+                    }
+                });
+                hexEditText.setOnEditorActionListener((textView, i, keyEvent) -> {
+                    if (i == EditorInfo.IME_ACTION_DONE) {
+                        AndroidUtilities.hideKeyboard(textView);
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            private void updateHexText(int color) {
+                if (hexEditText != null) {
+                    hexEditText.setText(String.format(java.util.Locale.US, "%08X", color));
+                    hexEditText.setSelection(hexEditText.length());
+                }
+            }
+
+            // aplica un color escrito en el campo hex o elegido de los recientes (actualiza selector, cajas y tema)
+            private void applyColor(int color, boolean updateHex) {
+                ignoreTextChange = true;
+                setColor(color);
+                colorEditText[0].setText("" + Color.red(color));
+                colorEditText[1].setText("" + Color.green(color));
+                colorEditText[2].setText("" + Color.blue(color));
+                colorEditText[3].setText("" + Color.alpha(color));
+                for (int b = 0; b < 4; b++) {
+                    colorEditText[b].setSelection(colorEditText[b].length());
+                }
+                if (updateHex) {
+                    updateHexText(color);
+                }
+                for (int i = 0; i < currentThemeDesription.size(); i++) {
+                    currentThemeDesription.get(i).setColor(getColor(), false);
+                }
+                onThemeColorEdited();
+                ignoreTextChange = false;
+            }
+
+            private ArrayList<Integer> loadRecents() {
+                ArrayList<Integer> list = new ArrayList<>();
+                try {
+                    String saved = getContext().getSharedPreferences("itha_theme_editor", 0).getString("recent_colors", "");
+                    if (saved != null && saved.length() > 0) {
+                        for (String part : saved.split(",")) {
+                            list.add(Integer.parseInt(part.trim()));
+                        }
+                    }
+                } catch (Exception ignore) {
+                    list.clear();
+                }
+                return list;
+            }
+
+            private void rebuildRecents() {
+                if (recentsLayout == null) {
+                    return;
+                }
+                recentsLayout.removeAllViews();
+                ArrayList<Integer> list = loadRecents();
+                for (int i = 0; i < list.size(); i++) {
+                    final int swatchColor = list.get(i);
+                    View swatch = new View(getContext());
+                    android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
+                    shape.setColor(swatchColor);
+                    shape.setCornerRadius(AndroidUtilities.dp(8));
+                    shape.setStroke(AndroidUtilities.dp(1), 0x33000000);
+                    swatch.setBackground(shape);
+                    swatch.setOnClickListener(v -> applyColor(swatchColor, true));
+                    recentsLayout.addView(swatch, LayoutHelper.createLinear(36, 36, 0, 0, i < list.size() - 1 ? 8 : 0, 0));
+                }
+            }
+
+            public void saveRecent() {
+                try {
+                    int color = getColor();
+                    ArrayList<Integer> list = loadRecents();
+                    list.remove(Integer.valueOf(color));
+                    list.add(0, color);
+                    while (list.size() > 6) {
+                        list.remove(list.size() - 1);
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < list.size(); i++) {
+                        if (i > 0) {
+                            sb.append(',');
+                        }
+                        sb.append(list.get(i));
+                    }
+                    getContext().getSharedPreferences("itha_theme_editor", 0).edit().putString("recent_colors", sb.toString()).apply();
+                    rebuildRecents();
+                } catch (Exception ignore) {
+                }
+            }
+
+            private int getCenterY() {
+                return AndroidUtilities.dp(96) + colorWheelRadius;
             }
 
             @Override
@@ -499,13 +685,17 @@ public class ThemeEditorView {
                 int heightSize = MeasureSpec.getSize(heightMeasureSpec);
                 int size = Math.min(widthSize, heightSize);
                 measureChild(linearLayout, widthMeasureSpec, heightMeasureSpec);
-                setMeasuredDimension(size, size);
+                measureChild(hexLayout, widthMeasureSpec, heightMeasureSpec);
+                measureChild(recentsLayout, widthMeasureSpec, heightMeasureSpec);
+                // IthaGram: 56dp extra de alto para la fila de colores recientes (la barra inferior de 48dp tapa el final)
+                int pickerHeight = Math.min(size + AndroidUtilities.dp(56), Math.max(heightSize - AndroidUtilities.dp(100), size));
+                setMeasuredDimension(size, pickerHeight);
             }
 
             @Override
             protected void onDraw(Canvas canvas) {
                 int centerX = getWidth() / 2 - paramValueSliderWidth * 2;
-                int centerY = getHeight() / 2 - AndroidUtilities.dp(8);
+                int centerY = getCenterY();
 
                 canvas.drawBitmap(colorWheelBitmap, centerX - colorWheelRadius, centerY - colorWheelRadius, null);
 
@@ -555,7 +745,8 @@ public class ThemeEditorView {
 
             @Override
             protected void onSizeChanged(int width, int height, int oldw, int oldh) {
-                colorWheelRadius = Math.max(1, width / 2 - paramValueSliderWidth * 2 - AndroidUtilities.dp(20));
+                // deja lugar arriba para las cajas RGBA y hex, y abajo para los colores recientes
+                colorWheelRadius = Math.max(1, Math.min(width / 2 - paramValueSliderWidth * 2 - AndroidUtilities.dp(20), (height - AndroidUtilities.dp(204)) / 2));
                 colorWheelBitmap = createColorWheelBitmap(colorWheelRadius * 2, colorWheelRadius * 2);
                 //linearLayout.setTranslationY(colorWheelRadius * 2 + AndroidUtilities.dp(20));
                 colorGradient = null;
@@ -614,7 +805,7 @@ public class ThemeEditorView {
                         int x = (int) event.getX();
                         int y = (int) event.getY();
                         int centerX = getWidth() / 2 - paramValueSliderWidth * 2;
-                        int centerY = getHeight() / 2 - AndroidUtilities.dp(8);
+                        int centerY = getCenterY();
                         int cx = x - centerX;
                         int cy = y - centerY;
                         double d = Math.sqrt(cx * cx + cy * cy);
@@ -670,6 +861,7 @@ public class ThemeEditorView {
                                 colorEditText[1].setText("" + green);
                                 colorEditText[2].setText("" + blue);
                                 colorEditText[3].setText("" + a);
+                                updateHexText(color);
                                 for (int b = 0; b < 4; b++) {
                                     colorEditText[b].setSelection(colorEditText[b].length());
                                 }
@@ -700,6 +892,7 @@ public class ThemeEditorView {
                     colorEditText[1].setText("" + green);
                     colorEditText[2].setText("" + blue);
                     colorEditText[3].setText("" + a);
+                    updateHexText(color);
                     for (int b = 0; b < 4; b++) {
                         colorEditText[b].setSelection(colorEditText[b].length());
                     }
@@ -751,7 +944,9 @@ public class ThemeEditorView {
                         ignoreLayout = false;
                     }
 
-                    int pickerSize = Math.min(width, height - (Build.VERSION.SDK_INT >= 21 ? AndroidUtilities.statusBarHeight : 0));
+                    int availableHeight = height - (Build.VERSION.SDK_INT >= 21 ? AndroidUtilities.statusBarHeight : 0);
+                    int pickerSize = Math.min(width, availableHeight);
+                    pickerSize = Math.min(pickerSize + AndroidUtilities.dp(56), Math.max(availableHeight - AndroidUtilities.dp(100), pickerSize));
 
                     int padding = height - (Build.VERSION.SDK_INT >= 21 ? AndroidUtilities.statusBarHeight : 0) + AndroidUtilities.dp(8) - pickerSize;
                     if (listView.getPaddingTop() != padding) {
@@ -1005,7 +1200,10 @@ public class ThemeEditorView {
             saveButton.setText(LocaleController.getString(R.string.Save).toUpperCase());
             saveButton.setTypeface(AndroidUtilities.bold());
             linearLayout.addView(saveButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT));
-            saveButton.setOnClickListener(v -> setColorPickerVisible(false));
+            saveButton.setOnClickListener(v -> {
+                colorPicker.saveRecent();
+                setColorPickerVisible(false);
+            });
         }
 
         private void runShadowAnimation(final int num, final boolean show) {
