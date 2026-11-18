@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="IthaPl_CheckingForUpdates">Buscando actualizaciones…</string>
+    <string name="IthaPl_LatestVersionInstalled">Ya tienes la última versión</string>
+    <string name="IthaPl_LoadingUpdate">Cargando actualización…</string>
+    <string name="IthaPl_PluginEngineNotEnabled">El motor de plugins está desactivado, así que no se puede usar %1$s</string>
+    <string name="IthaPl_PluginHasNoSettings">%1$s no tiene ajustes</string>
+    <string name="IthaPl_PluginInstallError">No se pudo instalar %1$s</string>
+    <string name="IthaPl_PluginIsNotRespondingAlert">%1$s no responde</string>
+    <string name="IthaPl_PluginNoAuthor">Autor desconocido</string>
+    <string name="IthaPl_PluginNoDescription">Sin descripción</string>
+    <string name="IthaPl_PluginNotEnabled">Activa el motor de plugins para instalar %1$s</string>
+    <string name="IthaPl_PluginNotFound">No se encontró el plugin %1$s</string>
+    <string name="IthaPl_PluginSettingNotFound">Ajuste no encontrado</string>
+    <string name="IthaPl_PluginsSafeModeInfoCrashGeneric">Los plugins se desactivaron tras un fallo</string>
+    <string name="IthaPl_PluginsSafeModeInfoManual">El modo seguro de plugins está activado</string>
+    <string name="IthaPl_PluginsSafeModeInfoNativeCrash">Los plugins se desactivaron tras un fallo nativo</string>
+    <string name="IthaPl_PluginsSafeModeInfoPluginCrash">El plugin %1$s causó un fallo y se desactivó</string>
+    <string name="IthaPl_RestartPluginSystemToApplyUpdate">Reinicia el sistema de plugins para aplicar la actualización</string>
+    <string name="IthaPl_WaitMore">Esperar</string>
+    <string name="IthaPl_Enable">Activar</string>
+    <string name="IthaPl_Disable">Desactivar</string>
+</resources>

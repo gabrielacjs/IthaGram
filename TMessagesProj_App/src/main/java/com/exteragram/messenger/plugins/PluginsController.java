@@ -280,20 +280,20 @@ public class PluginsController implements PluginsHooks {
     public static CharSequence getSafeModeStatusText() {
         String reason = getSafeModeReason();
         if (SafeModeReason.MANUAL.equals(reason)) {
-            return LocaleController.getString(R.string.IthaPl_PluginsSafeModeInfoManual);
+            return ApplicationLoader.applicationContext.getString(R.string.IthaPl_PluginsSafeModeInfoManual);
         }
         if (SafeModeReason.NATIVE_CRASH.equals(reason)) {
-            return LocaleController.getString(R.string.IthaPl_PluginsSafeModeInfoNativeCrash);
+            return ApplicationLoader.applicationContext.getString(R.string.IthaPl_PluginsSafeModeInfoNativeCrash);
         }
         if (SafeModeReason.PLUGIN_CRASH.equals(reason)) {
             String pluginId = getSafeModeCrashedPluginId();
             if (!TextUtils.isEmpty(pluginId)) {
                 Plugin plugin = getInstance().plugins.get(pluginId);
                 String pluginName = plugin != null ? plugin.getName() : pluginId;
-                return LocaleController.formatString(R.string.IthaPl_PluginsSafeModeInfoPluginCrash, pluginName);
+                return ApplicationLoader.applicationContext.getString(R.string.IthaPl_PluginsSafeModeInfoPluginCrash, pluginName);
             }
         }
-        return LocaleController.getString(R.string.IthaPl_PluginsSafeModeInfoCrashGeneric);
+        return ApplicationLoader.applicationContext.getString(R.string.IthaPl_PluginsSafeModeInfoCrashGeneric);
     }
 
     public static PluginsController getInstance() {
@@ -575,6 +575,30 @@ public class PluginsController implements PluginsHooks {
         getInstance().notifyPluginsChanged();
     }
 
+    // IthaGram: en arranque en frio todavia no hay pantalla, asi que se reintenta hasta que la haya
+    private static void showSafeModeSheetWhenReady(final int attempt) {
+        // AndroidUtilities.runOnUIThread descarta la tarea si todavia no esta listo su handler (arranque temprano), asi que se usa el de Android
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            boolean shown = false;
+            try {
+                BaseFragment lastFragment = LaunchActivity.getLastFragment();
+                if (attempt == 0 || attempt % 10 == 0) {
+                    Log.i("IthaDiag", "modo seguro: aviso intento " + attempt + " fragmento=" + (lastFragment != null));
+                }
+                if (lastFragment != null && AndroidUtilities.isActivityRunning(lastFragment.getParentActivity())) {
+                    Log.i("IthaDiag", "modo seguro: mostrando aviso");
+                    new SafeModeBottomSheet(lastFragment).show();
+                    shown = true;
+                }
+            } catch (Throwable t) {
+                Log.e("IthaDiag", "modo seguro: aviso fallo", t);
+            }
+            if (!shown && attempt < 40) {
+                showSafeModeSheetWhenReady(attempt + 1);
+            }
+        }, attempt == 0 ? 800 : 500);
+    }
+
     public void init() {
         init(null);
     }
@@ -637,22 +661,28 @@ public class PluginsController implements PluginsHooks {
             if (preferences != null) {
                 preferences.edit().remove(PREF_PENDING_CRASH).apply();
             }
+            Log.i("IthaDiag", "modo seguro: hadCrash=" + hadCrash + " razon=" + safeModeReason + " plugin=" + crashedPluginId
+                    + " flag=" + ExteraConfig.pluginsSafeMode + " manual=" + manualSafeMode);
             if (hadCrash) {
                 if (!TextUtils.isEmpty(crashedPluginId) && SafeModeReason.PLUGIN_CRASH.equals(safeModeReason) && preferences != null) {
+                    // se sabe cual plugin fallo: solo se desactiva ese y los demas siguen
                     preferences.edit().putBoolean(PREF_PLUGIN_ENABLED_KEY_PREFIX + crashedPluginId, false).apply();
+                    setSafeModeFlag(false);
+                } else {
+                    setSafeModeFlag(true);
                 }
-                setSafeModeFlag(true);
+                Log.i("IthaDiag", "modo seguro: tras revisar flag=" + ExteraConfig.pluginsSafeMode);
                 if (!manualSafeMode) {
-                    AndroidUtilities.runOnUIThread(() -> {
-                        BaseFragment lastFragment = LaunchActivity.getLastFragment();
-                        if (lastFragment != null) {
-                            new SafeModeBottomSheet(lastFragment).show();
-                        }
-                    }, 800);
+                    showSafeModeSheetWhenReady(0);
                 }
+            } else if (ExteraConfig.pluginsSafeMode && !manualSafeMode) {
+                // el modo seguro sigue encendido de un fallo anterior: se avisa en cada arranque hasta que se reactiven
+                showSafeModeSheetWhenReady(0);
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.e("IthaDiag", "modo seguro: excepcion", e);
         }
+        Log.i("IthaDiag", "modo seguro: antes de cargar motor flag=" + ExteraConfig.pluginsSafeMode);
 
         pluginsDir = new File(ApplicationLoader.getFilesDirFixed(), PluginsConstants.PLUGINS);
         if (!pluginsDir.exists()) {

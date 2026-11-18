@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="IthaPl_SafeModeTitle">Problema con un plugin</string>
+    <string name="IthaPl_SafeModeOnlyOne">Los demás plugins siguen funcionando.</string>
+    <string name="IthaPl_SafeModeAllOff">Se desactivaron todos los plugins hasta que los reactives.</string>
+    <string name="IthaPl_SafeModeAskSave">¿Quieres guardar un registro del error para saber qué falló?</string>
+    <string name="IthaPl_SafeModeSaveLog">Guardar registro</string>
+    <string name="IthaPl_SafeModeReenable">Reactivar plugins</string>
+    <string name="IthaPl_SafeModeClose">Cerrar</string>
+</resources>

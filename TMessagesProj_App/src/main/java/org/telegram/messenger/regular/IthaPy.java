@@ -28,6 +28,7 @@ public class IthaPy {
                 }
             } catch (Throwable ignored) {
             }
+            IthaCrashGuard.install(context);
             Log.i("IthaDiag", "motor Nagram: iniciando");
             PluginsController.getInstance().init(new Runnable() {
                 @Override

@@ -52,7 +52,7 @@ android {
 
     androidResources {
         noCompress += "pack"
-        localeFilters += ["zz"]
+        localeFilters += ["zz", "es"]
     }
 
     // IthaGram: firma con tu propia clave (local.properties); si no esta, usa la del repo
