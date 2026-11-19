@@ -1,0 +1,22 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+index d6d96dc..fd7ee04 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+@@ -7553,8 +7553,6 @@ x
+         } else if (position == noteRow) {
+ 
+         } else if (position == phoneRow || position == numberRow) {
+-            if (editRow(view, position)) return true;
+-
+             // IthaGram: con "Ocultar el numero" activo, tocar muestra / oculta el numero (spoiler)
+             if (position == phoneRow && org.telegram.messenger.IthaConfig.isPhoneHidden() && view instanceof org.telegram.ui.Cells.TextDetailCell) {
+                 final org.telegram.ui.Components.spoilers.SpoilersTextView ithaTv = ((org.telegram.ui.Cells.TextDetailCell) view).textView;
+@@ -7566,6 +7564,8 @@ x
+                 return true;
+             }
+ 
++            if (editRow(view, position)) return true;
++
+             final TLRPC.User user = getMessagesController().getUser(userId);
+             if (user == null || user.phone == null || user.phone.length() == 0 || getParentActivity() == null) {
+                 return false;

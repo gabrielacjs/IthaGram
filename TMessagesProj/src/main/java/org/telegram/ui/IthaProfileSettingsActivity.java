@@ -102,14 +102,14 @@ public class IthaProfileSettingsActivity extends BaseFragment {
 
     private void check(Context context, String title, boolean checked, BoolCallback callback) {
         final TextCheckCell cell = new TextCheckCell(context);
-        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        IthaMd3.style(cell);
         cell.setTextAndCheck(title, checked, false);
         cell.setOnClickListener(v -> {
             boolean value = !cell.isChecked();
             cell.setChecked(value);
             callback.run(value);
         });
-        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        IthaMd3.add(listLayout, cell);
     }
 
     private void section(Context context, String title) {
@@ -125,7 +125,7 @@ public class IthaProfileSettingsActivity extends BaseFragment {
     private void row(Context context, String title, String subtitle, Runnable action) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        IthaMd3.style(row);
         row.setPadding(dp(20), dp(12), dp(20), dp(12));
 
         TextView titleView = new TextView(context);
@@ -143,6 +143,6 @@ public class IthaProfileSettingsActivity extends BaseFragment {
         }
 
         row.setOnClickListener(v -> action.run());
-        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        IthaMd3.add(listLayout, row);
     }
 }

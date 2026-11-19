@@ -9522,7 +9522,8 @@ public class Test_All {
 
     @Test
     public fun test_001352_auth_FirebasePnvIntent_TL_auth_firebasePnvIntent() {
-      assumeTrue("Test skipped, link error", false)
+      test_TLdeserialize(org.telegram.tgnet.model.generated.TlGen_auth_FirebasePnvIntent.TL_auth_firebasePnvIntent::class,
+          org.telegram.tgnet.TLRPC.TL_auth_firebasePnvIntent::TLdeserialize, null)
 
     }
 

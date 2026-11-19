@@ -99,6 +99,11 @@ public class SpoilersTextView extends TextView implements TextSelectionHelper.Si
             getHeight() / 2f - getPaddingTop() + getScrollY());
     }
 
+    /** IthaGram: true si el spoiler ya se revelo (o se esta revelando), para poder ocultarlo de nuevo. */
+    public boolean ithaIsRevealed() {
+        return isSpoilersRevealed || revealInProgress;
+    }
+
     private void startReveal(float x, float y) {
         revealPending = false;
         if (spoilers.isEmpty()) {

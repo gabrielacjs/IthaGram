@@ -1,0 +1,197 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java
+index b9229dc..ab72c37 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatListSettingsActivity.java
+@@ -176,14 +176,14 @@ public class IthaChatListSettingsActivity extends BaseFragment {
+ 
+     private void check(Context context, String title, boolean checked, BoolCallback callback) {
+         final TextCheckCell cell = new TextCheckCell(context);
+-        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        IthaMd3.style(cell);
+         cell.setTextAndCheck(title, checked, false);
+         cell.setOnClickListener(v -> {
+             boolean value = !cell.isChecked();
+             cell.setChecked(value);
+             callback.run(value);
+         });
+-        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        IthaMd3.add(listLayout, cell);
+     }
+ 
+     /** Dibujo de ejemplo de la cabecera de la lista de chats. */
+@@ -276,7 +276,7 @@ public class IthaChatListSettingsActivity extends BaseFragment {
+     private void row(Context context, String title, String subtitle, Runnable action) {
+         LinearLayout row = new LinearLayout(context);
+         row.setOrientation(LinearLayout.VERTICAL);
+-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        IthaMd3.style(row);
+         row.setPadding(dp(20), dp(12), dp(20), dp(12));
+ 
+         TextView titleView = new TextView(context);
+@@ -294,6 +294,6 @@ public class IthaChatListSettingsActivity extends BaseFragment {
+         }
+ 
+         row.setOnClickListener(v -> action.run());
+-        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        IthaMd3.add(listLayout, row);
+     }
+ }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+index c9de8fe..fe0f480 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+@@ -122,14 +122,14 @@ public class IthaChatSettingsActivity extends BaseFragment {
+ 
+     private void check(Context context, String title, String subtitle, boolean checked, BoolCallback callback) {
+         final TextCheckCell cell = new TextCheckCell(context);
+-        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        IthaMd3.style(cell);
+         cell.setTextAndValueAndCheck(title, subtitle, checked, true, false);
+         cell.setOnClickListener(v -> {
+             boolean value = !cell.isChecked();
+             cell.setChecked(value);
+             callback.run(value);
+         });
+-        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        IthaMd3.add(listLayout, cell);
+     }
+ 
+     private void section(Context context, String title) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaMd3.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaMd3.java
+new file mode 100644
+index 0000000..7b75ea2
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaMd3.java
+@@ -0,0 +1,55 @@
++package org.telegram.ui;
++
++import android.graphics.drawable.Drawable;
++import android.view.View;
++import android.widget.LinearLayout;
++
++import org.telegram.ui.ActionBar.Theme;
++import org.telegram.ui.Components.LayoutHelper;
++
++import static org.telegram.messenger.AndroidUtilities.dp;
++
++/**
++ * IthaGram: ayudas del estilo Material 3 (opcional). Si esta apagado todo se ve como siempre.
++ */
++public class IthaMd3 {
++
++    public static boolean on() {
++        return IthaSettingsActivity.isMd3();
++    }
++
++    /** Color de las tarjetas: si el tema usa el mismo color que el fondo, se aclara un poco para que se note la forma. */
++    public static int cardColor() {
++        int base = Theme.getColor(Theme.key_windowBackgroundWhite);
++        if (base == Theme.getColor(Theme.key_windowBackgroundGray)) {
++            return androidx.core.graphics.ColorUtils.blendARGB(base, Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), 0.07f);
++        }
++        return base;
++    }
++
++    /** Fondo redondeado. En Material 3 las esquinas son mas grandes. */
++    public static Drawable roundBg(int classicRadius) {
++        if (on()) {
++            return Theme.createRoundRectDrawable(dp(classicRadius + 8), cardColor());
++        }
++        return Theme.createRoundRectDrawable(dp(classicRadius), Theme.getColor(Theme.key_windowBackgroundWhite));
++    }
++
++    /** Fondo de una fila de ajustes. */
++    public static void style(View v) {
++        if (on()) {
++            v.setBackground(Theme.createRoundRectDrawable(dp(20), cardColor()));
++        } else {
++            v.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        }
++    }
++
++    /** Agrega la fila a la lista: a todo el ancho (clasico) o como tarjeta separada (Material 3). */
++    public static void add(LinearLayout list, View v) {
++        if (on()) {
++            list.addView(v, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 12, 3, 12, 3));
++        } else {
++            list.addView(v, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        }
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+index e83e53a..cb2fab3 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaPluginsActivity.java
+@@ -171,7 +171,7 @@ public class IthaPluginsActivity extends BaseFragment {
+         LinearLayout box = new LinearLayout(context);
+         box.setOrientation(LinearLayout.HORIZONTAL);
+         box.setGravity(Gravity.CENTER_VERTICAL);
+-        box.setBackground(Theme.createRoundRectDrawable(dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
++        box.setBackground(IthaMd3.roundBg(16));
+         box.setPadding(dp(16), dp(14), dp(16), dp(14));
+ 
+         LinearLayout texts = new LinearLayout(context);
+@@ -309,7 +309,7 @@ public class IthaPluginsActivity extends BaseFragment {
+     private void addPluginCard(final Context context, final IthaPlugins.Host host, final IthaPlugins.Info p, boolean pinned) {
+         LinearLayout card = new LinearLayout(context);
+         card.setOrientation(LinearLayout.VERTICAL);
+-        card.setBackground(Theme.createRoundRectDrawable(dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
++        card.setBackground(IthaMd3.roundBg(16));
+         card.setPadding(dp(16), dp(16), dp(16), dp(8));
+ 
+         LinearLayout top = new LinearLayout(context);
+@@ -521,7 +521,7 @@ public class IthaPluginsActivity extends BaseFragment {
+     private void row(Context context, String title, String subtitle, Runnable action) {
+         LinearLayout row = new LinearLayout(context);
+         row.setOrientation(LinearLayout.VERTICAL);
+-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        IthaMd3.style(row);
+         row.setPadding(dp(20), dp(12), dp(20), dp(12));
+ 
+         TextView titleView = new TextView(context);
+@@ -539,6 +539,6 @@ public class IthaPluginsActivity extends BaseFragment {
+         }
+ 
+         row.setOnClickListener(v -> action.run());
+-        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        IthaMd3.add(listLayout, row);
+     }
+ }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java
+index f2bee06..2639347 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaProfileSettingsActivity.java
+@@ -102,14 +102,14 @@ public class IthaProfileSettingsActivity extends BaseFragment {
+ 
+     private void check(Context context, String title, boolean checked, BoolCallback callback) {
+         final TextCheckCell cell = new TextCheckCell(context);
+-        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        IthaMd3.style(cell);
+         cell.setTextAndCheck(title, checked, false);
+         cell.setOnClickListener(v -> {
+             boolean value = !cell.isChecked();
+             cell.setChecked(value);
+             callback.run(value);
+         });
+-        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        IthaMd3.add(listLayout, cell);
+     }
+ 
+     private void section(Context context, String title) {
+@@ -125,7 +125,7 @@ public class IthaProfileSettingsActivity extends BaseFragment {
+     private void row(Context context, String title, String subtitle, Runnable action) {
+         LinearLayout row = new LinearLayout(context);
+         row.setOrientation(LinearLayout.VERTICAL);
+-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        IthaMd3.style(row);
+         row.setPadding(dp(20), dp(12), dp(20), dp(12));
+ 
+         TextView titleView = new TextView(context);
+@@ -143,6 +143,6 @@ public class IthaProfileSettingsActivity extends BaseFragment {
+         }
+ 
+         row.setOnClickListener(v -> action.run());
+-        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        IthaMd3.add(listLayout, row);
+     }
+ }

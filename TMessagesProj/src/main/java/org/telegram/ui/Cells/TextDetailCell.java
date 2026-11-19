@@ -194,6 +194,7 @@ public class TextDetailCell extends FrameLayout implements Theme.Colorable {
     }
 
     public void setTextAndValue(CharSequence text, CharSequence value, boolean divider) {
+        textView.allowClickSpoilers = true; // IthaGram: el perfil lo desactiva solo para el numero oculto
         textView.setText(text);
         valueTextView.setText(value);
         rightValueTextView.setVisibility(View.GONE);

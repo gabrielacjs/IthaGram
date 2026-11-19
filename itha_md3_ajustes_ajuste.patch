@@ -1,0 +1,62 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+index 816bae2..06eb87b 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaSettingsActivity.java
+@@ -106,7 +106,10 @@ public class IthaSettingsActivity extends BaseFragment {
+ 
+     private void buildMd3(Context context) {
+         final int accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader);
+-        final int card = Theme.getColor(Theme.key_windowBackgroundWhite);
++        int cardBase = Theme.getColor(Theme.key_windowBackgroundWhite);
++        final int card = cardBase == Theme.getColor(Theme.key_windowBackgroundGray)
++                ? androidx.core.graphics.ColorUtils.blendARGB(cardBase, Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), 0.07f)
++                : cardBase;
+         final int tint = (accent & 0x00FFFFFF) | 0x33000000;
+ 
+         TextView big = new TextView(context);
+@@ -114,14 +117,14 @@ public class IthaSettingsActivity extends BaseFragment {
+         big.setTextSize(32);
+         big.setTypeface(AndroidUtilities.bold());
+         big.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+-        big.setPadding(dp(24), dp(8), dp(24), dp(4));
++        big.setPadding(dp(20), dp(8), dp(20), dp(4));
+         listLayout.addView(big, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+ 
+         TextView sub = new TextView(context);
+         sub.setText(tr("Todo lo que hace único a IthaGram", "Everything that makes IthaGram unique"));
+         sub.setTextSize(14);
+         sub.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+-        sub.setPadding(dp(24), 0, dp(24), dp(16));
++        sub.setPadding(dp(20), 0, dp(20), dp(16));
+         listLayout.addView(sub, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+ 
+         LinearLayout group = md3Card(context, card);
+@@ -147,7 +150,7 @@ public class IthaSettingsActivity extends BaseFragment {
+         head.setTextSize(14);
+         head.setTypeface(AndroidUtilities.bold());
+         head.setTextColor(accent);
+-        head.setPadding(dp(28), dp(20), dp(24), dp(8));
++        head.setPadding(dp(20), dp(20), dp(20), dp(8));
+         listLayout.addView(head, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+ 
+         LinearLayout group2 = md3Card(context, card);
+@@ -173,8 +176,8 @@ public class IthaSettingsActivity extends BaseFragment {
+         bg.setColor(color);
+         bg.setCornerRadius(dp(28));
+         group.setBackground(bg);
+-        group.setPadding(dp(8), dp(8), dp(8), dp(8));
+-        listLayout.addView(group, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 16, 0, 16, 0));
++        group.setPadding(0, dp(4), 0, dp(4));
++        listLayout.addView(group, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 8, 0, 8, 0));
+         return group;
+     }
+ 
+@@ -183,7 +186,7 @@ public class IthaSettingsActivity extends BaseFragment {
+         row.setOrientation(LinearLayout.HORIZONTAL);
+         row.setGravity(Gravity.CENTER_VERTICAL);
+         row.setMinimumHeight(dp(72));
+-        row.setPadding(dp(16), dp(12), dp(16), dp(12));
++        row.setPadding(dp(12), dp(12), dp(12), dp(12));
+         row.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_listSelector), 2));
+ 
+         FrameLayout circle = new FrameLayout(context);
