@@ -1,0 +1,36 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
+index 24984a7..aaa10e7 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
+@@ -709,6 +709,9 @@ public class MessageDrawable extends Drawable {
+         final int bubbleStyle = currentType == TYPE_PREVIEW ? 0 : IthaBubbles.style();
+         final boolean noTail = bubbleStyle == 2;
+         final boolean iosTail = bubbleStyle == 1;
++        if (iosTail && overrideRoundRadius == 0 && overrideRounding <= 0) {
++            rad = Math.max(rad, dp(20));
++        }
+         int heightHalf = (bounds.height() - padding) >> 1;
+         if (rad > heightHalf) {
+             rad = heightHalf;
+@@ -776,8 +779,8 @@ public class MessageDrawable extends Drawable {
+                         rect.set(bounds.right - dp(8) - nearRad * 2, bounds.bottom - padding - nearRad * 2, bounds.right - dp(8), bounds.bottom - padding);
+                         path.arcTo(rect, 0, 90, false);
+                     } else if (iosTail) {
+-                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - dp(12));
+-                        path.cubicTo(bounds.right - dp(8), bounds.bottom - padding - dp(4), bounds.right - dp(6.5f), bounds.bottom - padding - dp(0.5f), bounds.right - dp(2.6f), bounds.bottom - padding);
++                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - dp(20));
++                        path.cubicTo(bounds.right - dp(8), bounds.bottom - padding - dp(7), bounds.right - dp(7), bounds.bottom - padding - dp(1), bounds.right - dp(2.6f), bounds.bottom - padding);
+                     } else {
+                         path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
+                         rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
+@@ -844,8 +847,8 @@ public class MessageDrawable extends Drawable {
+                         rect.set(bounds.left + dp(8), bounds.bottom - padding - nearRad * 2, bounds.left + dp(8) + nearRad * 2, bounds.bottom - padding);
+                         path.arcTo(rect, 180, -90, false);
+                     } else if (iosTail) {
+-                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - dp(12));
+-                        path.cubicTo(bounds.left + dp(8), bounds.bottom - padding - dp(4), bounds.left + dp(6.5f), bounds.bottom - padding - dp(0.5f), bounds.left + dp(2.6f), bounds.bottom - padding);
++                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - dp(20));
++                        path.cubicTo(bounds.left + dp(8), bounds.bottom - padding - dp(7), bounds.left + dp(7), bounds.bottom - padding - dp(1), bounds.left + dp(2.6f), bounds.bottom - padding);
+                     } else {
+                         path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
+                         rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));

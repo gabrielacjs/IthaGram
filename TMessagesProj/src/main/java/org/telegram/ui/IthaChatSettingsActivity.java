@@ -114,6 +114,51 @@ public class IthaChatSettingsActivity extends BaseFragment {
                     IthaConfig.setChatPillHidden(value);
                     preview.invalidate();
                 });
+
+        section(context, tr("Burbujas de mensajes", "Message bubbles"));
+        bubbleRow(context);
+    }
+
+    /** Elegir el estilo de las burbujas: Telegram, iOS o Material 3. */
+    private void bubbleRow(Context context) {
+        final String[] names = new String[]{
+                tr("Actual de Telegram", "Telegram default"),
+                tr("Material 3 (sin cola)", "Material 3 (no tail)")};
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        row.setPadding(dp(20), dp(12), dp(20), dp(12));
+        TextView title = new TextView(context);
+        title.setText(tr("Estilo de burbujas", "Bubble style"));
+        title.setTextSize(16);
+        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        row.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        final TextView value = new TextView(context);
+        value.setText(names[org.telegram.messenger.IthaBubbles.style() == 2 ? 1 : 0]);
+        value.setTextSize(13);
+        value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        row.addView(value, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
+        row.setOnClickListener(v -> {
+            if (getParentActivity() == null) {
+                return;
+            }
+            org.telegram.ui.ActionBar.AlertDialog.Builder b = new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity());
+            b.setTitle(tr("Estilo de burbujas", "Bubble style"));
+            b.setItems(names, (d, which) -> {
+                org.telegram.messenger.IthaBubbles.set(which == 1 ? 2 : 0);
+                value.setText(names[which]);
+            });
+            b.setNegativeButton(tr("Cancelar", "Cancel"), null);
+            showDialog(b.create());
+        });
+        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        TextView note = new TextView(context);
+        note.setText(tr("Se aplica al abrir un chat.", "Applies when you open a chat."));
+        note.setTextSize(13);
+        note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        note.setPadding(dp(20), dp(10), dp(20), dp(10));
+        listLayout.addView(note, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
     }
 
     private interface BoolCallback {

@@ -1,0 +1,203 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/IthaBubbles.java b/TMessagesProj/src/main/java/org/telegram/messenger/IthaBubbles.java
+new file mode 100644
+index 0000000..2f3623b
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/IthaBubbles.java
+@@ -0,0 +1,38 @@
++package org.telegram.messenger;
++
++import android.content.Context;
++import android.content.SharedPreferences;
++
++/**
++ * IthaGram: estilo de las burbujas de mensajes. 0 = Telegram, 1 = iOS, 2 = Material 3 (sin cola).
++ */
++public class IthaBubbles {
++
++    private static int cached = -1;
++
++    public static int style() {
++        if (cached < 0) {
++            try {
++                cached = prefs().getInt("style", 0);
++            } catch (Throwable t) {
++                cached = 0;
++            }
++            if (cached < 0 || cached > 2) {
++                cached = 0;
++            }
++        }
++        return cached;
++    }
++
++    public static void set(int value) {
++        cached = Math.max(0, Math.min(2, value));
++        try {
++            prefs().edit().putInt("style", cached).apply();
++        } catch (Throwable ignore) {
++        }
++    }
++
++    private static SharedPreferences prefs() {
++        return ApplicationLoader.applicationContext.getSharedPreferences("itha_bubbles", Context.MODE_PRIVATE);
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
+index 895f6c1..24984a7 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ActionBar/MessageDrawable.java
+@@ -22,6 +22,7 @@ import android.graphics.drawable.NinePatchDrawable;
+ import androidx.core.graphics.ColorUtils;
+ 
+ import org.telegram.messenger.AndroidUtilities;
++import org.telegram.messenger.IthaBubbles;
+ import org.telegram.messenger.SharedConfig;
+ import org.telegram.ui.Components.MotionBackgroundDrawable;
+ import org.telegram.ui.Components.blur3.utils.NinePatchBuilder;
+@@ -356,6 +357,7 @@ public class MessageDrawable extends Drawable {
+         } else {
+             newRad = dp(SharedConfig.bubbleRadius);
+         }
++        newRad += IthaBubbles.style() * 100000; // IthaGram: el estilo de burbuja tambien invalida el cache
+         int idx;
+         if (isTopNear && isBottomNear) {
+             idx = 3;
+@@ -478,7 +480,7 @@ public class MessageDrawable extends Drawable {
+         if (gradientShader == null && !isSelected && crossfadeFromDrawable == null) {
+             return null;
+         }
+-        int newRad = dp(SharedConfig.bubbleRadius);
++        int newRad = dp(SharedConfig.bubbleRadius) + IthaBubbles.style() * 100000;
+         int idx;
+         if (isTopNear && isBottomNear) {
+             idx = 3;
+@@ -703,6 +705,10 @@ public class MessageDrawable extends Drawable {
+ 
+     private void generatePath(Path path, Rect bounds, int padding, int rad, int smallRad, int nearRad, int top, boolean drawFullBottom, boolean drawFullTop, boolean customPaint) {
+         path.rewind();
++        // IthaGram: estilo de burbuja (0 = Telegram, 1 = iOS, 2 = Material 3 sin cola)
++        final int bubbleStyle = currentType == TYPE_PREVIEW ? 0 : IthaBubbles.style();
++        final boolean noTail = bubbleStyle == 2;
++        final boolean iosTail = bubbleStyle == 1;
+         int heightHalf = (bounds.height() - padding) >> 1;
+         if (rad > heightHalf) {
+             rad = heightHalf;
+@@ -713,6 +719,8 @@ public class MessageDrawable extends Drawable {
+                 int radToUse = botButtonsBottom ? nearRad : rad;
+                 if (currentType == TYPE_MEDIA) {
+                     path.moveTo(bounds.right - dp(8) - radToUse, bounds.bottom - padding);
++                } else if (noTail) {
++                    path.moveTo(bounds.right - dp(8) - nearRad, bounds.bottom - padding);
+                 } else {
+                     path.moveTo(bounds.right - dp(2.6f), bounds.bottom - padding);
+                 }
+@@ -763,9 +771,18 @@ public class MessageDrawable extends Drawable {
+                 }
+             } else {
+                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
+-                    path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
+-                    rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
+-                    path.arcTo(rect, 180, -83, false);
++                    if (noTail) {
++                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - nearRad);
++                        rect.set(bounds.right - dp(8) - nearRad * 2, bounds.bottom - padding - nearRad * 2, bounds.right - dp(8), bounds.bottom - padding);
++                        path.arcTo(rect, 0, 90, false);
++                    } else if (iosTail) {
++                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - dp(12));
++                        path.cubicTo(bounds.right - dp(8), bounds.bottom - padding - dp(4), bounds.right - dp(6.5f), bounds.bottom - padding - dp(0.5f), bounds.right - dp(2.6f), bounds.bottom - padding);
++                    } else {
++                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
++                        rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
++                        path.arcTo(rect, 180, -83, false);
++                    }
+                 } else {
+                     path.lineTo(bounds.right - dp(8), top - topY + currentBackgroundHeight);
+                 }
+@@ -776,6 +793,8 @@ public class MessageDrawable extends Drawable {
+ 
+                 if (currentType == TYPE_MEDIA) {
+                     path.moveTo(bounds.left + dp(8) + radToUse, bounds.bottom - padding);
++                } else if (noTail) {
++                    path.moveTo(bounds.left + dp(8) + nearRad, bounds.bottom - padding);
+                 } else {
+                     path.moveTo(bounds.left + dp(2.6f), bounds.bottom - padding);
+                 }
+@@ -820,9 +839,18 @@ public class MessageDrawable extends Drawable {
+                 }
+             } else {
+                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
+-                    path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
+-                    rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
+-                    path.arcTo(rect, 0, 83, false);
++                    if (noTail) {
++                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - nearRad);
++                        rect.set(bounds.left + dp(8), bounds.bottom - padding - nearRad * 2, bounds.left + dp(8) + nearRad * 2, bounds.bottom - padding);
++                        path.arcTo(rect, 180, -90, false);
++                    } else if (iosTail) {
++                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - dp(12));
++                        path.cubicTo(bounds.left + dp(8), bounds.bottom - padding - dp(4), bounds.left + dp(6.5f), bounds.bottom - padding - dp(0.5f), bounds.left + dp(2.6f), bounds.bottom - padding);
++                    } else {
++                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
++                        rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
++                        path.arcTo(rect, 0, 83, false);
++                    }
+                 } else {
+                     path.lineTo(bounds.left + dp(8), top - topY + currentBackgroundHeight);
+                 }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+index c9de8fe..16a19aa 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/IthaChatSettingsActivity.java
+@@ -114,6 +114,52 @@ public class IthaChatSettingsActivity extends BaseFragment {
+                     IthaConfig.setChatPillHidden(value);
+                     preview.invalidate();
+                 });
++
++        section(context, tr("Burbujas de mensajes", "Message bubbles"));
++        bubbleRow(context);
++    }
++
++    /** Elegir el estilo de las burbujas: Telegram, iOS o Material 3. */
++    private void bubbleRow(Context context) {
++        final String[] names = new String[]{
++                tr("Actual de Telegram", "Telegram default"),
++                tr("Estilo iOS", "iOS style"),
++                tr("Material 3 (sin cola)", "Material 3 (no tail)")};
++        LinearLayout row = new LinearLayout(context);
++        row.setOrientation(LinearLayout.VERTICAL);
++        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
++        row.setPadding(dp(20), dp(12), dp(20), dp(12));
++        TextView title = new TextView(context);
++        title.setText(tr("Estilo de burbujas", "Bubble style"));
++        title.setTextSize(16);
++        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
++        row.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++        final TextView value = new TextView(context);
++        value.setText(names[Math.max(0, Math.min(2, org.telegram.messenger.IthaBubbles.style()))]);
++        value.setTextSize(13);
++        value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        row.addView(value, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
++        row.setOnClickListener(v -> {
++            if (getParentActivity() == null) {
++                return;
++            }
++            org.telegram.ui.ActionBar.AlertDialog.Builder b = new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity());
++            b.setTitle(tr("Estilo de burbujas", "Bubble style"));
++            b.setItems(names, (d, which) -> {
++                org.telegram.messenger.IthaBubbles.set(which);
++                value.setText(names[which]);
++            });
++            b.setNegativeButton(tr("Cancelar", "Cancel"), null);
++            showDialog(b.create());
++        });
++        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
++
++        TextView note = new TextView(context);
++        note.setText(tr("Se aplica al abrir un chat. El estilo iOS es una aproximación.", "Applies when you open a chat. The iOS style is an approximation."));
++        note.setTextSize(13);
++        note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
++        note.setPadding(dp(20), dp(10), dp(20), dp(10));
++        listLayout.addView(note, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+     }
+ 
+     private interface BoolCallback {

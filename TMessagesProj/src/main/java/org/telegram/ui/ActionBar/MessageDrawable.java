@@ -22,6 +22,7 @@ import android.graphics.drawable.NinePatchDrawable;
 import androidx.core.graphics.ColorUtils;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.IthaBubbles;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.ui.Components.MotionBackgroundDrawable;
 import org.telegram.ui.Components.blur3.utils.NinePatchBuilder;
@@ -356,6 +357,7 @@ public class MessageDrawable extends Drawable {
         } else {
             newRad = dp(SharedConfig.bubbleRadius);
         }
+        newRad += IthaBubbles.style() * 100000; // IthaGram: el estilo de burbuja tambien invalida el cache
         int idx;
         if (isTopNear && isBottomNear) {
             idx = 3;
@@ -478,7 +480,7 @@ public class MessageDrawable extends Drawable {
         if (gradientShader == null && !isSelected && crossfadeFromDrawable == null) {
             return null;
         }
-        int newRad = dp(SharedConfig.bubbleRadius);
+        int newRad = dp(SharedConfig.bubbleRadius) + IthaBubbles.style() * 100000;
         int idx;
         if (isTopNear && isBottomNear) {
             idx = 3;
@@ -703,6 +705,9 @@ public class MessageDrawable extends Drawable {
 
     private void generatePath(Path path, Rect bounds, int padding, int rad, int smallRad, int nearRad, int top, boolean drawFullBottom, boolean drawFullTop, boolean customPaint) {
         path.rewind();
+        // IthaGram: estilo de burbuja (0 = Telegram, 1 = iOS, 2 = Material 3 sin cola)
+        final int bubbleStyle = currentType == TYPE_PREVIEW ? 0 : IthaBubbles.style();
+        final boolean noTail = bubbleStyle == 2;
         int heightHalf = (bounds.height() - padding) >> 1;
         if (rad > heightHalf) {
             rad = heightHalf;
@@ -713,6 +718,8 @@ public class MessageDrawable extends Drawable {
                 int radToUse = botButtonsBottom ? nearRad : rad;
                 if (currentType == TYPE_MEDIA) {
                     path.moveTo(bounds.right - dp(8) - radToUse, bounds.bottom - padding);
+                } else if (noTail) {
+                    path.moveTo(bounds.right - dp(8) - nearRad, bounds.bottom - padding);
                 } else {
                     path.moveTo(bounds.right - dp(2.6f), bounds.bottom - padding);
                 }
@@ -763,9 +770,15 @@ public class MessageDrawable extends Drawable {
                 }
             } else {
                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                    path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
-                    rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
-                    path.arcTo(rect, 180, -83, false);
+                    if (noTail) {
+                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - nearRad);
+                        rect.set(bounds.right - dp(8) - nearRad * 2, bounds.bottom - padding - nearRad * 2, bounds.right - dp(8), bounds.bottom - padding);
+                        path.arcTo(rect, 0, 90, false);
+                    } else {
+                        path.lineTo(bounds.right - dp(8), bounds.bottom - padding - smallRad - dp(3));
+                        rect.set(bounds.right - dp(8), bounds.bottom - padding - smallRad * 2 - dp(9), bounds.right - dp(7) + smallRad * 2, bounds.bottom - padding - dp(1));
+                        path.arcTo(rect, 180, -83, false);
+                    }
                 } else {
                     path.lineTo(bounds.right - dp(8), top - topY + currentBackgroundHeight);
                 }
@@ -776,6 +789,8 @@ public class MessageDrawable extends Drawable {
 
                 if (currentType == TYPE_MEDIA) {
                     path.moveTo(bounds.left + dp(8) + radToUse, bounds.bottom - padding);
+                } else if (noTail) {
+                    path.moveTo(bounds.left + dp(8) + nearRad, bounds.bottom - padding);
                 } else {
                     path.moveTo(bounds.left + dp(2.6f), bounds.bottom - padding);
                 }
@@ -820,9 +835,15 @@ public class MessageDrawable extends Drawable {
                 }
             } else {
                 if (drawFullBubble || currentType == TYPE_PREVIEW || customPaint || drawFullBottom) {
-                    path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
-                    rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
-                    path.arcTo(rect, 0, 83, false);
+                    if (noTail) {
+                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - nearRad);
+                        rect.set(bounds.left + dp(8), bounds.bottom - padding - nearRad * 2, bounds.left + dp(8) + nearRad * 2, bounds.bottom - padding);
+                        path.arcTo(rect, 180, -90, false);
+                    } else {
+                        path.lineTo(bounds.left + dp(8), bounds.bottom - padding - smallRad - dp(3));
+                        rect.set(bounds.left + dp(7) - smallRad * 2, bounds.bottom - padding - smallRad * 2 - dp(9), bounds.left + dp(8), bounds.bottom - padding - dp(1));
+                        path.arcTo(rect, 0, 83, false);
+                    }
                 } else {
                     path.lineTo(bounds.left + dp(8), top - topY + currentBackgroundHeight);
                 }
