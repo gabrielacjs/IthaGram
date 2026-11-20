@@ -276,14 +276,32 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         tmpRect.offset(0, blurTop + (int) bubbleInputTranlationY);
 
         blurredBackgroundDrawable.setBounds(tmpRect);
-        if (drawInputBackground)
-            blurredBackgroundDrawable.draw(canvas);
+        if (drawInputBackground) {
+            if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+                drawIthaInput(canvas);
+            } else {
+                blurredBackgroundDrawable.draw(canvas);
+            }
+        }
 
         if (needDrawInAppKeyboard) {
             underKeyboardBackgroundDrawable.draw(canvas);
         }
 
         super.dispatchDraw(canvas);
+    }
+
+    // IthaGram: campo de mensaje solido de Material 3, del color de la cabecera
+    private final android.graphics.Paint ithaInputPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+    private void drawIthaInput(@NonNull Canvas canvas) {
+        final int bar = org.telegram.messenger.IthaStyles.barColor();
+        final int base = (bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite)) | 0xFF000000;
+        tmpRectF.set(tmpRect.left + dp(7), tmpRect.top + dp(7), tmpRect.right - dp(7), tmpRect.bottom - dp(7));
+        final float r = Math.min(dp(16), tmpRectF.height() / 2f);
+        ithaInputPaint.setColor(base);
+        ithaInputPaint.setAlpha(blurredBackgroundDrawable.getAlpha());
+        canvas.drawRoundRect(tmpRectF, r, r, ithaInputPaint);
     }
 
     @Override

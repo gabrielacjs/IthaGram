@@ -3290,7 +3290,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
 
                     final float r = dpf2(19);
-                    paint.setColor(getThemedColor(Theme.key_chat_messagePanelSend));
+                    if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+                        // IthaGram: circulo tonal de Material 3 (como el boton del fijado)
+                        final int bar = org.telegram.messenger.IthaStyles.barColor();
+                        final int base = (bar != 0 ? bar : getThemedColor(Theme.key_windowBackgroundWhite)) | 0xFF000000;
+                        paint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader), 0.28f) | 0xFF000000);
+                    } else {
+                        paint.setColor(getThemedColor(Theme.key_chat_messagePanelSend));
+                    }
                     final float margin = dpf2(3);
                     final float height = dpf2(38);
                     final float width = dpf2(38);
@@ -6680,7 +6687,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         audioVideoButtonContainer.setAlpha(audioVideoButtonContainerForbidden ? 0.5f : 1.0f);
         audioVideoButtonContainer.invalidate();
         audioVideoSendButton.setColorFilter(new PorterDuffColorFilter(audioVideoButtonContainerForbidden ?
-            getThemedColor(Theme.key_glass_defaultIcon) : Color.WHITE, PorterDuff.Mode.SRC_IN));
+            getThemedColor(Theme.key_glass_defaultIcon) : (org.telegram.messenger.IthaStyles.chatHeader() == 1 ? getThemedColor(Theme.key_windowBackgroundWhiteBlackText) : Color.WHITE), PorterDuff.Mode.SRC_IN));
         audioVideoSendButton.invalidate();
         updateFieldHint(false);
         boolean currentModeVideo = isInVideoMode;
@@ -15662,7 +15669,8 @@ public class ChatActivityEnterView extends FrameLayout implements
         private int drawableColor, inactiveDrawableColor, drawableInverseColor;
 
         public void updateColors() {
-            int color = isNewDesignSendButton ? Color.WHITE : Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider);
+            final boolean ithaMd3 = isNewDesignSendButton && org.telegram.messenger.IthaStyles.chatHeader() == 1;
+            int color = ithaMd3 ? Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider) : isNewDesignSendButton ? Color.WHITE : Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider);
             int c = Theme.getColor(Theme.key_glass_defaultIcon, resourcesProvider);
             int inverseColor = Theme.getColor(Theme.key_chat_messagePanelVoicePressed, resourcesProvider);
             if (color != drawableColor || c != inactiveDrawableColor || inverseColor != drawableInverseColor) {
@@ -15674,7 +15682,14 @@ public class ChatActivityEnterView extends FrameLayout implements
                 drawableInverse.setColorFilter(new PorterDuffColorFilter(inverseColor, PorterDuff.Mode.SRC_IN));
             }
             if (isNewDesignSendButton) {
-                backgroundPaint.setColor(Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider));
+                if (ithaMd3) {
+                    // IthaGram: circulo tonal de Material 3 (como el boton del fijado)
+                    final int bar = org.telegram.messenger.IthaStyles.barColor();
+                    final int base = (bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider)) | 0xFF000000;
+                    backgroundPaint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourcesProvider), 0.28f) | 0xFF000000);
+                } else {
+                    backgroundPaint.setColor(Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider));
+                }
             } else if (shouldDrawBackground()) {
                 backgroundPaint.setColor(getFillColor());
             } else {
