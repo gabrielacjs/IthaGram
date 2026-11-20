@@ -12141,7 +12141,7 @@ public class ChatActivity extends BaseFragment implements
         if (ithaMd3Pin) {
             // IthaGram: boton tonal redondeado (Material 3)
             pinnedListButton.setColorFilter(ithaPinText);
-            pinnedListButton.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(10), androidx.core.graphics.ColorUtils.blendARGB(org.telegram.messenger.IthaStyles.barColor() != 0 ? org.telegram.messenger.IthaStyles.barColor() : getThemedColor(Theme.key_windowBackgroundWhite), ithaPinAccent, 0.28f) | 0xFF000000));
+            pinnedListButton.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(10), androidx.core.graphics.ColorUtils.blendARGB(org.telegram.messenger.IthaStyles.barColor() != 0 ? org.telegram.messenger.IthaStyles.barColor() : getThemedColor(Theme.key_windowBackgroundWhite), ithaPinAccent, 0.55f) | 0xFF000000));
             pinnedMessageView.addView(pinnedListButton, LayoutHelper.createFrame(34, 34, Gravity.RIGHT | Gravity.TOP, 0, 7, 9, 0));
         } else {
             pinnedMessageView.addView(pinnedListButton, LayoutHelper.createFrame(36, 48, Gravity.RIGHT | Gravity.TOP, 0, 0, 7, 0));

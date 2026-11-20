@@ -3294,7 +3294,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                         // IthaGram: circulo tonal de Material 3 (como el boton del fijado)
                         final int bar = org.telegram.messenger.IthaStyles.barColor();
                         final int base = (bar != 0 ? bar : getThemedColor(Theme.key_windowBackgroundWhite)) | 0xFF000000;
-                        paint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader), 0.28f) | 0xFF000000);
+                        paint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader), 0.55f) | 0xFF000000);
                     } else {
                         paint.setColor(getThemedColor(Theme.key_chat_messagePanelSend));
                     }
@@ -15686,7 +15686,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     // IthaGram: circulo tonal de Material 3 (como el boton del fijado)
                     final int bar = org.telegram.messenger.IthaStyles.barColor();
                     final int base = (bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider)) | 0xFF000000;
-                    backgroundPaint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourcesProvider), 0.28f) | 0xFF000000);
+                    backgroundPaint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourcesProvider), 0.55f) | 0xFF000000);
                 } else {
                     backgroundPaint.setColor(Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider));
                 }
