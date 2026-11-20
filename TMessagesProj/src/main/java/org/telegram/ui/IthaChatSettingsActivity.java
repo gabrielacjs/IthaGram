@@ -167,14 +167,14 @@ public class IthaChatSettingsActivity extends BaseFragment {
 
     private void check(Context context, String title, String subtitle, boolean checked, BoolCallback callback) {
         final TextCheckCell cell = new TextCheckCell(context);
-        cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        IthaMd3.style(cell);
         cell.setTextAndValueAndCheck(title, subtitle, checked, true, false);
         cell.setOnClickListener(v -> {
             boolean value = !cell.isChecked();
             cell.setChecked(value);
             callback.run(value);
         });
-        listLayout.addView(cell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        IthaMd3.add(listLayout, cell);
     }
 
     private void section(Context context, String title) {

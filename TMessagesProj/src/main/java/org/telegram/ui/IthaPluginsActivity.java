@@ -171,7 +171,7 @@ public class IthaPluginsActivity extends BaseFragment {
         LinearLayout box = new LinearLayout(context);
         box.setOrientation(LinearLayout.HORIZONTAL);
         box.setGravity(Gravity.CENTER_VERTICAL);
-        box.setBackground(Theme.createRoundRectDrawable(dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        box.setBackground(IthaMd3.roundBg(16));
         box.setPadding(dp(16), dp(14), dp(16), dp(14));
 
         LinearLayout texts = new LinearLayout(context);
@@ -309,7 +309,7 @@ public class IthaPluginsActivity extends BaseFragment {
     private void addPluginCard(final Context context, final IthaPlugins.Host host, final IthaPlugins.Info p, boolean pinned) {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(Theme.createRoundRectDrawable(dp(16), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        card.setBackground(IthaMd3.roundBg(16));
         card.setPadding(dp(16), dp(16), dp(16), dp(8));
 
         LinearLayout top = new LinearLayout(context);
@@ -521,7 +521,7 @@ public class IthaPluginsActivity extends BaseFragment {
     private void row(Context context, String title, String subtitle, Runnable action) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        IthaMd3.style(row);
         row.setPadding(dp(20), dp(12), dp(20), dp(12));
 
         TextView titleView = new TextView(context);
@@ -539,6 +539,6 @@ public class IthaPluginsActivity extends BaseFragment {
         }
 
         row.setOnClickListener(v -> action.run());
-        listLayout.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        IthaMd3.add(listLayout, row);
     }
 }

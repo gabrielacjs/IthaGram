@@ -1,0 +1,13 @@
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ProfileActivity.java
+@@ -13673,6 +13673,9 @@
+                             text = LocaleController.getString(R.string.PhoneHidden);
+                             phoneNumber = null;
+                         }
++                        if (phoneNumber != null && org.telegram.messenger.IthaConfig.isPhoneHidden()) {
++                            text = text.replaceAll("\\d", String.valueOf((char) 0x2022));
++                        }
+                         isFragmentPhoneNumber = phoneNumber != null && phoneNumber.matches("888\\d{8}");
+                         detailCell.setTextAndValue(text, LocaleController.getString(isFragmentPhoneNumber ? R.string.AnonymousNumber : R.string.PhoneMobile), false);
+                     } else if (position == noteRow) {

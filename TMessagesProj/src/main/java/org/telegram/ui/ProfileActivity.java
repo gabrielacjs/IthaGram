@@ -7553,6 +7553,17 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         } else if (position == noteRow) {
 
         } else if (position == phoneRow || position == numberRow) {
+            // IthaGram: con "Ocultar el numero" activo, tocar muestra / oculta el numero (spoiler)
+            if (position == phoneRow && org.telegram.messenger.IthaConfig.isPhoneHidden() && view instanceof org.telegram.ui.Cells.TextDetailCell) {
+                final org.telegram.ui.Components.spoilers.SpoilersTextView ithaTv = ((org.telegram.ui.Cells.TextDetailCell) view).textView;
+                if (ithaTv.ithaIsRevealed()) {
+                    ithaTv.setText(ithaTv.getText());
+                } else {
+                    ithaTv.reveal();
+                }
+                return true;
+            }
+
             if (editRow(view, position)) return true;
 
             final TLRPC.User user = getMessagesController().getUser(userId);
@@ -13660,7 +13671,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             containsGift = !myProfile && today && !getMessagesController().premiumPurchaseBlocked();
                         }
                     } else if (position == phoneRow) {
-                        String text;
+                        CharSequence text;
                         TLRPC.User user = getMessagesController().getUser(userId);
                         String phoneNumber;
                         if (user != null && !TextUtils.isEmpty(vcardPhone)) {
@@ -13673,8 +13684,18 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             text = LocaleController.getString(R.string.PhoneHidden);
                             phoneNumber = null;
                         }
+                        if (phoneNumber != null && org.telegram.messenger.IthaConfig.isPhoneHidden()) {
+                            // IthaGram: numero oculto con efecto spoiler (particulas)
+                            final android.text.SpannableString ithaSp = new android.text.SpannableString(text);
+                            final org.telegram.ui.Components.TextStyleSpan.TextStyleRun ithaRun = new org.telegram.ui.Components.TextStyleSpan.TextStyleRun();
+                            ithaRun.flags |= org.telegram.ui.Components.TextStyleSpan.FLAG_STYLE_SPOILER;
+                            ithaSp.setSpan(new org.telegram.ui.Components.TextStyleSpan(ithaRun), 0, ithaSp.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            text = ithaSp;
+                        }
                         isFragmentPhoneNumber = phoneNumber != null && phoneNumber.matches("888\\d{8}");
                         detailCell.setTextAndValue(text, LocaleController.getString(isFragmentPhoneNumber ? R.string.AnonymousNumber : R.string.PhoneMobile), false);
+                        // IthaGram: con el numero oculto, el toque lo maneja solo el perfil (mostrar / ocultar)
+                        detailCell.textView.allowClickSpoilers = !(phoneNumber != null && org.telegram.messenger.IthaConfig.isPhoneHidden());
                     } else if (position == noteRow) {
                         final TLRPC.UserFull userInfo = getMessagesController().getUserFull(userId);
                         if (userInfo == null) return;
