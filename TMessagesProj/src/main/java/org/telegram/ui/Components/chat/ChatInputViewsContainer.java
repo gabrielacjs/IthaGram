@@ -230,7 +230,8 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
     }
 
     public float getInputBubbleHeight() {
-        return inputBubbleHeight;
+        // IthaGram: con la franja de Material 3, un poco de aire para que el ultimo mensaje no quede pegado
+        return inputBubbleHeight + (org.telegram.messenger.IthaStyles.input() == 1 ? dp(10) : 0);
     }
 
     public float getInputBubbleTop() {
@@ -277,7 +278,7 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
 
         blurredBackgroundDrawable.setBounds(tmpRect);
         if (drawInputBackground) {
-            if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+            if (org.telegram.messenger.IthaStyles.input() == 1) {
                 drawIthaInput(canvas);
             } else {
                 blurredBackgroundDrawable.draw(canvas);
@@ -297,10 +298,23 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
     private void drawIthaInput(@NonNull Canvas canvas) {
         final int bar = org.telegram.messenger.IthaStyles.barColor();
         final int base = (bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite)) | 0xFF000000;
-        tmpRectF.set(tmpRect.left + dp(7), tmpRect.top + dp(7), tmpRect.right - dp(7), tmpRect.bottom - dp(7));
-        final float r = Math.min(dp(16), tmpRectF.height() / 2f);
+        // el campo termina antes del boton de microfono / enviar, que queda aparte (cuadrado redondeado)
+        // el icono de emojis queda afuera, a la izquierda, y el microfono afuera, a la derecha
+        tmpRectF.set(tmpRect.left + dp(7) + dp(39), tmpRect.top + dp(7), tmpRect.right - dp(7) - dp(47), tmpRect.bottom - dp(7));
+        final float r = Math.min(dp(24), tmpRectF.height() / 2f);
+        final int alpha = blurredBackgroundDrawable.getAlpha();
+        // franja a todo el ancho que encierra el campo y el boton
         ithaInputPaint.setColor(base);
-        ithaInputPaint.setAlpha(blurredBackgroundDrawable.getAlpha());
+        ithaInputPaint.setAlpha(alpha);
+        final float stripTop = tmpRectF.top - dp(8);
+        canvas.drawRect(0, stripTop, getMeasuredWidth(), getMeasuredHeight() + dp(24), ithaInputPaint);
+        // linea fina arriba, como la de la cabecera
+        ithaInputPaint.setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), (int) (31 * alpha / 255f)));
+        canvas.drawRect(0, stripTop, getMeasuredWidth(), stripTop + dp(1), ithaInputPaint);
+        // campo con un leve tinte del color del tema
+        final int accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader);
+        ithaInputPaint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, accent, 0.13f) | 0xFF000000);
+        ithaInputPaint.setAlpha(alpha);
         canvas.drawRoundRect(tmpRectF, r, r, ithaInputPaint);
     }
 

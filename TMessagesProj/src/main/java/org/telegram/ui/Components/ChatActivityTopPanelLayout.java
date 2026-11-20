@@ -85,7 +85,7 @@ public class ChatActivityTopPanelLayout extends AnimatedLinearLayout {
 
         clipRectF.set(getPaddingLeft(), getPaddingTop(), getMeasuredWidth() - getPaddingRight(), getPaddingTop() + bgHeight);
 
-        final boolean ithaMd3 = org.telegram.messenger.IthaStyles.chatHeader() == 1;
+        final boolean ithaMd3 = org.telegram.messenger.IthaStyles.pinned() == 1;
         final float r = Math.min(dp(ithaMd3 ? 14 : 18), Math.min(clipRectF.width(), clipRectF.height()) / 2f);
         ithaCardRect.set(clipRectF.left, clipRectF.top + dp(6), clipRectF.right, clipRectF.bottom);
         ithaCardAlpha = bgAlpha;
@@ -126,7 +126,7 @@ public class ChatActivityTopPanelLayout extends AnimatedLinearLayout {
     protected void dispatchDraw(@NonNull Canvas canvas) {
         if (getMetadata().getTotalVisibility() == 0) return;
 
-        if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+        if (org.telegram.messenger.IthaStyles.pinned() == 1) {
             drawIthaCard(canvas);
         } else if (backgroundDrawable != null) {
             backgroundDrawable.draw(canvas);

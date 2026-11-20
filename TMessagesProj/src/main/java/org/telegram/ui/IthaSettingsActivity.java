@@ -112,6 +112,10 @@ public class IthaSettingsActivity extends BaseFragment {
                 tr("Ajustes de chat", "Chat settings"),
                 tr("Encabezado dentro de los chats", "Header inside chats"),
                 () -> presentFragment(new IthaChatSettingsActivity()));
+        md3Row(context, group, R.drawable.msg_theme, tint, accent,
+                tr("Estilos", "Styles"),
+                tr("Elegí el diseño de cada pieza de la app", "Pick the design of each part of the app"),
+                () -> presentFragment(new IthaStylesActivity()));
         md3Row(context, group, R.drawable.msg_bots, tint, accent,
                 tr("Plugins", "Plugins"),
                 tr("Extensiones .plugin (Python)", "Python .plugin extensions"),

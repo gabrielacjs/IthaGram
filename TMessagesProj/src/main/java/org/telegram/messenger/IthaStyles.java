@@ -19,7 +19,57 @@ public class IthaStyles {
 
     /** Color de la barra del encabezado del chat en Material 3 (0 si todavia no se dibujo). */
     public static int barColor() {
-        return barColor;
+        return chatHeader() == 1 ? barColor : 0;
+    }
+
+    private static int pinned = -1;
+    private static int input = -1;
+
+    private static int read(String key) {
+        try {
+            return ApplicationLoader.applicationContext.getSharedPreferences("itha_styles", Context.MODE_PRIVATE).getInt(key, -1);
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    private static void write(String key, int value) {
+        try {
+            ApplicationLoader.applicationContext.getSharedPreferences("itha_styles", Context.MODE_PRIVATE).edit().putInt(key, value).apply();
+        } catch (Throwable ignore) {
+        }
+    }
+
+    /** Estilo del mensaje fijado (0 = Telegram, 1 = Material 3). Si nunca se eligio, sigue al encabezado. */
+    public static int pinned() {
+        if (pinned < 0) {
+            pinned = read("pinned");
+            if (pinned != 0 && pinned != 1) {
+                pinned = -2;
+            }
+        }
+        return pinned == -2 ? chatHeader() : pinned;
+    }
+
+    public static void setPinned(int value) {
+        pinned = value == 1 ? 1 : 0;
+        write("pinned", pinned);
+    }
+
+    /** Estilo de la barra de mensaje (0 = Telegram, 1 = Material 3). Si nunca se eligio, sigue al encabezado. */
+    public static int input() {
+        if (input < 0) {
+            input = read("input");
+            if (input != 0 && input != 1) {
+                input = -2;
+            }
+        }
+        return input == -2 ? chatHeader() : input;
+    }
+
+    public static void setInput(int value) {
+        input = value == 1 ? 1 : 0;
+        write("input", input);
     }
 
     public static int chatHeader() {

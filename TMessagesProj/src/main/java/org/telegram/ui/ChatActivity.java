@@ -12006,7 +12006,7 @@ public class ChatActivity extends BaseFragment implements
             }
         };
         pinnedMessageView.setTag(1);
-        if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+        if (org.telegram.messenger.IthaStyles.pinned() == 1) {
             // IthaGram: 6dp de aire arriba para separar la tarjeta de la cabecera
             pinnedMessageView.setPadding(0, AndroidUtilities.dp(6), 0, 0);
             topPanelLayout.addView(pinnedMessageView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 54));
@@ -12049,7 +12049,7 @@ public class ChatActivity extends BaseFragment implements
 
         pinnedCounterTextView = new NumberTextView(getContext());
         pinnedCounterTextView.setAddNumber();
-        final boolean ithaMd3Pin = org.telegram.messenger.IthaStyles.chatHeader() == 1;
+        final boolean ithaMd3Pin = org.telegram.messenger.IthaStyles.pinned() == 1;
         final int ithaPinAccent = getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader);
         final int ithaPinText = getThemedColor(Theme.key_windowBackgroundWhiteBlackText);
         pinnedCounterTextView.setTextSize(14);

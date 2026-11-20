@@ -3281,7 +3281,7 @@ public class ChatActivityEnterView extends FrameLayout implements
 
             @Override
             protected void dispatchDraw(@NonNull Canvas canvas) {
-                if (!audioVideoButtonContainerForbidden) {
+                if (!audioVideoButtonContainerForbidden && org.telegram.messenger.IthaStyles.input() != 1) {
                     float s = 1;
                     if (expandStickersButton != null) {
                         if (expandStickersButton.getVisibility() == View.VISIBLE) {
@@ -3290,7 +3290,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
 
                     final float r = dpf2(19);
-                    if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+                    if (org.telegram.messenger.IthaStyles.input() == 1) {
                         // IthaGram: circulo tonal de Material 3 (como el boton del fijado)
                         final int bar = org.telegram.messenger.IthaStyles.barColor();
                         final int base = (bar != 0 ? bar : getThemedColor(Theme.key_windowBackgroundWhite)) | 0xFF000000;
@@ -3310,7 +3310,8 @@ public class ChatActivityEnterView extends FrameLayout implements
 
                     canvas.save();
                     canvas.scale(s, s, backgroundRect.centerX(), backgroundRect.centerY());
-                    canvas.drawRoundRect(backgroundRect, r, r, paint);
+                    final float rr = org.telegram.messenger.IthaStyles.input() == 1 ? dpf2(12) : r;
+                    canvas.drawRoundRect(backgroundRect, rr, rr, paint);
                     canvas.restore();
                 }
                 super.dispatchDraw(canvas);
@@ -5884,7 +5885,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         ThemeBind.hintTextColor(messageEditText, Theme.key_chat_messagePanelHint, resourcesProvider);
         ThemeBind.cursorColor(messageEditText, Theme.key_chat_messagePanelCursor, resourcesProvider);
         ThemeBind.editHandlesColor(messageEditText, Theme.key_chat_TextSelectionCursor, resourcesProvider);
-        messageEditTextContainer.addView(messageEditText, 1, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 52, 0, isChat ? 50 : 2, 1.5f));
+        messageEditTextContainer.addView(messageEditText, 1, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, org.telegram.messenger.IthaStyles.input() == 1 ? 54 : 52, 0, isChat ? 50 : 2, 1.5f));
 
         richDraftPreview = new RichMessageLayout.PreviewView(getContext(), currentAccount, resourcesProvider);
         richDraftPreview.setAllowActions(false);
@@ -6687,7 +6688,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         audioVideoButtonContainer.setAlpha(audioVideoButtonContainerForbidden ? 0.5f : 1.0f);
         audioVideoButtonContainer.invalidate();
         audioVideoSendButton.setColorFilter(new PorterDuffColorFilter(audioVideoButtonContainerForbidden ?
-            getThemedColor(Theme.key_glass_defaultIcon) : (org.telegram.messenger.IthaStyles.chatHeader() == 1 ? getThemedColor(Theme.key_windowBackgroundWhiteBlackText) : Color.WHITE), PorterDuff.Mode.SRC_IN));
+            getThemedColor(Theme.key_glass_defaultIcon) : (org.telegram.messenger.IthaStyles.input() == 1 ? getThemedColor(Theme.key_glass_defaultIcon) : Color.WHITE), PorterDuff.Mode.SRC_IN));
         audioVideoSendButton.invalidate();
         updateFieldHint(false);
         boolean currentModeVideo = isInVideoMode;
@@ -10539,7 +10540,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             botKeyboardView.updateColors();
         }
         // emojiButton / deleteRichDraftButton / sendOutlineView icon colors are ThemeBind bindings
-        final int audioVideoColor = audioVideoButtonContainerForbidden ? getThemedColor(Theme.key_glass_defaultIcon) : Color.WHITE;
+        final int audioVideoColor = audioVideoButtonContainerForbidden ? getThemedColor(Theme.key_glass_defaultIcon) : (org.telegram.messenger.IthaStyles.input() == 1 ? getThemedColor(Theme.key_glass_defaultIcon) : Color.WHITE);
         if (audioVideoSendButton != null && (!audioVideoColorApplied || audioVideoColor != lastAudioVideoColor)) {
             audioVideoColorApplied = true;
             lastAudioVideoColor = audioVideoColor;
@@ -15408,7 +15409,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             updateColors();
             checkBackgroundRect();
             if (isNewDesignSendButton) {
-                canvas.drawRoundRect(backgroundRect, dp(RADIUS), dp(RADIUS), backgroundPaint);
+                final float rr = org.telegram.messenger.IthaStyles.input() == 1 ? dp(12) : dp(RADIUS);
+                canvas.drawRoundRect(backgroundRect, rr, rr, backgroundPaint);
             }
 
             final boolean inactive = isInactive();
@@ -15669,7 +15671,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         private int drawableColor, inactiveDrawableColor, drawableInverseColor;
 
         public void updateColors() {
-            final boolean ithaMd3 = isNewDesignSendButton && org.telegram.messenger.IthaStyles.chatHeader() == 1;
+            final boolean ithaMd3 = isNewDesignSendButton && org.telegram.messenger.IthaStyles.input() == 1;
             int color = ithaMd3 ? Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider) : isNewDesignSendButton ? Color.WHITE : Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider);
             int c = Theme.getColor(Theme.key_glass_defaultIcon, resourcesProvider);
             int inverseColor = Theme.getColor(Theme.key_chat_messagePanelVoicePressed, resourcesProvider);
