@@ -3,6 +3,7 @@ package org.telegram.ui;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.Gravity;
 import android.view.View;
@@ -15,6 +16,7 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.IthaConfig;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -22,6 +24,7 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.SeekBarView;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.DownloadQueueManager.tr;
@@ -34,6 +37,8 @@ public class IthaChatSettingsActivity extends BaseFragment {
     private LinearLayout listLayout;
     private Context ctx;
     private PreviewView preview;
+    private BubblePreview bubblePreview;
+    private static final int RADIUS_MAX = 28;
 
     @Override
     public View createView(Context context) {
@@ -116,7 +121,88 @@ public class IthaChatSettingsActivity extends BaseFragment {
                 });
 
         section(context, tr("Burbujas de mensajes", "Message bubbles"));
+        bubblePreview = new BubblePreview(context);
+        IthaMd3.style(bubblePreview);
+        IthaMd3.add(listLayout, bubblePreview);
         bubbleRow(context);
+        radiusRow(context);
+        resetRow(context);
+    }
+
+    /** Deslizador para el redondeo de las esquinas de las burbujas (0 a 28). */
+    private void radiusRow(Context context) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
+        IthaMd3.style(row);
+        row.setPadding(dp(20), dp(12), dp(20), dp(8));
+        LinearLayout head = new LinearLayout(context);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        TextView title = new TextView(context);
+        title.setText(tr("Redondeo de esquinas", "Corner roundness"));
+        title.setTextSize(16);
+        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        head.addView(title, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
+        final TextView value = new TextView(context);
+        value.setText(SharedConfig.bubbleRadius + " dp");
+        value.setTextSize(14);
+        value.setTypeface(AndroidUtilities.bold());
+        value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
+        head.addView(value, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
+        row.addView(head, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        final SeekBarView bar = new SeekBarView(context);
+        bar.setReportChanges(true);
+        bar.setSeparatorsCount(RADIUS_MAX + 1);
+        bar.setOuterColor(Theme.getColor(Theme.key_player_progress));
+        bar.setProgress(Math.min(1f, SharedConfig.bubbleRadius / (float) RADIUS_MAX));
+        bar.setDelegate(new SeekBarView.SeekBarViewDelegate() {
+            @Override
+            public void onSeekBarDrag(boolean stop, float progress) {
+                int v = Math.round(RADIUS_MAX * progress);
+                if (v != SharedConfig.bubbleRadius) {
+                    SharedConfig.bubbleRadius = v;
+                    org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putInt("bubbleRadius", v).apply();
+                    value.setText(v + " dp");
+                    if (bubblePreview != null) {
+                        bubblePreview.invalidate();
+                    }
+                }
+            }
+
+            @Override
+            public void onSeekBarPressed(boolean pressed) {
+            }
+
+            @Override
+            public CharSequence getContentDescription() {
+                return String.valueOf(SharedConfig.bubbleRadius);
+            }
+
+            @Override
+            public int getStepsCount() {
+                return RADIUS_MAX;
+            }
+        });
+        row.addView(bar, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 4, 0, 0));
+        IthaMd3.add(listLayout, row);
+    }
+
+    /** Vuelve a lo normal de Telegram: burbujas con cola y esquinas de 17. */
+    private void resetRow(Context context) {
+        TextView reset = new TextView(context);
+        reset.setText(tr("Volver a lo de Telegram", "Back to Telegram default"));
+        reset.setTextSize(15);
+        reset.setTypeface(AndroidUtilities.bold());
+        reset.setGravity(Gravity.CENTER);
+        reset.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
+        IthaMd3.style(reset);
+        reset.setOnClickListener(v -> {
+            SharedConfig.bubbleRadius = 17;
+            org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putInt("bubbleRadius", 17).apply();
+            org.telegram.messenger.IthaBubbles.set(0);
+            rebuild();
+        });
+        listLayout.addView(reset, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 52, 12, 10, 12, 10));
     }
 
     /** Elegir el estilo de las burbujas: Telegram, iOS o Material 3. */
@@ -147,6 +233,9 @@ public class IthaChatSettingsActivity extends BaseFragment {
             b.setItems(names, (d, which) -> {
                 org.telegram.messenger.IthaBubbles.set(which == 1 ? 2 : 0);
                 value.setText(names[which]);
+                if (bubblePreview != null) {
+                    bubblePreview.invalidate();
+                }
             });
             b.setNegativeButton(tr("Cancelar", "Cancel"), null);
             showDialog(b.create());
@@ -185,6 +274,73 @@ public class IthaChatSettingsActivity extends BaseFragment {
         header.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
         header.setPadding(dp(20), dp(18), dp(20), dp(8));
         listLayout.addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+    }
+
+    /** Vista previa de dos burbujas con el estilo y el redondeo elegidos. */
+    private class BubblePreview extends View {
+        private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path path = new Path();
+        private final RectF r = new RectF();
+
+        BubblePreview(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(132));
+        }
+
+        private void bubble(Canvas canvas, float left, float top, boolean out, String text, String time) {
+            final boolean md3 = org.telegram.messenger.IthaBubbles.style() == 2;
+            p.setTextSize(dp(15));
+            p.setTypeface(null);
+            final float tw = p.measureText(text);
+            p.setTextSize(dp(11));
+            final float timeW = p.measureText(time);
+            final float width = tw + dp(8) + timeW + dp(24);
+            final float height = dp(42);
+            final float l = out ? getMeasuredWidth() - dp(20) - width : left;
+            final float t = top;
+            r.set(l, t, l + width, t + height);
+            final float rad = Math.min(dp(SharedConfig.bubbleRadius), height / 2f);
+            final float near = md3 ? Math.min(dp(6), rad) : dp(2);
+            final float tl = rad, tr = rad;
+            final float br = out ? near : rad;
+            final float bl = out ? rad : near;
+            path.reset();
+            path.addRoundRect(r, new float[]{tl, tl, tr, tr, br, br, bl, bl}, Path.Direction.CW);
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(Theme.getColor(out ? Theme.key_chat_outBubble : Theme.key_chat_inBubble));
+            canvas.drawPath(path, p);
+            if (!md3) {
+                // cola de Telegram
+                path.reset();
+                if (out) {
+                    path.moveTo(r.right - dp(8), r.bottom - dp(10));
+                    path.lineTo(r.right + dp(5), r.bottom);
+                    path.lineTo(r.right - dp(12), r.bottom);
+                } else {
+                    path.moveTo(r.left + dp(8), r.bottom - dp(10));
+                    path.lineTo(r.left - dp(5), r.bottom);
+                    path.lineTo(r.left + dp(12), r.bottom);
+                }
+                path.close();
+                canvas.drawPath(path, p);
+            }
+            p.setTextSize(dp(15));
+            p.setColor(Theme.getColor(out ? Theme.key_chat_messageTextOut : Theme.key_chat_messageTextIn));
+            canvas.drawText(text, l + dp(12), t + dp(26), p);
+            p.setTextSize(dp(11));
+            p.setColor(Theme.getColor(out ? Theme.key_chat_outTimeText : Theme.key_chat_inTimeText));
+            canvas.drawText(time, r.right - dp(12) - timeW, t + dp(36), p);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            bubble(canvas, dp(20), dp(18), false, tr("¿Ya probaste IthaGram?", "Tried IthaGram yet?"), "16:30");
+            bubble(canvas, 0, dp(72), true, tr("¡Sí, está genial!", "Yes, it's great!"), "16:31");
+        }
     }
 
     /** Dibujo de ejemplo del encabezado de un chat: boton de volver, pildora con avatar y titulo, menu. */

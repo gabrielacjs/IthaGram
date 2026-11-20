@@ -92,8 +92,10 @@ public class IthaPluginsActivity extends BaseFragment {
         ScrollView scroll = new ScrollView(context);
         listLayout = new LinearLayout(context);
         listLayout.setOrientation(LinearLayout.VERTICAL);
+        listLayout.setPadding(0, 0, 0, dp(96));
         scroll.addView(listLayout, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
         root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
+        root.addView(buildFab(context), LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 56, Gravity.RIGHT | Gravity.BOTTOM, 0, 0, 16, 24));
 
         ctx = context;
         rebuild();
@@ -106,10 +108,9 @@ public class IthaPluginsActivity extends BaseFragment {
         final Context context = ctx;
         final IthaPlugins.Host host = IthaPlugins.getHost();
 
+        addTitle(context, host != null ? host.list().size() : 0);
         if (host != null) {
             addMasterRow(context, host);
-            section(context, tr("Agregar", "Add"));
-            row(context, tr("Importar plugin", "Import plugin"), tr("Elegí un archivo .plugin de tu teléfono", "Pick a .plugin file from your phone"), () -> warnThen(this::pickFile));
             row(context, tr("Catálogo de plugins", "Plugin catalog"), tr("Abre el canal de IthaGram con plugins para descargar", "Opens the IthaGram channel with plugins to download"), this::openCatalog);
         }
         section(context, tr("Plugins instalados", "Installed plugins"));
@@ -306,32 +307,92 @@ public class IthaPluginsActivity extends BaseFragment {
         return iv;
     }
 
+    private void addTitle(Context context, int count) {
+        TextView big = new TextView(context);
+        big.setText("Plugins");
+        big.setTextSize(32);
+        big.setTypeface(AndroidUtilities.bold());
+        big.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        big.setPadding(dp(20), dp(8), dp(20), dp(2));
+        listLayout.addView(big, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        TextView sub = new TextView(context);
+        sub.setText(count == 1 ? tr("1 instalado", "1 installed") : count + tr(" instalados", " installed"));
+        sub.setTextSize(14);
+        sub.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        sub.setPadding(dp(20), 0, dp(20), dp(8));
+        listLayout.addView(sub, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+    }
+
+    /** Boton flotante "Importar plugin". */
+    private View buildFab(final Context context) {
+        LinearLayout fab = new LinearLayout(context);
+        fab.setOrientation(LinearLayout.HORIZONTAL);
+        fab.setGravity(Gravity.CENTER_VERTICAL);
+        fab.setPadding(dp(16), 0, dp(20), 0);
+        fab.setBackground(Theme.createRoundRectDrawable(dp(16), Theme.getColor(Theme.key_chats_actionBackground)));
+        fab.setElevation(dp(4));
+        ImageView plus = new ImageView(context);
+        plus.setImageResource(R.drawable.msg_add);
+        plus.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chats_actionIcon), PorterDuff.Mode.MULTIPLY));
+        fab.addView(plus, LayoutHelper.createLinear(24, 24, 0, 0, 12, 0));
+        TextView label = new TextView(context);
+        label.setText(tr("Importar plugin", "Import plugin"));
+        label.setTextSize(14);
+        label.setTypeface(AndroidUtilities.bold());
+        label.setTextColor(Theme.getColor(Theme.key_chats_actionIcon));
+        fab.addView(label, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
+        fab.setOnClickListener(v -> {
+            if (IthaPlugins.getHost() == null) {
+                showError(tr("Los plugins todavía no están listos. Cerrá y abrí la app.", "Plugins are not ready yet. Close and reopen the app."));
+                return;
+            }
+            warnThen(this::pickFile);
+        });
+        return fab;
+    }
+
     private void addPluginCard(final Context context, final IthaPlugins.Host host, final IthaPlugins.Info p, boolean pinned) {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackground(IthaMd3.roundBg(16));
-        card.setPadding(dp(16), dp(16), dp(16), dp(8));
+        card.setPadding(dp(16), dp(16), dp(8), dp(8));
 
         LinearLayout top = new LinearLayout(context);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
+        top.setPadding(0, 0, dp(8), 0);
 
         String name = p.name == null || p.name.isEmpty() ? p.id : p.name;
         int hue = Math.abs(name.hashCode()) % 360;
         GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.HSVToColor(new float[]{hue, 0.65f, 0.95f}), Color.HSVToColor(new float[]{(hue + 40) % 360, 0.75f, 0.75f})});
-        g.setCornerRadius(dp(14));
+        g.setCornerRadius(dp(16));
         TextView icon = new TextView(context);
         icon.setText(name.substring(0, 1).toUpperCase());
-        icon.setTextSize(24);
+        icon.setTextSize(20);
         icon.setTypeface(AndroidUtilities.bold());
         icon.setTextColor(Color.WHITE);
         icon.setGravity(Gravity.CENTER);
         icon.setBackground(g);
-        top.addView(icon, LayoutHelper.createLinear(52, 52));
+        top.addView(icon, LayoutHelper.createLinear(48, 48, 0, 0, 14, 0));
 
-        View spacer = new View(context);
-        top.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
+        LinearLayout texts = new LinearLayout(context);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView title = new TextView(context);
+        title.setText((pinned ? "\uD83D\uDCCC " : "") + name);
+        title.setTextSize(16);
+        title.setTypeface(AndroidUtilities.bold());
+        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        texts.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        String meta = (p.version == null || p.version.isEmpty() ? "" : tr("Versión ", "Version ") + p.version) + (p.author == null || p.author.isEmpty() ? "" : "  \u00B7  " + p.author);
+        if (!meta.isEmpty()) {
+            TextView metaView = new TextView(context);
+            metaView.setText(meta);
+            metaView.setTextSize(14);
+            metaView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+            texts.addView(metaView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
+        }
+        top.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         final Switch sw = new Switch(context);
         sw.setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked, Theme.key_windowBackgroundWhite, Theme.key_windowBackgroundWhite);
@@ -349,32 +410,14 @@ public class IthaPluginsActivity extends BaseFragment {
         top.addView(sw, LayoutHelper.createLinear(37, 20));
         card.addView(top, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
-        TextView title = new TextView(context);
-        title.setText((pinned ? "\uD83D\uDCCC " : "") + name);
-        title.setTextSize(20);
-        title.setTypeface(AndroidUtilities.bold());
-        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        card.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
-
-        String meta = (p.version == null || p.version.isEmpty() ? "" : tr("Versión ", "Version ") + p.version) + (p.author == null || p.author.isEmpty() ? "" : "  \u00B7  " + p.author);
-        if (!meta.isEmpty()) {
-            TextView metaView = new TextView(context);
-            metaView.setText(meta);
-            metaView.setTextSize(14);
-            metaView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
-            card.addView(metaView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
-        }
         if (p.description != null && !p.description.isEmpty()) {
             TextView desc = new TextView(context);
             desc.setText(p.description);
-            desc.setTextSize(15);
-            desc.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-            card.addView(desc, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 10, 0, 0));
+            desc.setTextSize(14);
+            desc.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+            desc.setPadding(0, 0, dp(8), 0);
+            card.addView(desc, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
         }
-
-        View divider = new View(context);
-        divider.setBackgroundColor(Theme.getColor(Theme.key_divider));
-        card.addView(divider, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 1, 0, 12, 0, 4));
 
         LinearLayout actions = new LinearLayout(context);
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -392,7 +435,7 @@ public class IthaPluginsActivity extends BaseFragment {
         View grow = new View(context);
         actions.addView(grow, new LinearLayout.LayoutParams(0, 1, 1f));
         actions.addView(actionIcon(context, R.drawable.msg_delete, Theme.getColor(Theme.key_text_RedBold), () -> confirmRemove(p)), LayoutHelper.createLinear(48, 44));
-        card.addView(actions, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        card.addView(actions, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 4, 0, 0));
 
         listLayout.addView(card, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 12, 6, 12, 6));
     }
