@@ -2480,12 +2480,18 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int t = getHeight() - extraHeight - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
 
+        // IthaGram: encabezado del chat en Material 3 = barra solida, sin capsulas de vidrio
+        final boolean ithaMd3 = glassMode && org.telegram.messenger.IthaStyles.chatHeader() == 1 && org.telegram.messenger.IthaConfig.hasChatHeader(this);
+        if (ithaMd3) {
+            org.telegram.messenger.IthaStyles.drawChatHeaderBar(canvas, getWidth(), getHeight() - extraHeight, getButtonsGlassBackgroundColor());
+        }
+
         if (glassDrawable != null && !glassOnlyBack && drawGlassTitle) {
             if (centerTitleAndGlass && titleTextView[0] != null && titleTextView[0].getVisibility() == View.VISIBLE) {
                 int titleWidth = (int) Math.ceil(titleTextView[0].getTextWidth()) + p * 2 + dp(48);
                 int titleLeft = (getWidth() - titleWidth) / 2 + Math.round(titleTextView[0].getTranslationX());
                 glassDrawable.setBounds(titleLeft, t, titleLeft + titleWidth, b);
-                if (!doNotDrawCenterGlass) {
+                if (!doNotDrawCenterGlass && !ithaMd3) {
                     glassDrawable.draw(canvas);
                 }
             } else {
@@ -2515,16 +2521,16 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 }
 
                 glassDrawable.setBounds(left, t, right, b);
-                if (!doNotDrawCenterGlass && !(org.telegram.messenger.IthaConfig.isChatPillHidden() && org.telegram.messenger.IthaConfig.hasChatHeader(this))) {
+                if (!doNotDrawCenterGlass && !ithaMd3 && !(org.telegram.messenger.IthaConfig.isChatPillHidden() && org.telegram.messenger.IthaConfig.hasChatHeader(this))) {
                     glassDrawable.draw(canvas);
                 }
             }
         }
-        if (glassDrawableBack != null && hasBackButton) {
+        if (glassDrawableBack != null && hasBackButton && !ithaMd3) {
             glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
         }
-        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay()) {
+        if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu && !isMenuPillInOverlay() && !ithaMd3) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
             glassDrawableMenu.draw(canvas);

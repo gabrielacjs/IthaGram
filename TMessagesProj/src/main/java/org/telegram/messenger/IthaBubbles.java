@@ -32,6 +32,29 @@ public class IthaBubbles {
         }
     }
 
+    private static int gap = -1;
+
+    /** Espacio extra entre mensajes, en dp (0 a 12). */
+    public static int gap() {
+        if (gap < 0) {
+            try {
+                gap = prefs().getInt("gap", 0);
+            } catch (Throwable t) {
+                gap = 0;
+            }
+            gap = Math.max(0, Math.min(12, gap));
+        }
+        return gap;
+    }
+
+    public static void setGap(int value) {
+        gap = Math.max(0, Math.min(12, value));
+        try {
+            prefs().edit().putInt("gap", gap).apply();
+        } catch (Throwable ignore) {
+        }
+    }
+
     private static SharedPreferences prefs() {
         return ApplicationLoader.applicationContext.getSharedPreferences("itha_bubbles", Context.MODE_PRIVATE);
     }

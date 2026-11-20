@@ -58,7 +58,7 @@ public class IthaPluginsActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(tr("Plugins", "Plugins"));
+        IthaMd3.centerTitle(actionBar, context, tr("Plugins", "Plugins"));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {

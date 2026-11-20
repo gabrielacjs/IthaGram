@@ -35,7 +35,18 @@ public class IthaSettingsActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle("Itha Ajustes");
+        actionBar.setTitle("");
+        // titulo centrado en la barra de arriba
+        TextView centerTitle = new TextView(context);
+        centerTitle.setText("Itha Ajustes");
+        centerTitle.setTextSize(20);
+        centerTitle.setTypeface(AndroidUtilities.bold());
+        centerTitle.setSingleLine(true);
+        centerTitle.setGravity(Gravity.CENTER);
+        centerTitle.setTextColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
+        FrameLayout.LayoutParams titleLp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, dp(56), Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        titleLp.topMargin = actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0;
+        actionBar.addView(centerTitle, titleLp);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -81,19 +92,11 @@ public class IthaSettingsActivity extends BaseFragment {
                 : cardBase;
         final int tint = (accent & 0x00FFFFFF) | 0x33000000;
 
-        TextView big = new TextView(context);
-        big.setText("Itha Ajustes");
-        big.setTextSize(32);
-        big.setTypeface(AndroidUtilities.bold());
-        big.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        big.setPadding(dp(20), dp(8), dp(20), dp(4));
-        listLayout.addView(big, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
-
         TextView sub = new TextView(context);
         sub.setText(tr("Todo lo que hace único a IthaGram", "Everything that makes IthaGram unique"));
         sub.setTextSize(14);
         sub.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
-        sub.setPadding(dp(20), 0, dp(20), dp(16));
+        sub.setPadding(dp(20), dp(12), dp(20), dp(16));
         listLayout.addView(sub, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
         LinearLayout group = md3Card(context, card);

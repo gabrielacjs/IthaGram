@@ -37,7 +37,7 @@ public class IthaChatListSettingsActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(tr("Ajustes lista de chat", "Chat list settings"));
+        IthaMd3.centerTitle(actionBar, context, tr("Ajustes lista de chat", "Chat list settings"));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {

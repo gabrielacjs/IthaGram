@@ -12006,7 +12006,13 @@ public class ChatActivity extends BaseFragment implements
             }
         };
         pinnedMessageView.setTag(1);
-        topPanelLayout.addView(pinnedMessageView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+        if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+            // IthaGram: 6dp de aire arriba para separar la tarjeta de la cabecera
+            pinnedMessageView.setPadding(0, AndroidUtilities.dp(6), 0, 0);
+            topPanelLayout.addView(pinnedMessageView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 54));
+        } else {
+            topPanelLayout.addView(pinnedMessageView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+        }
         topPanelLayout.setPriority(pinnedMessageView, 1);
         topPanelLayout.setDebugName(pinnedMessageView, "pinned message view");
         pinnedMessageView.setOnClickListener(v -> {
@@ -12043,6 +12049,9 @@ public class ChatActivity extends BaseFragment implements
 
         pinnedCounterTextView = new NumberTextView(getContext());
         pinnedCounterTextView.setAddNumber();
+        final boolean ithaMd3Pin = org.telegram.messenger.IthaStyles.chatHeader() == 1;
+        final int ithaPinAccent = getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader);
+        final int ithaPinText = getThemedColor(Theme.key_windowBackgroundWhiteBlackText);
         pinnedCounterTextView.setTextSize(14);
         pinnedCounterTextView.setTextColor(getThemedColor(Theme.key_chat_topPanelTitle));
         pinnedCounterTextView.setTypeface(AndroidUtilities.bold());
@@ -12129,7 +12138,14 @@ public class ChatActivity extends BaseFragment implements
         pinnedListButton.setScaleX(0.4f);
         pinnedListButton.setScaleY(0.4f);
         ThemeBind.selectorBackground(pinnedListButton, Theme.createSelectorDrawable(getThemedColor(Theme.key_inappPlayerClose) & 0x19ffffff), null, ThemeBind.alpha(Theme.key_inappPlayerClose, 0x19), getResourceProvider());
-        pinnedMessageView.addView(pinnedListButton, LayoutHelper.createFrame(36, 48, Gravity.RIGHT | Gravity.TOP, 0, 0, 7, 0));
+        if (ithaMd3Pin) {
+            // IthaGram: boton tonal redondeado (Material 3)
+            pinnedListButton.setColorFilter(ithaPinText);
+            pinnedListButton.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(10), androidx.core.graphics.ColorUtils.blendARGB(org.telegram.messenger.IthaStyles.barColor() != 0 ? org.telegram.messenger.IthaStyles.barColor() : getThemedColor(Theme.key_windowBackgroundWhite), ithaPinAccent, 0.28f) | 0xFF000000));
+            pinnedMessageView.addView(pinnedListButton, LayoutHelper.createFrame(34, 34, Gravity.RIGHT | Gravity.TOP, 0, 7, 9, 0));
+        } else {
+            pinnedMessageView.addView(pinnedListButton, LayoutHelper.createFrame(36, 48, Gravity.RIGHT | Gravity.TOP, 0, 0, 7, 0));
+        }
         pinnedListButton.setOnClickListener(v -> openPinnedMessagesList(false));
 
         closePinned = new ImageView(getContext());

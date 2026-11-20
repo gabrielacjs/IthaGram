@@ -44,7 +44,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(tr("Ajustes de chat", "Chat settings"));
+        IthaMd3.centerTitle(actionBar, context, tr("Ajustes de chat", "Chat settings"));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -85,6 +85,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
         listLayout.addView(info, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
         section(context, tr("Encabezado de chat", "Chat header"));
+        headerStyleRow(context);
         check(context, tr("Ocultar avatar", "Hide avatar"), tr("Quita el avatar del encabezado. Tocá el título para ver el perfil.", "Removes the avatar from the header. Tap the title to see the profile."),
                 IthaConfig.isChatAvatarHidden(), (value) -> {
                     IthaConfig.setChatAvatarHidden(value);
@@ -103,22 +104,27 @@ public class IthaChatSettingsActivity extends BaseFragment {
         check(context, tr("Llamada dentro del menú", "Call inside the menu"), tr("Quita el botón de llamada de la barra; queda en el menú de los tres puntos. Se aplica al abrir un chat.", "Removes the call button from the bar; it stays in the three-dots menu. Applies when you open a chat."),
                 IthaConfig.isChatCallInMenu(), (value) -> {
                     IthaConfig.setChatCallInMenu(value);
-                });
-        check(context, tr("Píldora compacta", "Compact pill"), tr("Ajusta el fondo del título más al texto, sin espacio de sobra.", "Fits the title background closer to the text."),
-                IthaConfig.isChatPillCompact(), (value) -> {
-                    IthaConfig.setChatPillCompact(value);
                     preview.invalidate();
                 });
+        if (org.telegram.messenger.IthaStyles.chatHeader() == 0) {
+            check(context, tr("Píldora compacta", "Compact pill"), tr("Ajusta el fondo del título más al texto, sin espacio de sobra.", "Fits the title background closer to the text."),
+                    IthaConfig.isChatPillCompact(), (value) -> {
+                        IthaConfig.setChatPillCompact(value);
+                        preview.invalidate();
+                    });
+        }
         check(context, tr("Centrar título", "Center title"), tr("Centra el avatar y el nombre entre el botón de volver y el menú.", "Centers the avatar and name between the back and menu buttons."),
                 IthaConfig.isChatTitleCentered(), (value) -> {
                     IthaConfig.setChatTitleCentered(value);
                     preview.invalidate();
                 });
-        check(context, tr("Ocultar fondo de píldora", "Hide pill background"), tr("Quita el fondo de vidrio detrás del título del chat.", "Removes the glass background behind the chat title."),
-                IthaConfig.isChatPillHidden(), (value) -> {
-                    IthaConfig.setChatPillHidden(value);
-                    preview.invalidate();
-                });
+        if (org.telegram.messenger.IthaStyles.chatHeader() == 0) {
+            check(context, tr("Ocultar fondo de píldora", "Hide pill background"), tr("Quita el fondo de vidrio detrás del título del chat.", "Removes the glass background behind the chat title."),
+                    IthaConfig.isChatPillHidden(), (value) -> {
+                        IthaConfig.setChatPillHidden(value);
+                        preview.invalidate();
+                    });
+        }
 
         section(context, tr("Burbujas de mensajes", "Message bubbles"));
         bubblePreview = new BubblePreview(context);
@@ -126,7 +132,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
         IthaMd3.add(listLayout, bubblePreview);
         bubbleRow(context);
         radiusRow(context);
-        resetRow(context);
+        gapRow(context);
     }
 
     /** Deslizador para el redondeo de las esquinas de las burbujas (0 a 28). */
@@ -142,6 +148,9 @@ public class IthaChatSettingsActivity extends BaseFragment {
         title.setTextSize(16);
         title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         head.addView(title, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
+        final TextView resetR = resetButton(context);
+        resetR.setVisibility(SharedConfig.bubbleRadius != 17 ? View.VISIBLE : View.GONE);
+        head.addView(resetR, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 0, 12, 0));
         final TextView value = new TextView(context);
         value.setText(SharedConfig.bubbleRadius + " dp");
         value.setTextSize(14);
@@ -163,6 +172,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
                     SharedConfig.bubbleRadius = v;
                     org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putInt("bubbleRadius", v).apply();
                     value.setText(v + " dp");
+                    resetR.setVisibility(v != 17 ? View.VISIBLE : View.GONE);
                     if (bubblePreview != null) {
                         bubblePreview.invalidate();
                     }
@@ -183,26 +193,134 @@ public class IthaChatSettingsActivity extends BaseFragment {
                 return RADIUS_MAX;
             }
         });
+        resetR.setOnClickListener(v -> {
+            SharedConfig.bubbleRadius = 17;
+            org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putInt("bubbleRadius", 17).apply();
+            value.setText("17 dp");
+            bar.setProgress(17 / (float) RADIUS_MAX);
+            resetR.setVisibility(View.GONE);
+            if (bubblePreview != null) {
+                bubblePreview.invalidate();
+            }
+        });
         row.addView(bar, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 4, 0, 0));
         IthaMd3.add(listLayout, row);
     }
 
-    /** Vuelve a lo normal de Telegram: burbujas con cola y esquinas de 17. */
-    private void resetRow(Context context) {
-        TextView reset = new TextView(context);
-        reset.setText(tr("Volver a lo de Telegram", "Back to Telegram default"));
-        reset.setTextSize(15);
-        reset.setTypeface(AndroidUtilities.bold());
-        reset.setGravity(Gravity.CENTER);
-        reset.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
-        IthaMd3.style(reset);
-        reset.setOnClickListener(v -> {
-            SharedConfig.bubbleRadius = 17;
-            org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putInt("bubbleRadius", 17).apply();
-            org.telegram.messenger.IthaBubbles.set(0);
-            rebuild();
+    /** Boton chico "Restablecer" que aparece solo cuando el valor no es el de Telegram. */
+    private TextView resetButton(Context context) {
+        TextView t = new TextView(context);
+        t.setText(tr("Restablecer", "Reset"));
+        t.setTextSize(13);
+        t.setTypeface(AndroidUtilities.bold());
+        t.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
+        t.setPadding(dp(8), dp(2), dp(8), dp(2));
+        return t;
+    }
+
+    /** Deslizador para el espacio extra entre mensajes (0 a 12 dp). */
+    private void gapRow(Context context) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
+        IthaMd3.style(row);
+        row.setPadding(dp(20), dp(12), dp(20), dp(8));
+        LinearLayout head = new LinearLayout(context);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        TextView title = new TextView(context);
+        title.setText(tr("Espacio entre mensajes", "Space between messages"));
+        title.setTextSize(16);
+        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        head.addView(title, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
+        final TextView resetG = resetButton(context);
+        resetG.setVisibility(org.telegram.messenger.IthaBubbles.gap() != 0 ? View.VISIBLE : View.GONE);
+        head.addView(resetG, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 0, 12, 0));
+        final TextView value = new TextView(context);
+        value.setText("+" + org.telegram.messenger.IthaBubbles.gap() + " dp");
+        value.setTextSize(14);
+        value.setTypeface(AndroidUtilities.bold());
+        value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader));
+        head.addView(value, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
+        row.addView(head, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        final SeekBarView bar = new SeekBarView(context);
+        bar.setReportChanges(true);
+        bar.setSeparatorsCount(13);
+        bar.setOuterColor(Theme.getColor(Theme.key_player_progress));
+        bar.setProgress(org.telegram.messenger.IthaBubbles.gap() / 12f);
+        bar.setDelegate(new SeekBarView.SeekBarViewDelegate() {
+            @Override
+            public void onSeekBarDrag(boolean stop, float progress) {
+                int v = Math.round(12 * progress);
+                if (v != org.telegram.messenger.IthaBubbles.gap()) {
+                    org.telegram.messenger.IthaBubbles.setGap(v);
+                    value.setText("+" + v + " dp");
+                    resetG.setVisibility(v != 0 ? View.VISIBLE : View.GONE);
+                    if (bubblePreview != null) {
+                        bubblePreview.invalidate();
+                    }
+                }
+            }
+
+            @Override
+            public void onSeekBarPressed(boolean pressed) {
+            }
+
+            @Override
+            public CharSequence getContentDescription() {
+                return String.valueOf(org.telegram.messenger.IthaBubbles.gap());
+            }
+
+            @Override
+            public int getStepsCount() {
+                return 12;
+            }
         });
-        listLayout.addView(reset, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 52, 12, 10, 12, 10));
+        resetG.setOnClickListener(v -> {
+            org.telegram.messenger.IthaBubbles.setGap(0);
+            value.setText("+0 dp");
+            bar.setProgress(0f);
+            resetG.setVisibility(View.GONE);
+            if (bubblePreview != null) {
+                bubblePreview.invalidate();
+            }
+        });
+        row.addView(bar, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 38, 0, 4, 0, 0));
+        IthaMd3.add(listLayout, row);
+    }
+
+    /** Elegir el estilo del encabezado del chat: Telegram o Material 3. */
+    private void headerStyleRow(Context context) {
+        final String[] names = new String[]{
+                tr("Actual de Telegram", "Telegram default"),
+                tr("Material 3", "Material 3")};
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
+        IthaMd3.style(row);
+        row.setPadding(dp(20), dp(12), dp(20), dp(12));
+        TextView title = new TextView(context);
+        title.setText(tr("Estilo del encabezado", "Header style"));
+        title.setTextSize(16);
+        title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        row.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        TextView value = new TextView(context);
+        value.setText(names[org.telegram.messenger.IthaStyles.chatHeader()]);
+        value.setTextSize(13);
+        value.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        row.addView(value, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
+        row.setOnClickListener(v -> {
+            if (getParentActivity() == null) {
+                return;
+            }
+            org.telegram.ui.ActionBar.AlertDialog.Builder b = new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity());
+            b.setTitle(tr("Estilo del encabezado", "Header style"));
+            b.setItems(names, (d, which) -> {
+                org.telegram.messenger.IthaStyles.setChatHeader(which);
+                rebuild();
+            });
+            b.setNegativeButton(tr("Cancelar", "Cancel"), null);
+            showDialog(b.create());
+        });
+        IthaMd3.add(listLayout, row);
     }
 
     /** Elegir el estilo de las burbujas: Telegram, iOS o Material 3. */
@@ -288,7 +406,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(132));
+            setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), dp(138));
         }
 
         private void bubble(Canvas canvas, float left, float top, boolean out, String text, String time) {
@@ -339,7 +457,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
         @Override
         protected void onDraw(Canvas canvas) {
             bubble(canvas, dp(20), dp(18), false, tr("¿Ya probaste IthaGram?", "Tried IthaGram yet?"), "16:30");
-            bubble(canvas, 0, dp(72), true, tr("¡Sí, está genial!", "Yes, it's great!"), "16:31");
+            bubble(canvas, 0, dp(63) + dp(org.telegram.messenger.IthaBubbles.gap()), true, tr("¡Sí, está genial!", "Yes, it's great!"), "16:31");
         }
     }
 
@@ -357,8 +475,121 @@ public class IthaChatSettingsActivity extends BaseFragment {
             return new String(Character.toChars(value.codePointAt(0))).toUpperCase();
         }
 
+        private void icon(Canvas canvas, int res, float cx, float cy, int color, int size) {
+            android.graphics.drawable.Drawable d = getContext().getResources().getDrawable(res).mutate();
+            d.setColorFilter(new android.graphics.PorterDuffColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN));
+            final int hs = dp(size) / 2;
+            d.setBounds((int) cx - hs, (int) cy - hs, (int) cx + hs, (int) cy + hs);
+            d.draw(canvas);
+        }
+
+        private void avatarCircle(Canvas canvas, float cx, float cy, float r, String initial) {
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Theme.getColor(Theme.key_avatar_backgroundBlue));
+            canvas.drawCircle(cx, cy, r, paint);
+            paint.setColor(0xffffffff);
+            paint.setTypeface(AndroidUtilities.bold());
+            paint.setTextSize(r * 0.9f);
+            canvas.drawText(initial, cx - paint.measureText(initial) / 2f, cy + r * 0.32f, paint);
+        }
+
+        /** Encabezado en Material 3: barra solida, avatar a la izquierda, iconos a la derecha. */
+        private void drawMd3(Canvas canvas) {
+            final int w = getMeasuredWidth();
+            final int h = getMeasuredHeight();
+            final float cy = h / 2f;
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(androidx.core.graphics.ColorUtils.blendARGB(Theme.getColor(Theme.key_windowBackgroundGray),
+                    Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), 0.1f));
+            canvas.drawRect(0, 0, w, h, paint);
+
+            final int bar = Theme.getColor(Theme.key_windowBackgroundWhite);
+            final int text = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
+            final int hint = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
+            final float top = cy - dp(32);
+            final float bottom = cy + dp(32);
+            paint.setColor(bar);
+            canvas.drawRect(0, top, w, bottom, paint);
+            paint.setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(text, 31));
+            canvas.drawRect(0, bottom - dp(1), w, bottom, paint);
+
+            // flecha de volver
+            paint.setColor(text);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(dp(2));
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            canvas.drawLine(dp(31), cy - dp(7), dp(24), cy, paint);
+            canvas.drawLine(dp(24), cy, dp(31), cy + dp(7), paint);
+            paint.setStyle(Paint.Style.FILL);
+
+            TLRPC.User user = UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser();
+            String name = user != null ? ContactsController.formatName(user.first_name, user.last_name) : null;
+            if (name == null || name.trim().isEmpty()) {
+                name = "IthaGram";
+            }
+            final String initial = initialOf(name);
+            final String sub = tr("en línea", "online");
+            final boolean avatar = !IthaConfig.isChatAvatarHidden();
+            final boolean menuAv = avatar && IthaConfig.isChatAvatarMenu();
+            final boolean avLeft = avatar && !menuAv && !IthaConfig.isChatAvatarRight();
+            final boolean avRight = avatar && !menuAv && IthaConfig.isChatAvatarRight();
+            final boolean callVisible = !IthaConfig.isChatCallInMenu();
+
+            final float leftEdge = dp(56);
+            final float rightEdge = w - (callVisible ? dp(100) : dp(52));
+            final float region = rightEdge - leftEdge;
+            final float avW = dp(48);
+            paint.setTypeface(AndroidUtilities.bold());
+            paint.setTextSize(dp(16));
+            final float nameW = paint.measureText(name);
+            paint.setTypeface(null);
+            paint.setTextSize(dp(13));
+            final float subW = paint.measureText(sub);
+            final float textMax = Math.max(dp(40), region - (avLeft ? avW : 0) - (avRight ? avW : 0) - dp(8));
+            final float textW = Math.min(Math.max(nameW, subW), textMax);
+            final float groupW = (avLeft ? avW : 0) + textW + (avRight ? avW : 0);
+            float x = IthaConfig.isChatTitleCentered() ? leftEdge + Math.max(0, (region - groupW) / 2f) : leftEdge + dp(4);
+
+            if (avLeft) {
+                avatarCircle(canvas, x + dp(20), cy, dp(20), initial);
+                x += avW;
+            }
+            paint.setColor(text);
+            paint.setTypeface(AndroidUtilities.bold());
+            paint.setTextSize(dp(16));
+            String shown = name;
+            while (shown.length() > 1 && paint.measureText(shown) > textW) {
+                shown = shown.substring(0, shown.length() - 1);
+            }
+            canvas.drawText(shown, x, cy - dp(2), paint);
+            paint.setColor(hint);
+            paint.setTypeface(null);
+            paint.setTextSize(dp(13));
+            canvas.drawText(sub, x, cy + dp(15), paint);
+            x += textW;
+            if (avRight) {
+                avatarCircle(canvas, x + dp(8) + dp(20), cy, dp(20), initial);
+            }
+
+            if (callVisible) {
+                icon(canvas, R.drawable.msg_calls, w - dp(76), cy, text, 24);
+            }
+            if (menuAv) {
+                avatarCircle(canvas, w - dp(28), cy, dp(17), initial);
+            } else {
+                paint.setColor(text);
+                for (int i = -1; i <= 1; i++) {
+                    canvas.drawCircle(w - dp(28), cy + i * dp(6), dp(1.6f), paint);
+                }
+            }
+        }
+
         @Override
         protected void onDraw(Canvas canvas) {
+            if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+                drawMd3(canvas);
+                return;
+            }
             final int w = getMeasuredWidth();
             final int h = getMeasuredHeight();
             final float cy = h / 2f;
@@ -385,8 +616,15 @@ public class IthaChatSettingsActivity extends BaseFragment {
             paint.setStyle(Paint.Style.FILL);
 
             // boton de menu (tres puntos)
+            final boolean callVisible = !IthaConfig.isChatCallInMenu();
             paint.setColor(bubble);
-            canvas.drawCircle(w - dp(34), cy, dp(20), paint);
+            if (callVisible) {
+                rect.set(w - dp(88), cy - dp(20), w - dp(14), cy + dp(20));
+                canvas.drawRoundRect(rect, dp(20), dp(20), paint);
+                icon(canvas, R.drawable.msg_calls, w - dp(64), cy, text, 22);
+            } else {
+                canvas.drawCircle(w - dp(34), cy, dp(20), paint);
+            }
             paint.setColor(text);
             for (int i = -1; i <= 1; i++) {
                 canvas.drawCircle(w - dp(34), cy + i * dp(6), dp(1.6f), paint);
@@ -410,7 +648,7 @@ public class IthaChatSettingsActivity extends BaseFragment {
             final float subW = paint.measureText(sub);
             // en el chat el contenido va pegado a la izquierda; compacta = la pildora se ajusta al texto
             final float pl0 = dp(60);
-            final float full = w - dp(60) * 2;
+            final float full = w - dp(60) - (callVisible ? dp(100) : dp(60));
             final float textW = Math.max(nameW, subW);
             final boolean menuAv = avatar && IthaConfig.isChatAvatarMenu();
             final boolean inPill = avatar && !menuAv;

@@ -35,6 +35,24 @@ public class IthaMd3 {
         return Theme.createRoundRectDrawable(dp(classicRadius), Theme.getColor(Theme.key_windowBackgroundWhite));
     }
 
+    /** Titulo centrado en la barra de arriba (reemplaza a actionBar.setTitle). */
+    public static void centerTitle(org.telegram.ui.ActionBar.ActionBar bar, android.content.Context context, String title) {
+        bar.setTitle("");
+        android.widget.TextView t = new android.widget.TextView(context);
+        t.setText(title);
+        t.setTextSize(20);
+        t.setTypeface(org.telegram.messenger.AndroidUtilities.bold());
+        t.setSingleLine(true);
+        t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setTextColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, dp(56), android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL);
+        lp.topMargin = bar.getOccupyStatusBar() ? org.telegram.messenger.AndroidUtilities.statusBarHeight : 0;
+        lp.leftMargin = dp(72);
+        lp.rightMargin = dp(72);
+        bar.addView(t, lp);
+    }
+
     /** Fondo de una fila de ajustes. */
     public static void style(View v) {
         if (on()) {

@@ -12181,6 +12181,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             resultHeight = botDraftHeightController.getOverrideMeasureHeight(currentMessageObject, normHeight);
         }
 
+        resultHeight += dp(org.telegram.messenger.IthaBubbles.gap()); // IthaGram: espacio extra entre mensajes
         additionalPaddingHeight = Math.max(0, resultHeight - normHeight);
 
         setMeasuredDimension(

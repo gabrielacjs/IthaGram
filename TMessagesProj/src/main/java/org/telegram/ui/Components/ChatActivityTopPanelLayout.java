@@ -59,6 +59,23 @@ public class ChatActivityTopPanelLayout extends AnimatedLinearLayout {
                 || ev.getAction() == MotionEvent.ACTION_DOWN && backgroundDrawable != null && backgroundDrawable.getBounds().contains((int) ev.getX(), (int) ev.getY());
     }
 
+    // IthaGram: tarjeta tonal de Material 3 en lugar del vidrio
+    private final RectF ithaCardRect = new RectF();
+    private final android.graphics.Paint ithaCardPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    private float ithaCardAlpha = 1f;
+
+    private void drawIthaCard(Canvas canvas) {
+        final int bar = org.telegram.messenger.IthaStyles.barColor();
+        final int base = bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite);
+        final int text = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
+        final int card = base | 0xFF000000;
+        final int a = (int) (255 * Math.max(0f, Math.min(1f, ithaCardAlpha)));
+        ithaCardPaint.setColor(card);
+        ithaCardPaint.setAlpha(a);
+        final float radius = Math.min(dp(14), ithaCardRect.height() / 2f);
+        canvas.drawRoundRect(ithaCardRect, radius, radius, ithaCardPaint);
+    }
+
     private final Path clipPath = new Path();
     private final RectF clipRectF = new RectF();
 
@@ -68,7 +85,10 @@ public class ChatActivityTopPanelLayout extends AnimatedLinearLayout {
 
         clipRectF.set(getPaddingLeft(), getPaddingTop(), getMeasuredWidth() - getPaddingRight(), getPaddingTop() + bgHeight);
 
-        final float r = Math.min(dp(18), Math.min(clipRectF.width(), clipRectF.height()) / 2f);
+        final boolean ithaMd3 = org.telegram.messenger.IthaStyles.chatHeader() == 1;
+        final float r = Math.min(dp(ithaMd3 ? 14 : 18), Math.min(clipRectF.width(), clipRectF.height()) / 2f);
+        ithaCardRect.set(clipRectF.left, clipRectF.top + dp(6), clipRectF.right, clipRectF.bottom);
+        ithaCardAlpha = bgAlpha;
         clipPath.rewind();
         clipPath.addRoundRect(clipRectF, r, r, Path.Direction.CW);
 
@@ -106,7 +126,9 @@ public class ChatActivityTopPanelLayout extends AnimatedLinearLayout {
     protected void dispatchDraw(@NonNull Canvas canvas) {
         if (getMetadata().getTotalVisibility() == 0) return;
 
-        if (backgroundDrawable != null) {
+        if (org.telegram.messenger.IthaStyles.chatHeader() == 1) {
+            drawIthaCard(canvas);
+        } else if (backgroundDrawable != null) {
             backgroundDrawable.draw(canvas);
         }
 
