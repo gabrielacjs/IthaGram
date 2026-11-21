@@ -668,7 +668,12 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int width = MeasureSpec.getSize(widthMeasureSpec);
-        final int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE && !ithaMenuSlotAvatar() ? 54 : 0) + 16);
+        int availableWidth = width - dp((avatarImageView.getVisibility() == VISIBLE && !ithaMenuSlotAvatar() ? 54 : 0) + 16);
+        // IthaGram: el texto nunca ocupa mas de lo que entra en la pildora (cualquier tamano de pantalla, letra o cantidad de botones)
+        if (ithaPillCap > 0 && getParent() instanceof ActionBar && (org.telegram.messenger.IthaConfig.isChatTitleCentered()
+                || org.telegram.messenger.IthaConfig.isChatAvatarRight() || org.telegram.messenger.IthaConfig.isChatPillCompact())) {
+            availableWidth = Math.max(dp(40), Math.min(availableWidth, ithaPillCap));
+        }
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(avatarSizeInDp) - 2, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -768,6 +773,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     private boolean glassMode;
     // IthaGram: ancho de la banda de texto (centrado) y ancho disponible, para que la barra detecte textos nuevos
     public int ithaBandWidth, ithaAvailWidth;
+    /** IthaGram: ancho maximo de texto que entra de verdad dentro de la pildora (lo calcula la barra con el ancho real de la pildora). */
+    public int ithaPillCap;
 
     // IthaGram: avatar en el boton de menu (ocupa el lugar de los tres puntos)
     public org.telegram.ui.ActionBar.ActionBarMenuItem ithaMenuItem;

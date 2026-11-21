@@ -205,6 +205,17 @@ public class IthaConfig {
             }
             org.telegram.ui.Components.ChatAvatarContainer c = (org.telegram.ui.Components.ChatAvatarContainer) child;
             final boolean avatar = c.hasVisibleAvatar() && !c.ithaMenuSlotAvatar();
+            // ancho de texto que entra de verdad en la pildora: se le avisa al contenedor para que nunca deje el avatar fuera
+            final int capLeft = c.getLeftPadding() + (avatar && !avatarRight ? org.telegram.messenger.AndroidUtilities.dp(49.66f) : org.telegram.messenger.AndroidUtilities.dp(13));
+            final int capRight = avatar && avatarRight ? org.telegram.messenger.AndroidUtilities.dp(58) : org.telegram.messenger.AndroidUtilities.dp(16);
+            final int cap = Math.max(org.telegram.messenger.AndroidUtilities.dp(40), (rightDefault - leftDefault) - capLeft - capRight);
+            if (c.ithaPillCap != cap) {
+                c.ithaPillCap = cap;
+                c.post(() -> c.requestLayout());
+            }
+            if (c.ithaAvailWidth > cap) {
+                c.ithaAvailWidth = cap;
+            }
             // getVisualWidth viene recortado 8dp si la compacta esta activa: se lo devolvemos para sacar el ancho del texto
             int textW = Math.max(0, c.getVisualWidth() + (compact ? org.telegram.messenger.AndroidUtilities.dp(8) : 0)
                     - (avatar ? org.telegram.messenger.AndroidUtilities.dp(70) : org.telegram.messenger.AndroidUtilities.dp(34)));
