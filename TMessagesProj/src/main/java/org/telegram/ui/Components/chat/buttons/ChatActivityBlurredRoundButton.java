@@ -57,9 +57,30 @@ public class ChatActivityBlurredRoundButton extends FrameLayout implements Facto
         backgroundDrawable.setBounds(0, 0, w, h);
     }
 
+    // IthaGram: en Material 3 el boton es un circulo tonal liso, sin el cristal de Telegram
+    private boolean ithaTonal;
+    private final android.graphics.Paint ithaPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+    public void setIthaTonal(boolean tonal) {
+        ithaTonal = tonal;
+        invalidate();
+    }
+
+    public static int ithaTonalColor(Theme.ResourcesProvider resourcesProvider) {
+        final int bar = org.telegram.messenger.IthaStyles.barColor();
+        final int base = (bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider)) | 0xFF000000;
+        final int accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourcesProvider);
+        return androidx.core.graphics.ColorUtils.blendARGB(base, accent, 0.22f) | 0xFF000000;
+    }
+
     @Override
     public void draw(@NonNull Canvas canvas) {
-        backgroundDrawable.draw(canvas);
+        if (ithaTonal && org.telegram.messenger.IthaStyles.input() == 1) {
+            ithaPaint.setColor(ithaTonalColor(resourcesProvider));
+            canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, dp(BUTTON_SIZE / 2f), ithaPaint);
+        } else {
+            backgroundDrawable.draw(canvas);
+        }
         super.draw(canvas);
     }
 

@@ -137,6 +137,7 @@ public class ChatActivityChannelButtonsLayout extends FrameLayout implements Fac
                 button.setContentDescription(getString(R.string.BroadcastGroupInfo));
             }
 
+            button.setIthaTonal(true);
             ScaleStateListAnimator.apply(button, .13f, 2f);
             button.setVisibility(GONE);
             button.setOnClickListener(v -> {
@@ -415,7 +416,16 @@ public class ChatActivityChannelButtonsLayout extends FrameLayout implements Fac
 
     @Override
     protected boolean drawChild(@NonNull Canvas canvas, View child, long drawingTime) {
-        if (child == container && containerDrawable != null) {
+        if (child == container && org.telegram.messenger.IthaStyles.input() == 1) {
+            // IthaGram: Material 3, fondo tonal liso (se esconde cuando el boton central ya lleva el color de acento)
+            final float tonal = 1f - animatorCenterAccentBackground.getFloatValue();
+            if (tonal > 0 && totalVisibilityFactor > 0) {
+                tmpRect.set(totalWidthLeft + dp(7), dp(6), getMeasuredWidth() - dp(7) - totalWidthRight, getMeasuredHeight() - dp(6));
+                backgroundAccentPaint.setColor(ChatActivityBlurredRoundButton.ithaTonalColor(resourcesProvider));
+                backgroundAccentPaint.setAlpha((int) (255 * tonal * totalVisibilityFactor));
+                canvas.drawRoundRect(tmpRect, dp(22), dp(22), backgroundAccentPaint);
+            }
+        } else if (child == container && containerDrawable != null) {
             tmpRect.set(
                 totalWidthLeft + dp(1), 0,
                 getMeasuredWidth() - dp(1) - totalWidthRight,
@@ -433,15 +443,17 @@ public class ChatActivityChannelButtonsLayout extends FrameLayout implements Fac
     protected void dispatchDraw(@NonNull Canvas canvas) {
         final int accentAlpha = (int) (255 * totalVisibilityFactor * animatorCenterAccentBackground.getFloatValue());
         if (accentAlpha > 0) {
+            final boolean ithaMd3 = org.telegram.messenger.IthaStyles.input() == 1;
+            // IthaGram: en Material 3 el boton central mide lo mismo que los botones redondos (44dp)
             tmpRect.set(
-                totalWidthLeft + dp(10),
-                dp(9),
-                getMeasuredWidth() - dp(10) - totalWidthRight,
-                getMeasuredHeight() - dp(9)
+                totalWidthLeft + (ithaMd3 ? dp(7) : dp(10)),
+                ithaMd3 ? dp(6) : dp(9),
+                getMeasuredWidth() - (ithaMd3 ? dp(7) : dp(10)) - totalWidthRight,
+                getMeasuredHeight() - (ithaMd3 ? dp(6) : dp(9))
             );
             backgroundAccentPaint.setColor(accentColor);
             backgroundAccentPaint.setAlpha(accentAlpha);
-            canvas.drawRoundRect(tmpRect, dp(19), dp(19), backgroundAccentPaint);
+            canvas.drawRoundRect(tmpRect, ithaMd3 ? dp(22) : dp(19), ithaMd3 ? dp(22) : dp(19), backgroundAccentPaint);
         }
 
         super.dispatchDraw(canvas);

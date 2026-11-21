@@ -302,10 +302,12 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         // el icono de emojis queda afuera, a la izquierda, y el microfono afuera, a la derecha
         // con boton de Menu de un bot, el campo arranca antes para encerrarlo completo
         boolean botMenu = false;
+        boolean enterVisible = true;
         for (int i = 0; i < inputIslandBubbleContainer.getChildCount(); i++) {
             final View v = inputIslandBubbleContainer.getChildAt(i);
             if (v instanceof org.telegram.ui.Components.ChatActivityEnterView) {
                 botMenu = ((org.telegram.ui.Components.ChatActivityEnterView) v).ithaHasBotMenu();
+                enterVisible = v.getVisibility() == View.VISIBLE;
                 break;
             }
         }
@@ -324,6 +326,8 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         final int accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader);
         ithaInputPaint.setColor(androidx.core.graphics.ColorUtils.blendARGB(base, accent, 0.13f) | 0xFF000000);
         ithaInputPaint.setAlpha(alpha);
+        // sin campo de escritura (barra "Unirme", "Silenciar", bots...): solo la franja, sin el recuadro detras de los botones
+        if (!enterVisible) return;
         canvas.drawRoundRect(tmpRectF, r, r, ithaInputPaint);
     }
 
