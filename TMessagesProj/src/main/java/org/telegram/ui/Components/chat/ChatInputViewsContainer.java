@@ -300,7 +300,16 @@ public class ChatInputViewsContainer extends FrameLayout implements Theme.Colora
         final int base = (bar != 0 ? bar : Theme.getColor(Theme.key_windowBackgroundWhite)) | 0xFF000000;
         // el campo termina antes del boton de microfono / enviar, que queda aparte (cuadrado redondeado)
         // el icono de emojis queda afuera, a la izquierda, y el microfono afuera, a la derecha
-        tmpRectF.set(tmpRect.left + dp(7) + dp(39), tmpRect.top + dp(7), tmpRect.right - dp(7) - dp(47), tmpRect.bottom - dp(7));
+        // con boton de Menu de un bot, el campo arranca antes para encerrarlo completo
+        boolean botMenu = false;
+        for (int i = 0; i < inputIslandBubbleContainer.getChildCount(); i++) {
+            final View v = inputIslandBubbleContainer.getChildAt(i);
+            if (v instanceof org.telegram.ui.Components.ChatActivityEnterView) {
+                botMenu = ((org.telegram.ui.Components.ChatActivityEnterView) v).ithaHasBotMenu();
+                break;
+            }
+        }
+        tmpRectF.set(tmpRect.left + dp(7) + (botMenu ? dp(4) : dp(39)), tmpRect.top + dp(7), tmpRect.right - dp(7) - dp(47), tmpRect.bottom - dp(7));
         final float r = Math.min(dp(24), tmpRectF.height() / 2f);
         final int alpha = blurredBackgroundDrawable.getAlpha();
         // franja a todo el ancho que encierra el campo y el boton

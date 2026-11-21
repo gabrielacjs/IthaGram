@@ -4700,6 +4700,11 @@ public class ChatActivityEnterView extends FrameLayout implements
         return parentFragment;
     }
 
+    // IthaGram: el campo de Material 3 necesita saber si hay boton de Menu del bot a la izquierda
+    public boolean ithaHasBotMenu() {
+        return botCommandsMenuButton != null && botCommandsMenuButton.getTag() != null;
+    }
+
     private void checkBotMenu() {
         final boolean shouldBeExpanded = (messageEditText == null || TextUtils.isEmpty(messageEditText.getText())) && !(keyboardVisible || waitingForKeyboardOpen || isPopupShowing());
         if (shouldBeExpanded) {
@@ -14790,9 +14795,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                 ((MarginLayoutParams) richDraftPreview.getLayoutParams()).leftMargin = dp(54) + width;
             }
         } else {
-            ((MarginLayoutParams) emojiButton.getLayoutParams()).leftMargin = dp(3);
+            // IthaGram: en Material 3 el emoji queda mas a la izquierda, con el mismo aire que el microfono
+            final int ithaEmojiLeft = org.telegram.messenger.IthaStyles.input() == 1 ? dp(-7) : dp(3);
+            ((MarginLayoutParams) emojiButton.getLayoutParams()).leftMargin = ithaEmojiLeft;
             if (deleteRichDraftButton != null) {
-                ((MarginLayoutParams) deleteRichDraftButton.getLayoutParams()).leftMargin = dp(3);
+                ((MarginLayoutParams) deleteRichDraftButton.getLayoutParams()).leftMargin = ithaEmojiLeft;
             }
             if (messageEditText != null) {
                 ((MarginLayoutParams) messageEditText.getLayoutParams()).leftMargin = dp(50);
