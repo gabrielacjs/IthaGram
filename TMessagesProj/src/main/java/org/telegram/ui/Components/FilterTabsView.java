@@ -1508,12 +1508,50 @@ public class FilterTabsView extends FrameLayout {
             final float add = additionalTabWidth / 2f;
 
             final int y = height / 2 - dp(14);
-            selectorDrawable.setBounds((int) (indicatorX - dp(TAB_INTERNAL_PADDING) - add), y, (int) (indicatorX + indicatorWidth + dp(TAB_INTERNAL_PADDING) + add), y + dp(28));
-            selectorDrawable.setAlpha(31);
+            final float ithaPad = org.telegram.messenger.IthaStyles.list() == 1 ? 9f : TAB_INTERNAL_PADDING;
+            selectorDrawable.setBounds((int) (indicatorX - dp(ithaPad) - add), y, (int) (indicatorX + indicatorWidth + dp(ithaPad) + add), y + dp(28));
+            if (org.telegram.messenger.IthaStyles.list() == 1) {
+                // IthaGram: chip relleno de Material 3 para la pestana activa
+                final float chipRad = AndroidUtilities.dpf2(11);
+                selectorDrawable.setCornerRadii(new float[]{chipRad, chipRad, chipRad, chipRad, chipRad, chipRad, chipRad, chipRad});
+                selectorDrawable.setAlpha((int) (96 * listView.getAlpha()));
+            } else {
+                selectorDrawable.setAlpha(31);
+            }
             selectorDrawable.draw(canvas);
             canvas.restore();
         }
+
+        if (org.telegram.messenger.IthaStyles.list() == 1) {
+            // IthaGram: chips con borde para las pestanas no activas
+            ithaChipPaint.setStyle(Paint.Style.STROKE);
+            ithaChipPaint.setStrokeWidth(dp(1));
+            ithaChipPaint.setColor(ColorUtils.setAlphaComponent(Theme.getColor(tabLineColorKey, resourcesProvider), (int) (90 * listView.getAlpha())));
+            final float chipRad = dp(11);
+            final float add = additionalTabWidth / 2f;
+            canvas.save();
+            canvas.translate(listView.getTranslationX(), 0);
+            canvas.scale(listView.getScaleX(), 1f, listView.getPivotX() + listView.getX(), listView.getPivotY());
+            for (int c = 0; c < listView.getChildCount(); c++) {
+                final View v = listView.getChildAt(c);
+                if (!(v instanceof TabView)) {
+                    continue;
+                }
+                final TabView tv = (TabView) v;
+                if (tv.currentPosition == currentPosition) {
+                    continue;
+                }
+                final float w = Math.max(dp(16), tv.tabWidth);
+                final float x = tv.getX() + (tv.getMeasuredWidth() - w) / 2f;
+                ithaChipRect.set(x - dp(9) - add, height / 2f - dp(14), x + w + dp(9) + add, height / 2f + dp(14));
+                canvas.drawRoundRect(ithaChipRect, chipRad, chipRad, ithaChipPaint);
+            }
+            canvas.restore();
+        }
     }
+
+    private final Paint ithaChipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final android.graphics.RectF ithaChipRect = new android.graphics.RectF();
 
     private final Path clipPath = new Path();
 

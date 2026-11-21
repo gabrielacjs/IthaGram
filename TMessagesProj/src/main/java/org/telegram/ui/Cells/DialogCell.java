@@ -4077,6 +4077,13 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             canvas.drawRoundRect(rect, cornersRadius, cornersRadius, Theme.dialogs_tabletSeletedPaint);
         }
 
+        if (org.telegram.messenger.IthaStyles.list() == 1 && rightFragmentOpenedProgress == 0) {
+            // IthaGram: tarjeta tonal de Material 3 detras de cada chat
+            rect.set(dp(3), dp(2), getMeasuredWidth() - dp(3), getMeasuredHeight() - dp(2) - (useSeparator ? 1 : 0));
+            rect.offset(0, -translateY);
+            org.telegram.messenger.IthaStyles.drawListCard(canvas, rect, getIsPinned() || drawPinBackground, isSelected);
+        }
+
         canvas.save();
         canvas.translate(0, -rightFragmentOffset * rightFragmentOpenedProgress);
         if (currentDialogFolderId != 0 && (!SharedConfig.archiveHidden || archiveBackgroundProgress != 0)) {
@@ -4866,7 +4873,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             canvas.restore();
         }
 
-        if (useSeparator) {
+        if (useSeparator && org.telegram.messenger.IthaStyles.list() != 1) {
             int left;
             if (fullSeparator || currentDialogFolderId != 0 && archiveHidden && !fullSeparator2 || fullSeparator2 && !archiveHidden) {
                 left = 0;

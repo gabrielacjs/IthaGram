@@ -154,7 +154,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         if (selectedFactor > 0 && !skipDrawSelector) {
             final float alpha = AnimatorUtils.DECELERATE_INTERPOLATOR.getInterpolation(selectedFactor);
 
-            paintCounterBackground.setColor(Theme.multAlpha(colorSelected, 0.09f * alpha));
+            paintCounterBackground.setColor(Theme.multAlpha(colorSelected, (org.telegram.messenger.IthaStyles.list() == 1 ? 0.30f : 0.09f) * alpha));
             tmpRectF.set(0, 0, viewWidth, getHeight());
             final float r = Math.min(tmpRectF.width(), tmpRectF.height()) / 2f;
             final float s = lerp(0.6f, 1, selectedFactor) * MathUtils.clamp(attachScale, 0, 1);
@@ -164,6 +164,9 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
             canvas.restore();
         }
 
+        // IthaGram: en Material 3 el contenido baja un poco para quedar centrado en el ovalo
+        canvas.save();
+        canvas.translate(0, org.telegram.messenger.IthaStyles.list() == 1 && !selfMeasure ? dp(2) : 0);
         final float hasCounter = (usePremiumCounter ? 1f : isHasCounterAnimator.getFloatValue()) * attachScale;
         final boolean saveLayer = hasCounter > 0;
         if (saveLayer) {
@@ -216,6 +219,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
         if (saveLayer) {
             canvas.restore();
         }
+        canvas.restore();
     }
 
     private Drawable premiumStarDrawable;

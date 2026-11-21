@@ -149,6 +149,7 @@ public class FragmentFloatingButton extends FrameLayout implements FactorAnimato
     private BlurredBackgroundColorProviderThemed iBlur3ColorProviderTabs;
 
     private Drawable themedBackground;
+    private int ithaShapeStyle = -1;
     private int themedIconColor;
     private boolean themedIconColorSet;
     private int themedBackgroundColor, themedBackgroundPressedColor;
@@ -190,16 +191,36 @@ public class FragmentFloatingButton extends FrameLayout implements FactorAnimato
                 setBackground(themedBackground = Theme.createInsetRoundRectDrawable(themedBackgroundPressedColor = pressedColor, rad, dp(6)));
             }
         } else {
-            final int iconColor = Theme.getColor(Theme.key_chats_actionIcon, resourcesProvider);
+            // IthaGram: boton de Material 3 (cuadrado redondeado tonal) si la lista de chats esta en Material 3
+            final boolean ithaMd3 = org.telegram.messenger.IthaStyles.list() == 1;
+            final int ithaBase = Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider) | 0xFF000000;
+            final int ithaAccent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourcesProvider);
+            final int ithaContainer = androidx.core.graphics.ColorUtils.blendARGB(ithaBase, ithaAccent, 0.55f) | 0xFF000000;
+            final boolean ithaLight = androidx.core.graphics.ColorUtils.calculateLuminance(ithaContainer) > 0.5;
+            final int iconColor = ithaMd3
+                    ? (androidx.core.graphics.ColorUtils.blendARGB(ithaAccent, ithaLight ? android.graphics.Color.BLACK : android.graphics.Color.WHITE, ithaLight ? 0.7f : 0.85f) | 0xFF000000)
+                    : Theme.getColor(Theme.key_chats_actionIcon, resourcesProvider);
             if (iconColor != themedIconColor || !themedIconColorSet) {
                 themedIconColor = iconColor;
                 themedIconColorSet = true;
                 imageView.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
             }
-            progressView.setProgressColor(Theme.getColor(Theme.key_chats_actionIcon, resourcesProvider));
-            final int color = Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider);
-            final int pressedColor = Theme.getColor(Theme.key_featuredStickers_addButtonPressed, resourcesProvider);
-            if (recolorBackground) {
+            progressView.setProgressColor(iconColor);
+            final int color = ithaMd3 ? ithaContainer : Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider);
+            final int pressedColor = ithaMd3
+                    ? (androidx.core.graphics.ColorUtils.blendARGB(ithaBase, ithaAccent, 0.70f) | 0xFF000000)
+                    : Theme.getColor(Theme.key_featuredStickers_addButtonPressed, resourcesProvider);
+            if (ithaShapeStyle != (ithaMd3 ? 1 : 0)) {
+                ithaShapeStyle = ithaMd3 ? 1 : 0;
+                setOutlineProvider(ithaMd3 ? new android.view.ViewOutlineProvider() {
+                    @Override
+                    public void getOutline(View view, android.graphics.Outline outline) {
+                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(16));
+                    }
+                } : ViewOutlineProviderImpl.BOUNDS_OVAL);
+                themedBackground = null;
+            }
+            if (recolorBackground && themedBackground != null) {
                 if (color != themedBackgroundColor || pressedColor != themedBackgroundPressedColor) {
                     themedBackgroundColor = color;
                     themedBackgroundPressedColor = pressedColor;
@@ -210,7 +231,7 @@ public class FragmentFloatingButton extends FrameLayout implements FactorAnimato
             } else {
                 themedBackgroundColor = color;
                 themedBackgroundPressedColor = pressedColor;
-                setBackground(themedBackground = Theme.createSimpleSelectorCircleDrawable(dp(48), color, pressedColor));
+                setBackground(themedBackground = ithaMd3 ? Theme.createSimpleSelectorRoundRectDrawable(dp(16), color, pressedColor) : Theme.createSimpleSelectorCircleDrawable(dp(48), color, pressedColor));
             }
         }
     }

@@ -70,14 +70,16 @@ public class IthaStylesActivity extends BaseFragment {
         final int h = IthaStyles.chatHeader();
         final int p = IthaStyles.pinned();
         final int i = IthaStyles.input();
+        final int l = IthaStyles.list();
         final int b = IthaBubbles.style() == 2 ? 1 : 0;
 
         section(context, tr("Todo a la vez", "Everything at once"));
-        final String all = (h == p && p == i && i == b) ? names[h] : tr("Personalizado", "Custom");
+        final String all = (h == p && p == i && i == b && b == l) ? names[h] : tr("Personalizado", "Custom");
         pick(context, tr("Estilo general", "Overall style"), all, tr("Estilo general", "Overall style"), names, which -> {
             IthaStyles.setChatHeader(which);
             IthaStyles.setPinned(which);
             IthaStyles.setInput(which);
+            IthaStyles.setList(which);
             IthaBubbles.set(which == 1 ? 2 : 0);
         });
 
@@ -86,6 +88,7 @@ public class IthaStylesActivity extends BaseFragment {
         pick(context, tr("Encabezado del chat", "Chat header"), names[h], tr("Encabezado del chat", "Chat header"), names, IthaStyles::setChatHeader);
         pick(context, tr("Mensaje fijado", "Pinned message"), names[p], tr("Mensaje fijado", "Pinned message"), names, IthaStyles::setPinned);
         pick(context, tr("Barra de mensaje", "Message bar"), names[i], tr("Barra de mensaje", "Message bar"), names, IthaStyles::setInput);
+        pick(context, tr("Lista de chats", "Chat list"), names[l], tr("Lista de chats", "Chat list"), names, IthaStyles::setList);
 
         TextView info = new TextView(context);
         info.setText(tr("Los cambios se ven al abrir un chat. Las opciones del encabezado (avatar, título centrado, llamada) están en Ajustes de chat y valen para cualquier estilo.",

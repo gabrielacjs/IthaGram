@@ -412,7 +412,24 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
         updateLayout();
         checkUnreadCount(false);
+        ithaApplyTabsBackground();
         return contentView;
+    }
+
+    /** IthaGram: barra de abajo en Material 3 (capsula tonal solida en lugar del vidrio), si la lista de chats esta en Material 3. */
+    private void ithaApplyTabsBackground() {
+        if (tabsView == null) {
+            return;
+        }
+        if (org.telegram.messenger.IthaStyles.list() == 1) {
+            final int base = getThemedColor(Theme.key_windowBackgroundWhite) | 0xFF000000;
+            final int accent = getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader);
+            final int fill = ColorUtils.blendARGB(base, accent, 0.14f) | 0xFF000000;
+            final ShapeDrawable pill = Theme.createRoundRectDrawable(dp(DialogsActivity.MAIN_TABS_HEIGHT / 2f), fill);
+            tabsView.setBackground(new android.graphics.drawable.InsetDrawable(pill, dp(DialogsActivity.MAIN_TABS_MARGIN - 0.334f)));
+        } else if (tabsViewBackground != null) {
+            tabsView.setBackground(tabsViewBackground);
+        }
     }
 
     private void checkUnreadCount(boolean animated) {
@@ -1292,6 +1309,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         if (fadeView != null) {
             fadeView.invalidate();
         }
+        ithaApplyTabsBackground();
         if (tabsView != null) {
             tabsView.invalidate();
         }

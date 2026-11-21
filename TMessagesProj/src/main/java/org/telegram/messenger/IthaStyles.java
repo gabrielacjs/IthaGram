@@ -24,6 +24,33 @@ public class IthaStyles {
 
     private static int pinned = -1;
     private static int input = -1;
+    private static int list = -1;
+
+    /** Estilo de la lista de chats (0 = Telegram, 1 = Material 3: tarjetas). Si nunca se eligio, sigue al encabezado. */
+    public static int list() {
+        if (list < 0) {
+            list = read("list");
+            if (list != 0 && list != 1) {
+                list = -2;
+            }
+        }
+        return list == -2 ? chatHeader() : list;
+    }
+
+    public static void setList(int value) {
+        list = value == 1 ? 1 : 0;
+        write("list", list);
+    }
+
+    /** Tarjeta tonal de Material 3 detras de cada chat de la lista. */
+    public static void drawListCard(Canvas canvas, android.graphics.RectF rect, boolean pinned, boolean selected) {
+        final int base = Theme.getColor(Theme.key_windowBackgroundWhite) | 0xFF000000;
+        final int accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(ColorUtils.blendARGB(base, accent, selected ? 0.30f : 0.10f) | 0xFF000000);
+        final float r = Math.min(AndroidUtilities.dp(20), rect.height() / 2f);
+        canvas.drawRoundRect(rect, r, r, paint);
+    }
 
     private static int read(String key) {
         try {
