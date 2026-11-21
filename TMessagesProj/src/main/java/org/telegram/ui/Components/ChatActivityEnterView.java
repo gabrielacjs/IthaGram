@@ -6575,6 +6575,13 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     public static final int DEFAULT_HEIGHT = 44;
 
+    /** IthaGram: color del icono sobre el boton tonal de Material 3 (claro u oscuro segun el fondo). */
+    private static int ithaOnTonal(int base, int accent) {
+        final int container = androidx.core.graphics.ColorUtils.blendARGB(base, accent, 0.55f) | 0xFF000000;
+        final boolean light = androidx.core.graphics.ColorUtils.calculateLuminance(container) > 0.5;
+        return androidx.core.graphics.ColorUtils.blendARGB(accent, light ? android.graphics.Color.BLACK : android.graphics.Color.WHITE, light ? 0.7f : 0.85f) | 0xFF000000;
+    }
+
     private boolean resizeForTopViewLastShow;
     private void resizeForTopView(boolean show) {
         if (resizeForTopViewLastShow == show) {
@@ -15409,7 +15416,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             updateColors();
             checkBackgroundRect();
             if (isNewDesignSendButton) {
-                final float rr = org.telegram.messenger.IthaStyles.input() == 1 ? dp(12) : dp(RADIUS);
+                final float rr = dp(RADIUS);
                 canvas.drawRoundRect(backgroundRect, rr, rr, backgroundPaint);
             }
 
@@ -15672,7 +15679,7 @@ public class ChatActivityEnterView extends FrameLayout implements
 
         public void updateColors() {
             final boolean ithaMd3 = isNewDesignSendButton && org.telegram.messenger.IthaStyles.input() == 1;
-            int color = ithaMd3 ? Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider) : isNewDesignSendButton ? Color.WHITE : Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider);
+            int color = ithaMd3 ? ithaOnTonal((org.telegram.messenger.IthaStyles.barColor() != 0 ? org.telegram.messenger.IthaStyles.barColor() : Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider)) | 0xFF000000, Theme.getColor(Theme.key_windowBackgroundWhiteBlueHeader, resourcesProvider)) : isNewDesignSendButton ? Color.WHITE : Theme.getColor(Theme.key_chat_messagePanelSend, resourcesProvider);
             int c = Theme.getColor(Theme.key_glass_defaultIcon, resourcesProvider);
             int inverseColor = Theme.getColor(Theme.key_chat_messagePanelVoicePressed, resourcesProvider);
             if (color != drawableColor || c != inactiveDrawableColor || inverseColor != drawableInverseColor) {
