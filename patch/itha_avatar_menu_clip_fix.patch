@@ -1,8 +1,0 @@
-diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
-index e0a6cec..98e9a07 100644
---- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
-+++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
-@@ -1424,0 +1425 @@
-+    public void showHeaderItem(boolean show) {
-@@ -1428 +1428,0 @@
--    public void showHeaderItem(boolean show) {

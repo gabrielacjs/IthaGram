@@ -1,7 +1,0 @@
-diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
-index fae8a35..e5dc9c3 100644
---- a/TMessagesProj_App/build.gradle
-+++ b/TMessagesProj_App/build.gradle
-@@ -166 +166 @@ x
--            outputFileName = "app.apk"
-+            outputFileName = "IthaGram-${APP_VERSION_NAME}.apk"
