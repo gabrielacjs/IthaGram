@@ -1,46 +1,86 @@
-## Telegram messenger for Android
+# IthaGram
 
-[Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
-This repo contains the official source code for [Telegram App for Android](https://play.google.com/store/apps/details?id=org.telegram.messenger).
+Cliente **no oficial** de Telegram para Android, basado en el código oficial de [Telegram 13.2.2](https://github.com/DrKLO/Telegram), con un diseño Material 3 y un motor de plugins propio.
 
-## Creating your Telegram Application
+> IthaGram no es la app oficial de Telegram ni está afiliada a Telegram.
 
-We welcome all developers to use our API and source code to create applications on our platform.
-There are several things we require from **all developers** for the moment.
+## Qué trae
 
-1. [**Obtain your own api_id**](https://core.telegram.org/api/obtaining_api_id) for your application.
-2. Please **do not** use the name Telegram for your app — or make sure your users understand that it is unofficial.
-3. Kindly **do not** use our standard logo (white paper plane in a blue circle) as your app's logo.
-3. Please study our [**security guidelines**](https://core.telegram.org/mtproto/security_guidelines) and take good care of your users' data and privacy.
-4. Please remember to publish **your** code too in order to comply with the licences.
+**Diseño Material 3**
+- Lista de chats en tarjetas, con tinte tonal que sigue el color de acento del tema.
+- Carpetas como chips (activa rellena, inactivas con contorno).
+- Barra inferior flotante (Perfil, Ajustes, Contactos, Chats) y botón flotante tonal.
+- Ícono de enviar con color adaptable y fondo redondo.
 
-### API, Protocol documentation
+**Ajustes de Itha**
+- Pantalla propia con estilos para la cabecera del chat, mensajes fijados, barra de escritura y lista de chats.
+- Menú del avatar y cabecera del chat personalizados.
+- Elección del ícono de la app.
 
-Telegram API manuals: https://core.telegram.org/api
+**Plugins**
+- Motor de plugins `.plugin` con pantalla de gestión: instalar, activar, desactivar, actualizar y borrar.
+- Pantalla de ajustes por plugin.
+- Instalación directa desde un archivo recibido en el chat.
 
-MTproto protocol manuals: https://core.telegram.org/mtproto
+## Descargar
 
-### Compilation Guide
+Los APK compilados están en [Releases](../../releases). Para instalar: descargá el APK, permití "instalar apps de orígenes desconocidos" y abrilo.
 
-**Note**: In order to support [reproducible builds](https://core.telegram.org/reproducible-builds), this repo contains dummy release.keystore,  google-services.json and filled variables inside BuildVars.java. Before publishing your own APKs please make sure to replace all these files with your own.
+## Ramas
 
-You will require Android Studio 2025.1.4, Android NDK 27.2.12479018 and Android SDK 36.
+| Rama | Uso |
+|---|---|
+| `main` | Versión estable |
+| `dev` | Desarrollo |
+| `motor-nagram` | Rama de trabajo con el motor de plugins |
 
-1. Clone the Telegram source code with its submodules:
+Las versiones estables se marcan con tags (por ejemplo `v13.2.2-itha`).
+
+## Compilar
+
+Requisitos (los de Telegram 13.2.2): Android Studio 2025.1.4, Android NDK 27.2.12479018 y Android SDK 36.
+
+1. Cloná el repo con sus submódulos:
    ```bash
-   git clone --recursive --shallow-submodules https://github.com/DrKLO/Telegram.git Telegram
+   git clone --recursive --shallow-submodules https://github.com/gabrielacjs/IthaGram.git
    ```
-   In case you forgot the `--recursive` flag, change to the `Telegram` directory and run:
+   Si olvidaste `--recursive`:
    ```bash
-   git submodule init && git submodule update --init --recursive --depth=1
+   git submodule update --init --recursive --depth=1
    ```
-2. Copy your release.keystore into TMessagesProj/config
-3. Fill out RELEASE_KEY_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_STORE_PASSWORD in gradle.properties to access your  release.keystore
-4.  Go to https://console.firebase.google.com/, create two android apps with application IDs org.telegram.messenger and org.telegram.messenger.beta, turn on firebase messaging and download google-services.json, which should be copied to the same folder as TMessagesProj.
-5. Open the project in the Studio (note that it should be opened, NOT imported).
-6. Fill out values in TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java – there’s a link for each of the variables showing where and which data to obtain.
-7. You are ready to compile Telegram.
+2. Poné tu propio `release.keystore` en `TMessagesProj/config` y completá `RELEASE_KEY_PASSWORD`, `RELEASE_KEY_ALIAS` y `RELEASE_STORE_PASSWORD` en `gradle.properties`.
+3. Compilá desde la terminal:
+   ```powershell
+   .\gradlew :TMessagesProj_App:assembleAfatRelease
+   ```
+   El APK queda en `TMessagesProj_App/build/outputs/apk/afat/release/`.
 
-### Localization
+También se puede abrir el proyecto en Android Studio (abrirlo, no importarlo).
 
-We moved all translations to https://translations.telegram.org/en/android/. Please use it.
+**Nota:** para respetar las [compilaciones reproducibles](https://core.telegram.org/reproducible-builds), el repo base trae un `release.keystore` y un `google-services.json` de ejemplo. Antes de publicar tus propios APK, reemplazalos por los tuyos.
+
+## Créditos y licencia
+
+- [Telegram para Android](https://github.com/DrKLO/Telegram), de Telegram FZ-LLC, es la base de este proyecto.
+- El motor de plugins se porta de [exteraGram](https://github.com/exteraSquad/exteraGram) y [Nagram](https://github.com/NextAlone/Nagram).
+
+Este proyecto se distribuye bajo la misma licencia que Telegram para Android (GNU GPL v2, ver [LICENSE](LICENSE)), y su código fuente se publica para cumplirla.
+
+## Requisitos de Telegram para apps derivadas
+
+Telegram pide a todos los desarrolladores que usan su API y su código:
+
+1. [Obtener tu propio `api_id`](https://core.telegram.org/api/obtaining_api_id).
+2. No usar el nombre Telegram en la app, o dejar claro que no es oficial.
+3. No usar el logo estándar de Telegram (avión de papel blanco en círculo azul).
+4. Leer las [pautas de seguridad](https://core.telegram.org/mtproto/security_guidelines) y cuidar los datos de los usuarios.
+5. Publicar el código propio para cumplir con las licencias.
+
+Documentación: [API de Telegram](https://core.telegram.org/api) y [protocolo MTProto](https://core.telegram.org/mtproto).
+
+<!--
+Capturas (agregar cuando estén en docs/capturas/):
+![Lista de chats](docs/capturas/lista.png)
+![Ajustes de Itha](docs/capturas/ajustes.png)
+![Plugins](docs/capturas/plugins.png)
+-->
