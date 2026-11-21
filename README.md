@@ -4,22 +4,39 @@ Cliente **no oficial** de Telegram para Android, basado en el código oficial de
 
 > IthaGram no es la app oficial de Telegram ni está afiliada a Telegram.
 
+## Capturas
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/capturas/lista.jpg" width="220"><br><sub>Lista de chats</sub></td>
+    <td align="center"><img src="docs/capturas/chat.jpg" width="220"><br><sub>Chat</sub></td>
+    <td align="center"><img src="docs/capturas/plugins.jpg" width="220"><br><sub>Plugins</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/capturas/ajustes.jpg" width="220"><br><sub>Itha Ajustes</sub></td>
+    <td align="center"><img src="docs/capturas/estilos.jpg" width="220"><br><sub>Estilos</sub></td>
+    <td align="center"><img src="docs/capturas/ajustes-chat.jpg" width="220"><br><sub>Ajustes de chat</sub></td>
+  </tr>
+</table>
+
 ## Qué trae
 
 **Diseño Material 3**
 - Lista de chats en tarjetas, con tinte tonal que sigue el color de acento del tema.
 - Carpetas como chips (activa rellena, inactivas con contorno).
-- Barra inferior flotante (Perfil, Ajustes, Contactos, Chats) y botón flotante tonal.
-- Ícono de enviar con color adaptable y fondo redondo.
+- Barra inferior flotante (Chats, Contactos, Ajustes, Perfil) y botón flotante tonal.
+- Barra de escribir con campo redondeado, ícono de enviar adaptable y botón de Menú de bots integrado.
 
-**Ajustes de Itha**
-- Pantalla propia con estilos para la cabecera del chat, mensajes fijados, barra de escritura y lista de chats.
-- Menú del avatar y cabecera del chat personalizados.
-- Elección del ícono de la app.
+**Itha Ajustes** (todo lo propio de IthaGram en un solo lugar)
+- **Lista de chat:** texto del título, título centrado y barra de búsqueda.
+- **Perfil:** ocultar el número de teléfono.
+- **Chat:** estilo del encabezado, ocultar el avatar o ponerlo a la derecha o en el botón de menú, llamada dentro del menú, título centrado, redondeo de esquinas y espacio entre mensajes, con vista previa en vivo.
+- **Estilos:** elegí el diseño de cada pieza por separado (burbujas, encabezado del chat, mensaje fijado, barra de mensaje y lista de chats) o todo a la vez.
+- **Plugins:** gestión de extensiones.
 
 **Plugins**
-- Motor de plugins `.plugin` con pantalla de gestión: instalar, activar, desactivar, actualizar y borrar.
-- Pantalla de ajustes por plugin.
+- Motor de plugins `.plugin` (Python) con pantalla de gestión: instalar, activar, desactivar, actualizar y borrar.
+- Pantalla de ajustes por plugin y catálogo en el canal de IthaGram.
 - Instalación directa desde un archivo recibido en el chat.
 
 ## Descargar
@@ -77,10 +94,3 @@ Telegram pide a todos los desarrolladores que usan su API y su código:
 5. Publicar el código propio para cumplir con las licencias.
 
 Documentación: [API de Telegram](https://core.telegram.org/api) y [protocolo MTProto](https://core.telegram.org/mtproto).
-
-<!--
-Capturas (agregar cuando estén en docs/capturas/):
-![Lista de chats](docs/capturas/lista.png)
-![Ajustes de Itha](docs/capturas/ajustes.png)
-![Plugins](docs/capturas/plugins.png)
--->
