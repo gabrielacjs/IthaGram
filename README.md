@@ -81,6 +81,7 @@ También se puede abrir el proyecto en Android Studio (abrirlo, no importarlo).
 - [Telegram para Android](https://github.com/DrKLO/Telegram), de Telegram FZ-LLC, es la base de este proyecto.
 - El motor de plugins se porta de [exteraGram](https://github.com/exteraSquad/exteraGram) y [Nagram](https://github.com/NextAlone/Nagram).
 - El diseño del encabezado de chat tipo iOS (título y botones en píldoras flotantes) se inspira en [entinyGram](https://github.com/entaytion/entinyGram) y [Cherrygram](https://github.com/arslan4k1390/Cherrygram).
+- Desarrollado por Gabi con la ayuda de [Claude](https://claude.ai), de Anthropic.
 
 Este proyecto se distribuye bajo la misma licencia que Telegram para Android (GNU GPL v2, ver [LICENSE](LICENSE)), y su código fuente se publica para cumplirla.
 
