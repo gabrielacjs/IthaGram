@@ -39,6 +39,10 @@ Cliente **no oficial** de Telegram para Android, basado en el código oficial de
 - Pantalla de ajustes por plugin y catálogo en el canal de IthaGram.
 - Instalación directa desde un archivo recibido en el chat.
 
+## Canal
+
+Novedades, nuevas versiones y temas para Telegram en **[@IthaGram](https://t.me/IthaGram)**.
+
 ## Descargar
 
 Los APK compilados están en [Releases](../../releases). Para instalar: descargá el APK, permití "instalar apps de orígenes desconocidos" y abrilo.
