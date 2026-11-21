@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.IthaUpdate;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -120,6 +121,20 @@ public class IthaSettingsActivity extends BaseFragment {
                 tr("Plugins", "Plugins"),
                 tr("Extensiones .plugin (Python)", "Python .plugin extensions"),
                 () -> presentFragment(new IthaPluginsActivity()));
+
+        listLayout.addView(new View(context), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 12));
+        LinearLayout updates = md3Card(context, card);
+        md3Row(context, updates, R.drawable.msg_download, tint, accent,
+                tr("Buscar actualizaciones", "Check for updates"),
+                tr("Versión instalada: ", "Installed version: ") + IthaUpdate.currentVersion(),
+                () -> IthaUpdate.check(getParentActivity(), true));
+        md3Row(context, updates, R.drawable.msg_notifications, tint, accent,
+                tr("Avisar al abrir la app", "Notify when opening the app"),
+                IthaUpdate.isAutoCheck() ? tr("Activado", "On") : tr("Desactivado", "Off"),
+                () -> {
+                    IthaUpdate.setAutoCheck(!IthaUpdate.isAutoCheck());
+                    rebuild();
+                });
 
         TextView info = new TextView(context);
         info.setText(tr("IthaGram es una app no oficial que usa la API de Telegram. No está afiliada a Telegram.",

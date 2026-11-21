@@ -182,6 +182,9 @@ public class IthaHooks {
     }
 
     public static void appEvent(String event) {
+        if ("app_resume".equals(event)) {
+            IthaUpdate.autoCheck();
+        }
         Bus b = bus;
         if (b == null) {
             return;
