@@ -30,7 +30,7 @@ import static org.telegram.messenger.DownloadQueueManager.tr;
 public class IthaUpdate {
 
     /** Numero de revision de Itha de ESTA compilacion (el numero que va al final del tag: -itha3 = 3). */
-    public static final int REVISION = 3;
+    public static final int REVISION = 4;
 
     private static final String API = "https://api.github.com/repos/gabrielacjs/IthaGram/releases/latest";
     private static final long DAY = 24L * 60L * 60L * 1000L;
