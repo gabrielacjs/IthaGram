@@ -1002,6 +1002,62 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
         speedSlider.setSpeed(currentPlaybackSpeed, animated);
     }
 
+    // IthaGram: mini reproductor en forma de pildora flotante (solo estilo de audio)
+    private android.graphics.drawable.GradientDrawable ithaPill;
+    private android.graphics.drawable.GradientDrawable ithaPlayCircle;
+
+    private int ithaPillColor() {
+        return ColorUtils.blendARGB(getThemedColor(Theme.key_windowBackgroundWhite), getThemedColor(Theme.key_featuredStickers_addButton), 0.14f);
+    }
+
+    private void ithaApplyAudioPill() {
+        if (frameLayout == null || playButton == null || closeButton == null || titleTextView == null) {
+            return;
+        }
+        ithaPill = new android.graphics.drawable.GradientDrawable();
+        ithaPill.setColor(ithaPillColor());
+        ithaPill.setCornerRadius(dp(15));
+        // se saca el tag para que el tema no vuelva a pintar la barra entera
+        frameLayout.setTag(null);
+        frameLayout.setBackground(new android.graphics.drawable.InsetDrawable(ithaPill, dp(10), dp(3), dp(10), dp(3)));
+        selector.setBackground(new android.graphics.drawable.InsetDrawable(Theme.createRadSelectorDrawable(getThemedColor(Theme.key_listSelector), dp(15), dp(15)), dp(10), dp(3), dp(10), dp(3)));
+
+        ithaPlayCircle = new android.graphics.drawable.GradientDrawable();
+        ithaPlayCircle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        ithaPlayCircle.setColor(Theme.multAlpha(getThemedColor(Theme.key_inappPlayerPlayPause), 0.18f));
+        playButton.setBackground(new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{
+            ithaPlayCircle,
+            Theme.createSelectorDrawable(getThemedColor(Theme.key_inappPlayerPlayPause) & 0x19ffffff, 1, dp(14))
+        }));
+        playButton.setLayoutParams(LayoutHelper.createFrame(30, 30, Gravity.TOP | Gravity.LEFT, 13, 3, 0, 0));
+        titleTextView.setLayoutParams(LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 36, Gravity.LEFT | Gravity.TOP, 50, 0, (isSideMenued ? 64 : 0) + 48, 0));
+        closeButton.setLayoutParams(LayoutHelper.createFrame(36, 36, Gravity.RIGHT | Gravity.TOP, 0, 0, 12, 0));
+    }
+
+    private void ithaResetAudioPill() {
+        if (ithaPill == null) {
+            return;
+        }
+        ithaPill = null;
+        ithaPlayCircle = null;
+        if (playButton != null) {
+            playButton.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_inappPlayerPlayPause) & 0x19ffffff, 1, dp(14)));
+        }
+        if (closeButton != null) {
+            closeButton.setLayoutParams(LayoutHelper.createFrame(36, 36, Gravity.RIGHT | Gravity.TOP, 0, 0, 4, 0));
+        }
+    }
+
+    private void ithaRefreshAudioPill() {
+        if (currentStyle != STYLE_AUDIO_PLAYER || ithaPill == null) {
+            return;
+        }
+        ithaPill.setColor(ithaPillColor());
+        if (ithaPlayCircle != null) {
+            ithaPlayCircle.setColor(Theme.multAlpha(getThemedColor(Theme.key_inappPlayerPlayPause), 0.18f));
+        }
+    }
+
     private android.graphics.drawable.Drawable lastSpeedButtonBackground;
     private PorterDuffColorFilter playButtonFilter, closeButtonFilter;
     private int playButtonFilterColor, closeButtonFilterColor, lastSpeedButtonColor;
@@ -1025,6 +1081,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
         }
 
+        ithaRefreshAudioPill();
         if (playButton != null) {
             final int playColor = getThemedColor(Theme.key_inappPlayerPlayPause);
             if (playButtonFilter == null || playColor != playButtonFilterColor) {
@@ -1195,6 +1252,9 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
         }
         currentStyle = style;
+        if (style != STYLE_AUDIO_PLAYER) {
+            ithaResetAudioPill();
+        }
         frameLayout.setWillNotDraw(currentStyle != STYLE_INACTIVE_GROUP_CALL);
         if (style != STYLE_INACTIVE_GROUP_CALL) {
             notifyButtonEnabled = false;
@@ -1295,6 +1355,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             } else if (style == STYLE_AUDIO_PLAYER) {
                 playButton.setLayoutParams(LayoutHelper.createFrame(36, 36, Gravity.TOP | Gravity.LEFT, 3, 0, 0, 0));
                 titleTextView.setLayoutParams(LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 36, Gravity.LEFT | Gravity.TOP, 37, 0, (isSideMenued ? 64 : 0) + 36, 0));
+                ithaApplyAudioPill();
                 createPlaybackSpeedButton();
                 if (playbackSpeedButton != null) {
                     playbackSpeedButton.setVisibility(VISIBLE);
