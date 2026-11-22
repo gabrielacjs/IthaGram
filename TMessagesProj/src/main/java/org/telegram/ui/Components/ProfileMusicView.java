@@ -47,6 +47,17 @@ public class ProfileMusicView extends View {
     private final PorterDuffColorFilter filterColorBlack = new PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN);
 
     private Text author, title;
+    private Text cardTitle, cardSub;
+    private boolean cardMode;
+    private final Path playPath = new Path();
+
+    /** IthaGram: la nota de perfil se dibuja como tarjeta grande cuando no hay otro pill al lado. */
+    public void setCardMode(boolean card) {
+        if (cardMode == card) return;
+        cardMode = card;
+        requestLayout();
+        invalidate();
+    }
     private ProfileMusicView trailingView;
     private ProfileMusicView leadingView;
 
@@ -102,7 +113,7 @@ public class ProfileMusicView extends View {
                 MeasureSpec.EXACTLY
             ),
             MeasureSpec.makeMeasureSpec(
-                dp(37),
+                cardMode ? dp(70) : dp(37),
                 MeasureSpec.EXACTLY
             )
         );
@@ -175,6 +186,12 @@ public class ProfileMusicView extends View {
             title = "";
         }
         setText(author, title);
+        CharSequence cTitle = getTitle(document);
+        CharSequence cAuthor = getAuthor(document);
+        if (TextUtils.isEmpty(cTitle)) cTitle = getString(R.string.AudioUnknownTitle);
+        if (TextUtils.isEmpty(cAuthor)) cAuthor = getString(R.string.AudioUnknownArtist);
+        cardTitle = new Text(cTitle, 14, AndroidUtilities.bold());
+        cardSub = new Text(cAuthor, 12);
     }
 
     public static CharSequence getTitle(TLRPC.Document document) {
@@ -255,7 +272,7 @@ public class ProfileMusicView extends View {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        final float alpha = Utilities.clamp01((currentHeight) / dp(21));
+        final float alpha = Utilities.clamp01((currentHeight) / (cardMode ? dp(52) : dp(21)));
         if (alpha <= 0) return false;
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             bounce.setPressed(rect.contains(event.getX(), event.getY()));
@@ -299,6 +316,51 @@ public class ProfileMusicView extends View {
         canvas.drawPath(arrowPath, arrowPaint);
     }
 
+    private void drawCard(Canvas canvas, float alpha) {
+        final float cy = rect.centerY();
+        final float h = dp(52);
+        final int circle = dp(36);
+        final float pad = (h - circle) / 2f;
+
+        // Icono de nota en un circulo suave.
+        iconPaint.setColor(textColor);
+        final int prevAlpha = iconPaint.getAlpha();
+        iconPaint.setAlpha((int) (0x30 * alpha));
+        canvas.drawCircle(pad + circle / 2f, cy, circle / 2f, iconPaint);
+        iconPaint.setAlpha(prevAlpha);
+        final int iconSz = dp(18);
+        final int ix = (int) (pad + circle / 2f);
+        icon.setBounds(ix - iconSz / 2, (int) cy - iconSz / 2, ix + iconSz / 2, (int) cy + iconSz / 2);
+        icon.setAlpha((int) (0xFF * alpha));
+        icon.draw(canvas);
+
+        // Boton de play decorativo (toda la tarjeta abre el reproductor).
+        final float px = rect.width() - dp(16) - pad - circle / 2f;
+        iconPaint.setColor(textColor);
+        iconPaint.setAlpha((int) (0xFF * alpha));
+        canvas.drawCircle(px, cy, circle / 2f, iconPaint);
+        final float t = dp(6.5f);
+        playPath.rewind();
+        playPath.moveTo(px - t * 0.6f, cy - t);
+        playPath.lineTo(px + t * 1.0f, cy);
+        playPath.lineTo(px - t * 0.6f, cy + t);
+        playPath.close();
+        iconPaint.setColor(textColor == Color.WHITE ? Color.BLACK : Color.WHITE);
+        iconPaint.setAlpha((int) (0xFF * alpha));
+        canvas.drawPath(playPath, iconPaint);
+        iconPaint.setColor(textColor);
+
+        // Textos.
+        final float tx = pad + circle + dp(10);
+        final float maxText = Math.max(0, px - circle / 2f - dp(10) - tx);
+        if (cardTitle != null && cardSub != null) {
+            cardTitle.ellipsize(maxText);
+            cardSub.ellipsize(maxText);
+            cardTitle.draw(canvas, tx, cy - dp(8), textColor, alpha);
+            cardSub.draw(canvas, tx, cy + dp(9), textColor, 0.75f * alpha);
+        }
+    }
+
     private boolean hasVisibleCompanion() {
         ProfileMusicView companion = trailingView != null ? trailingView : leadingView;
         return companion != null && companion.getVisibility() == VISIBLE;
@@ -312,7 +374,7 @@ public class ProfileMusicView extends View {
     protected void onDraw(@NonNull Canvas canvas) {
         if (this.author == null || this.title == null) return;
 
-        final float alpha = Utilities.clamp01((currentHeight) / dp(21));
+        final float alpha = Utilities.clamp01((currentHeight) / (cardMode ? dp(52) : dp(21)));
         final float scale = bounce.getScale(0.02f);
         if (alpha <= 0) {
             if (glass != null) {
@@ -326,7 +388,10 @@ public class ProfileMusicView extends View {
 
         float containerWidth;
         float left;
-        if (hasVisibleCompanion()) {
+        if (cardMode) {
+            containerWidth = getWidth() - dp(32);
+            left = dp(16);
+        } else if (hasVisibleCompanion()) {
             ProfileMusicView leading = leadingView != null ? leadingView : this;
             ProfileMusicView trailing = trailingView != null ? trailingView : this;
             // Reserve the balance first so long song titles cannot push it offscreen.
@@ -340,7 +405,7 @@ public class ProfileMusicView extends View {
             left = (getWidth() - containerWidth) / 2f;
         }
 
-        rect.set(left, dp(10), left + containerWidth, dp(10) + dp(17) * alpha);
+        rect.set(left, dp(10), left + containerWidth, dp(10) + (cardMode ? dp(52) : dp(17)) * alpha);
         canvas.save();
         canvas.scale(scale, scale, rect.centerX(), getHeight() / 2f);
 
@@ -382,8 +447,13 @@ public class ProfileMusicView extends View {
 
         canvas.save();
         canvas.clipPath(clipPath);
-        canvas.translate(rect.left + dp(8), 0);
-        drawContent(canvas, alpha);
+        if (cardMode) {
+            canvas.translate(rect.left, 0);
+            drawCard(canvas, alpha);
+        } else {
+            canvas.translate(rect.left + dp(8), 0);
+            drawContent(canvas, alpha);
+        }
 
         canvas.restore();
 

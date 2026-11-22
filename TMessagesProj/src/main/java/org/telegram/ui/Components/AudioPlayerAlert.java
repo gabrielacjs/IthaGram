@@ -410,8 +410,10 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             @Override
             protected void onDraw(Canvas canvas) {
                 if (playlist.size() <= 1) {
-                    shadowDrawable.setBounds(0, getMeasuredHeight() - playerLayout.getMeasuredHeight() - backgroundPaddingTop, getMeasuredWidth(), getMeasuredHeight());
-                    shadowDrawable.draw(canvas);
+                    if (!ithaDrawSheet(canvas, getMeasuredWidth(), getMeasuredHeight() - playerLayout.getMeasuredHeight() - backgroundPaddingTop, getMeasuredHeight())) {
+                        shadowDrawable.setBounds(0, getMeasuredHeight() - playerLayout.getMeasuredHeight() - backgroundPaddingTop, getMeasuredWidth(), getMeasuredHeight());
+                        shadowDrawable.draw(canvas);
+                    }
                     if (isProfilePlaylist) {
                         actionBar.setVisibility(View.GONE);
                     }
@@ -446,8 +448,10 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                     top += (int) (AndroidUtilities.statusBarHeight * (1f - moveProgress));
                     y += (int) (AndroidUtilities.statusBarHeight * (1f - moveProgress));
 
-                    shadowDrawable.setBounds(0, top, getMeasuredWidth(), height);
-                    shadowDrawable.draw(canvas);
+                    if (!ithaDrawSheet(canvas, getMeasuredWidth(), top, height)) {
+                        shadowDrawable.setBounds(0, top, getMeasuredWidth(), height);
+                        shadowDrawable.draw(canvas);
+                    }
 
                     if (!isProfilePlaylist && rad != 1.0f) {
                         Theme.dialogs_onlineCirclePaint.setColor(getThemedColor(Theme.key_dialogBackground));
@@ -1295,6 +1299,9 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
 
         savedMusicList = MediaController.getInstance().currentSavedMusicList;
         isProfilePlaylist = savedMusicList != null;
+        if (isProfilePlaylist) {
+            ithaEnableBlur();
+        }
         actionBar.menuOccupyBack = isProfilePlaylist;
         padWithItem = isMyList();
         playlist = MediaController.getInstance().getPlaylist();
@@ -2474,11 +2481,11 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                 }
             }
             if (playlist.size() > 1) {
-                ThemeBind.backgroundColor(playerLayout, Theme.key_player_background, AudioPlayerAlert.this.resourcesProvider);
+                ithaPlayerLayoutBackground();
                 playerShadow.setVisibility(View.VISIBLE);
                 listView.setPadding(0, listView.getPaddingTop(), 0, dp(179 + 52));
             } else {
-                ThemeBind.backgroundColor(playerLayout, Theme.key_player_background, AudioPlayerAlert.this.resourcesProvider);
+                ithaPlayerLayoutBackground();
                 playerShadow.setVisibility(View.VISIBLE);
                 listView.setPadding(0, listView.getPaddingTop(), 0, 0);
             }
@@ -2556,7 +2563,11 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             } else {
                 onReorderTouch = null;
             }
-            ThemeBind.backgroundColor(cell, Theme.key_dialogBackground, resourcesProvider);
+            if (isProfilePlaylist) {
+                cell.setBackground(null);
+            } else {
+                ThemeBind.backgroundColor(cell, Theme.key_dialogBackground, resourcesProvider);
+            }
             cell.setMessageObject(messageObject, isMyList(), isMyList() || noforwards || messageObject.getId() <= 0 ? null : btn -> showOptions(cell, messageObject), needDivider, onReorderTouch);
         }
 
@@ -3616,6 +3627,45 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
     private int lastSheetBackgroundColor;
 
     /** IthaGram: fondo en pildora para play y circulos suaves para anterior / siguiente. */
+    private boolean ithaBlurOn;
+    private final Paint ithaSheetPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /** Hoja translucida propia: el drawable de BottomSheet ignora el alpha del color. */
+    private boolean ithaDrawSheet(Canvas canvas, int width, int top, int bottom) {
+        if (!isProfilePlaylist) {
+            return false;
+        }
+        final int base = getThemedColor(Theme.key_windowBackgroundGray);
+        ithaSheetPaint.setColor(Theme.multAlpha(base, ithaBlurOn ? 0.55f : 0.82f));
+        final float rad = dp(22);
+        AndroidUtilities.rectTmp.set(backgroundPaddingLeft, top + backgroundPaddingTop, width - backgroundPaddingLeft, bottom + rad);
+        canvas.drawRoundRect(AndroidUtilities.rectTmp, rad, rad, ithaSheetPaint);
+        return true;
+    }
+
+    private void ithaEnableBlur() {
+        try {
+            if (Build.VERSION.SDK_INT >= 31 && getWindow() != null) {
+                android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.flags |= android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                lp.setBlurBehindRadius(dp(18));
+                getWindow().setAttributes(lp);
+                ithaBlurOn = true;
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
+    }
+
+    private void ithaPlayerLayoutBackground() {
+        if (isProfilePlaylist) {
+            // El fondo lo da la hoja translucida; el reproductor no debe taparlo.
+            playerLayout.setBackground(null);
+        } else {
+            ThemeBind.backgroundColor(playerLayout, Theme.key_player_background, AudioPlayerAlert.this.resourcesProvider);
+        }
+    }
+
     private void ithaStyleButtons() {
         if (playButton == null || prevButton == null || nextButton == null) {
             return;
