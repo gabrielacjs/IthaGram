@@ -6182,7 +6182,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int getActionsExtraHeight(boolean withPills) {
         if (userId != 0 && imageUpdater != null && !myProfile)
             return 0;
-        return dp(74 + (withPills && (hasMusic || hasBalance) ? 25 : 0));
+        return dp(74 + (withPills && (hasMusic || hasBalance) ? (ithaMusicCard() ? 62 : 25) : 0));
+    }
+
+    /** IthaGram: musica sin saldo al lado => tarjeta grande. */
+    private boolean ithaMusicCard() {
+        return hasMusic && !hasBalance;
     }
 
     private int getHeaderExtraHeight() {
@@ -11431,6 +11436,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (userInfo != null) {
                 musicView.setMusicDocument(userInfo.saved_music);
             }
+            musicView.setCardMode(ithaMusicCard());
             musicView.setVisibility(hasMusic ? View.VISIBLE : View.GONE);
             if (hasBalance) {
                 balanceView.setBalance(userInfo.wallet_card.balance);
@@ -11586,7 +11592,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             actionsView.updatePosition(listView.getMeasuredWidth(), dp(74));
         } else {
             actionsView.clipHeight = -1;
-            float bottom = extraHeight + newTop - dp(hasMusic || hasBalance ? 25 : 0);
+            float bottom = extraHeight + newTop - dp(hasMusic || hasBalance ? (ithaMusicCard() ? 62 : 25) : 0);
             float height = Math.min(dp(74), bottom - newTop);
             actionsView.updatePosition(bottom - height, height);
         }
