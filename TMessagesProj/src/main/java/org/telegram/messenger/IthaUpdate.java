@@ -34,6 +34,8 @@ public class IthaUpdate {
 
     private static final String API = "https://api.github.com/repos/gabrielacjs/IthaGram/releases/latest";
     private static final long DAY = 24L * 60L * 60L * 1000L;
+    /** Cada cuanto como maximo se consulta GitHub al abrir la app (no se consulta en cada vuelta a la app). */
+    private static final long CHECK_INTERVAL = 60L * 60L * 1000L;
     private static final Pattern TAG = Pattern.compile("v?(\\d+(?:\\.\\d+)*)(?:-itha(\\d*))?");
 
     private static volatile boolean busy;
@@ -69,7 +71,7 @@ public class IthaUpdate {
         if (!isAutoCheck() || busy || showing) {
             return;
         }
-        if (System.currentTimeMillis() - prefs().getLong("update_last_check", 0L) < DAY) {
+        if (System.currentTimeMillis() - prefs().getLong("update_last_check", 0L) < CHECK_INTERVAL) {
             return;
         }
         check(null, false);
@@ -117,6 +119,11 @@ public class IthaUpdate {
         if (showing) {
             return;
         }
+        // "Mas tarde": esa version no se vuelve a avisar sola durante 24 horas (el boton manual la muestra siempre)
+        if (!manual && release.tag.equals(prefs().getString("update_snooze_tag", ""))
+                && System.currentTimeMillis() < prefs().getLong("update_snooze_until", 0L)) {
+            return;
+        }
         showing = true;
         String name = release.tag.startsWith("v") ? release.tag.substring(1) : release.tag;
         String notes = release.body == null ? "" : release.body.trim();
@@ -136,7 +143,11 @@ public class IthaUpdate {
                     FileLog.e(t);
                 }
             });
-            builder.setNegativeButton(tr("Más tarde", "Later"), null);
+            final String snoozeTag = release.tag;
+            builder.setNegativeButton(tr("Más tarde", "Later"), (dialog, which) -> prefs().edit()
+                    .putString("update_snooze_tag", snoozeTag)
+                    .putLong("update_snooze_until", System.currentTimeMillis() + DAY)
+                    .apply());
             AlertDialog dialog = builder.create();
             dialog.setOnDismissListener(d -> showing = false);
             dialog.show();
