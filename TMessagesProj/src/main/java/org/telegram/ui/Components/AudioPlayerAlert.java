@@ -645,6 +645,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             }
         };
         seekBarView.setLineWidth(4);
+        seekBarView.setWavy(true);
         seekBarView.setDelegate(new SeekBarView.SeekBarViewDelegate() {
             @Override
             public void onSeekBarDrag(boolean stop, float progress) {
@@ -764,11 +765,19 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
         FrameLayout bottomView = new FrameLayout(context) {
             @Override
             protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-                int dist = ((right - left) - dp(8 + 48 * 5)) / 4;
+                // IthaGram: botones de distinto tamano (play en pildora, anterior / siguiente en circulos)
+                int sum = 0;
                 for (int a = 0; a < 5; a++) {
-                    int l = dp(4 + 48 * a) + dist * a;
-                    int t = dp(9);
-                    buttons[a].layout(l, t, l + buttons[a].getMeasuredWidth(), t + buttons[a].getMeasuredHeight());
+                    sum += buttons[a].getMeasuredWidth();
+                }
+                int dist = Math.max(0, ((right - left) - dp(8) - sum) / 4);
+                int l = dp(4);
+                for (int a = 0; a < 5; a++) {
+                    final int mw = buttons[a].getMeasuredWidth();
+                    final int mh = buttons[a].getMeasuredHeight();
+                    final int t = Math.max(0, ((bottom - top) - mh) / 2);
+                    buttons[a].layout(l, t, l + mw, t + mh);
+                    l += mw + dist;
                 }
             }
         };
@@ -964,17 +973,15 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
         prevButton.setLayerColor("Triangle 3", iconColor);
         prevButton.setLayerColor("Triangle 4", iconColor);
         prevButton.setLayerColor("Rectangle 4", iconColor);
-        ThemeBind.selectorBackground(prevButton, Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, dp(22)), null, ThemeBind.of(Theme.key_listSelector), resourcesProvider);
-        bottomView.addView(prevButton, LayoutHelper.createFrame(48, 48, Gravity.LEFT | Gravity.TOP));
+        bottomView.addView(prevButton, LayoutHelper.createFrame(52, 52, Gravity.LEFT | Gravity.TOP));
         prevButton.setContentDescription(LocaleController.getString(R.string.AccDescrPrevious));
 
         buttons[2] = playButton = new ImageView(context);
         playButton.setScaleType(ImageView.ScaleType.CENTER);
         playButton.setImageDrawable(playPauseDrawable = new PlayPauseDrawable(28));
         playPauseDrawable.setPause(!MediaController.getInstance().isMessagePaused(), false);
-        ThemeBind.colorFilter(playButton, Theme.key_player_button, resourcesProvider, PorterDuff.Mode.MULTIPLY);
-        ThemeBind.selectorBackground(playButton, Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, dp(24)), null, ThemeBind.of(Theme.key_listSelector), resourcesProvider);
-        bottomView.addView(playButton, LayoutHelper.createFrame(48, 48, Gravity.LEFT | Gravity.TOP));
+        ThemeBind.colorFilter(playButton, Theme.key_featuredStickers_buttonText, resourcesProvider, PorterDuff.Mode.MULTIPLY);
+        bottomView.addView(playButton, LayoutHelper.createFrame(88, 56, Gravity.LEFT | Gravity.TOP));
         playButton.setOnClickListener(v -> {
             if (MediaController.getInstance().isDownloadingCurrentMessage()) {
                 return;
@@ -1084,8 +1091,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
         nextButton.setLayerColor("Triangle 4", iconColor);
         nextButton.setLayerColor("Rectangle 4", iconColor);
         nextButton.setRotation(180f);
-        ThemeBind.selectorBackground(nextButton, Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, dp(22)), null, ThemeBind.of(Theme.key_listSelector), resourcesProvider);
-        bottomView.addView(nextButton, LayoutHelper.createFrame(48, 48, Gravity.LEFT | Gravity.TOP));
+        bottomView.addView(nextButton, LayoutHelper.createFrame(52, 52, Gravity.LEFT | Gravity.TOP));
         nextButton.setContentDescription(LocaleController.getString(R.string.Next));
 
         buttons[4] = optionsButton = new ActionBarMenuItem(context, null, 0, iconColor, false, resourcesProvider);
@@ -1118,6 +1124,8 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
         if (optionsIcon != null) {
             optionsIcon.setCasting(CastSync.isActive(), true);
         }
+
+        ithaStyleButtons();
 
         optionsButton.setShowedFromBottom(true);
         optionsButton.setDelegate(this::onSubItemClick);
@@ -2299,9 +2307,11 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             if (MediaController.getInstance().isMessagePaused()) {
                 playPauseDrawable.setPause(false);
                 playButton.setContentDescription(LocaleController.getString(R.string.AccActionPlay));
+                seekBarView.setWavyAnimating(false);
             } else {
                 playPauseDrawable.setPause(true);
                 playButton.setContentDescription(LocaleController.getString(R.string.AccActionPause));
+                seekBarView.setWavyAnimating(true);
             }
             String title = messageObject.getMusicTitle();
             String author = messageObject.getMusicAuthor();
@@ -3605,7 +3615,35 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
 
     private int lastSheetBackgroundColor;
 
+    /** IthaGram: fondo en pildora para play y circulos suaves para anterior / siguiente. */
+    private void ithaStyleButtons() {
+        if (playButton == null || prevButton == null || nextButton == null) {
+            return;
+        }
+        final int accent = getThemedColor(Theme.key_featuredStickers_addButton);
+        final android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
+        pill.setColor(accent);
+        pill.setCornerRadius(dp(20));
+        playButton.setBackground(new android.graphics.drawable.LayerDrawable(new Drawable[]{
+            pill,
+            Theme.createSelectorDrawable(0x33ffffff, 1, dp(28))
+        }));
+
+        final int soft = ColorUtils.setAlphaComponent(getThemedColor(Theme.key_player_button), 0x22);
+        final View[] circles = new View[]{prevButton, nextButton};
+        for (int i = 0; i < circles.length; i++) {
+            final android.graphics.drawable.GradientDrawable circle = new android.graphics.drawable.GradientDrawable();
+            circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            circle.setColor(soft);
+            circles[i].setBackground(new android.graphics.drawable.LayerDrawable(new Drawable[]{
+                circle,
+                Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1, dp(24))
+            }));
+        }
+    }
+
     private void updateThemeColorsInternal() {
+        ithaStyleButtons();
         final int sheetBackground = getThemedColor(isProfilePlaylist ? Theme.key_windowBackgroundGray : Theme.key_dialogBackground);
         if (sheetBackground != lastSheetBackgroundColor) {
             lastSheetBackgroundColor = sheetBackground;

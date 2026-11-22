@@ -333,8 +333,19 @@ public class AudioPlayerCell extends FrameLayout implements DownloadController.F
         }
     }
 
+    private Paint ithaPlayingPaint;
+
     @Override
     protected void onDraw(Canvas canvas) {
+        // IthaGram: la pista que suena se resalta con una tarjeta redondeada
+        if (currentMessageObject != null && MediaController.getInstance().isPlayingMessage(currentMessageObject)) {
+            if (ithaPlayingPaint == null) {
+                ithaPlayingPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            }
+            ithaPlayingPaint.setColor(Theme.multAlpha(getThemedColor(Theme.key_featuredStickers_addButton), 0.16f));
+            AndroidUtilities.rectTmp.set(dp(8), dp(2), getWidth() - dp(8), getHeight() - dp(2));
+            canvas.drawRoundRect(AndroidUtilities.rectTmp, dp(22), dp(22), ithaPlayingPaint);
+        }
         if (titleLayout != null) {
             canvas.save();
             canvas.translate(dp(LocaleController.isRTL ? 16 : AndroidUtilities.leftBaseline) + (LocaleController.isRTL && optionsButton.getVisibility() == View.VISIBLE ? dp(32) : 0), titleY);
@@ -392,6 +403,7 @@ public class AudioPlayerCell extends FrameLayout implements DownloadController.F
     }
 
     public void updateButtonState(boolean ifSame, boolean animated) {
+        invalidate();
         String fileName = currentMessageObject.getFileName();
         boolean fileExists;
         File cacheFile = null;

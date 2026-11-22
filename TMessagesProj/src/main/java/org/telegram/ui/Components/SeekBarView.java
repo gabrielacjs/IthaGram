@@ -96,6 +96,113 @@ public class SeekBarView extends FrameLayout implements Theme.Colorable {
     private int lineWidthDp = 3;
 
     private boolean twoSided;
+
+    // IthaGram: barra de progreso ondulada (opt-in, solo el reproductor de musica)
+    private boolean wavy;
+    private boolean wavyAnimating;
+    private float wavyAmp;
+    private float wavyPhase;
+    private long wavyLast;
+    private boolean wavyNeedsFrame;
+    private Paint wavyPaint;
+    private Paint wavyTrackPaint;
+    private Paint wavyThumbPaint;
+    private Path wavyPath;
+
+    public void setWavy(boolean value) {
+        wavy = value;
+        invalidate();
+    }
+
+    public void setWavyAnimating(boolean value) {
+        if (wavyAnimating != value) {
+            wavyAnimating = value;
+            wavyLast = 0;
+            invalidate();
+        }
+    }
+
+    private void drawWavy(Canvas canvas, float left, float right, float centerY, int thumbX) {
+        if (wavyPaint == null) {
+            wavyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            wavyPaint.setStyle(Paint.Style.STROKE);
+            wavyPaint.setStrokeCap(Paint.Cap.ROUND);
+            wavyPaint.setStrokeJoin(Paint.Join.ROUND);
+            wavyTrackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            wavyTrackPaint.setStyle(Paint.Style.STROKE);
+            wavyTrackPaint.setStrokeCap(Paint.Cap.ROUND);
+            wavyThumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            wavyPath = new Path();
+        }
+        final long now = SystemClock.elapsedRealtime();
+        final float dt = wavyLast == 0 ? 16f : Math.min(48f, now - wavyLast);
+        wavyLast = now;
+        final float target = pressed ? 0.25f : (wavyAnimating ? 1f : 0f);
+        wavyAmp += (target - wavyAmp) * Math.min(1f, dt / 120f);
+        if (Math.abs(target - wavyAmp) < 0.01f) {
+            wavyAmp = target;
+        }
+        if (wavyAmp > 0f) {
+            wavyPhase += dt / 1500f * 2f * (float) Math.PI;
+            if (wavyPhase > 2f * (float) Math.PI) {
+                wavyPhase -= 2f * (float) Math.PI;
+            }
+        }
+        wavyNeedsFrame = wavyAnimating || wavyAmp != target;
+
+        final int color = outerPaint1.getColor();
+        final float stroke = dp(4);
+        final float gap = dp(6);
+        final float x = left + thumbX;
+
+        wavyTrackPaint.setStrokeWidth(stroke);
+        wavyTrackPaint.setColor(getThemedColor(Theme.key_player_progressBackground));
+        final float trackStart = Math.min(right, x + gap);
+        if (trackStart < right) {
+            canvas.drawLine(trackStart, centerY, right, centerY, wavyTrackPaint);
+        }
+        if (bufferedProgress > 0) {
+            final float bufferedX = left + bufferedProgress * (right - left);
+            if (bufferedX > trackStart) {
+                wavyTrackPaint.setColor(getThemedColor(Theme.key_player_progressCachedBackground));
+                canvas.drawLine(trackStart, centerY, Math.min(bufferedX, right), centerY, wavyTrackPaint);
+            }
+        }
+
+        final float end = x - gap;
+        if (end > left) {
+            wavyPaint.setColor(color);
+            wavyPaint.setStrokeWidth(stroke);
+            final float amp = dp(2.6f) * wavyAmp;
+            final float waveLength = dp(18);
+            final float taper = dp(10);
+            wavyPath.reset();
+            final float step = dp(1.5f);
+            boolean first = true;
+            for (float px = left; ; px += step) {
+                final float cx = Math.min(px, end);
+                final float k = Math.min(1f, (cx - left) / taper);
+                final float py = centerY + amp * k * (float) Math.sin((cx - left) / waveLength * 2f * Math.PI - wavyPhase);
+                if (first) {
+                    wavyPath.moveTo(cx, py);
+                    first = false;
+                } else {
+                    wavyPath.lineTo(cx, py);
+                }
+                if (cx >= end) {
+                    break;
+                }
+            }
+            canvas.drawPath(wavyPath, wavyPaint);
+        }
+
+        wavyThumbPaint.setColor(color);
+        final float w = dp(pressed ? 3 : 4);
+        final float h = dp(pressed ? 26 : 22);
+        rect.set(x - w / 2f, centerY - h / 2f, x + w / 2f, centerY + h / 2f);
+        canvas.drawRoundRect(rect, w / 2f, w / 2f, wavyThumbPaint);
+    }
+
     private final Theme.ResourcesProvider resourcesProvider;
     private final AudioPlayerAlert.ClippingTextViewSwitcher textViewSwitcher;
 
@@ -470,6 +577,10 @@ public class SeekBarView extends FrameLayout implements Theme.Colorable {
         float left = selectorWidth / 2f, right = getMeasuredWidth() - selectorWidth / 2;
         float top = centerY - AndroidUtilities.dp(lineWidthDp) / 2f, bottom = centerY + AndroidUtilities.dp(lineWidthDp) / 2f;
 
+        final boolean wavyMode = wavy && !twoSided && minProgress < 0 && (timestamps == null || timestamps.isEmpty());
+        if (wavyMode) {
+            drawWavy(canvas, left, right, centerY, thumbX);
+        } else {
         rect.set(left, top, right, bottom);
         drawProgressBar(canvas, rect, innerPaint1);
         if (bufferedProgress > 0) {
@@ -498,8 +609,9 @@ public class SeekBarView extends FrameLayout implements Theme.Colorable {
                 drawProgressBar(canvas, rect, outerPaint1);
             }
         }
+        }
 
-        if (hoverDrawable != null) {
+        if (hoverDrawable != null && !wavyMode) {
             int dx = thumbX + selectorWidth / 2 - AndroidUtilities.dp(16);
             int dy = y + thumbSize / 2 - AndroidUtilities.dp(16);
             hoverDrawable.setBounds(dx, dy, dx + AndroidUtilities.dp(32), dy + AndroidUtilities.dp(32));
@@ -535,7 +647,9 @@ public class SeekBarView extends FrameLayout implements Theme.Colorable {
             }
         }
 
-        if (transitionProgress < 1f) {
+        if (wavyMode) {
+            // IthaGram: la barra ondulada dibuja su propio indicador
+        } else if (transitionProgress < 1f) {
             final float oldCircleProgress = 1f - Easings.easeInQuad.getInterpolation(Math.min(1f, transitionProgress * 3f));
             final float newCircleProgress = Easings.easeOutQuad.getInterpolation(transitionProgress);
             if (oldCircleProgress > 0f) {
@@ -548,7 +662,7 @@ public class SeekBarView extends FrameLayout implements Theme.Colorable {
 
         drawTimestampLabel(canvas);
 
-        if (needInvalidate) {
+        if (needInvalidate || (wavyMode && wavyNeedsFrame)) {
             postInvalidateOnAnimation();
         }
     }
